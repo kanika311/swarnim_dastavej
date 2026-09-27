@@ -23,11 +23,20 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: 'Swarnim Dastavej Editorial Board' }],
   metadataBase: new URL('https://swarnimdastavej.com'),
+  icons: {
+    icon: [
+      { url: '/image.png?v=3', type: 'image/png' },
+      { url: '/logo.png', type: 'image/png' }
+    ],
+    shortcut: '/image.png?v=3',
+    apple: '/image.png?v=3',
+  },
   openGraph: {
     title: 'स्वर्णिम दस्तावेज़ | सत्य, साहस और स्वर्णिम सरोकार',
     description: 'लखनऊ एवं सीतापुर का अग्रणी हिंदी दैनिक समाचार पत्र एवं नागरिक पत्रकारिता नेटवर्क।',
     locale: 'hi_IN',
     type: 'website',
+    images: ['/image.png?v=3'],
   },
 };
 
@@ -39,6 +48,9 @@ export default function RootLayout({
   return (
     <html lang="hi" suppressHydrationWarning>
       <head>
+        <link rel="icon" href="/image.png?v=3" type="image/png" sizes="any" />
+        <link rel="apple-touch-icon" href="/image.png?v=3" />
+        <link rel="shortcut icon" href="/image.png?v=3" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700;800;900&family=Rozha+One&display=swap" rel="stylesheet" />

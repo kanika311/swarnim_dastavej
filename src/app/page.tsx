@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import TopicsSidebar from '@/components/TopicsSidebar';
+import TopicsSidebar, { MobileTopicsDrawer } from '@/components/TopicsSidebar';
 import DainikNewsFeed from '@/components/DainikNewsFeed';
 import RightSponsoredSidebar from '@/components/RightSponsoredSidebar';
 import TodayNewspaperReader from '@/components/TodayNewspaperReader';
@@ -16,6 +16,7 @@ export default function HomePage() {
   const { selectedCity, setSelectedCity, fontSize, homeViewMode, setHomeViewMode } = useApp();
   const [articles, setArticles] = useState<Article[]>(INITIAL_ARTICLES);
   const [activeTopic, setActiveTopic] = useState<string>('all');
+  const [showMobileTopicsDrawer, setShowMobileTopicsDrawer] = useState<boolean>(false);
 
   // Load latest articles if API is active
   useEffect(() => {
@@ -126,24 +127,34 @@ export default function HomePage() {
           </div>
         ) : (
           /* VIEW 2: THREE PANEL MAIN CONTAINER (EXACT DAINIK BHASKAR LAYOUT) */
-          <div className="flex flex-col lg:flex-row gap-5 xl:gap-7 items-start">
-            
-            {/* PANEL 1 (LEFT): Topics & Categories Navigation */}
-            <TopicsSidebar
+          <div>
+            {/* THREE PANELS */}
+            <div className="flex flex-col lg:flex-row gap-5 xl:gap-7 items-start">
+              {/* PANEL 1 (LEFT): Topics & Categories Navigation (Hidden on mobile, visible on desktop lg) */}
+              <TopicsSidebar
+                activeTopic={activeTopic}
+                onSelectTopic={setActiveTopic}
+              />
+
+              {/* PANEL 2 (CENTER): News Feed, Big Headline, Media & Stream (Shows DIRECTLY on mobile!) */}
+              <DainikNewsFeed
+                articles={articles}
+                activeTopic={activeTopic}
+                onSelectTopic={setActiveTopic}
+                onOpenFilterDrawer={() => setShowMobileTopicsDrawer(true)}
+              />
+
+              {/* PANEL 3 (RIGHT): Google Favorite, Sponsored Ads, Video, E-Paper */}
+              <RightSponsoredSidebar />
+            </div>
+
+            {/* Mobile Filter Drawer / Bottom Sheet */}
+            <MobileTopicsDrawer
+              isOpen={showMobileTopicsDrawer}
+              onClose={() => setShowMobileTopicsDrawer(false)}
               activeTopic={activeTopic}
               onSelectTopic={setActiveTopic}
             />
-
-            {/* PANEL 2 (CENTER): News Feed, Big Headline, Media & Stream */}
-            <DainikNewsFeed
-              articles={articles}
-              activeTopic={activeTopic}
-              onSelectTopic={setActiveTopic}
-            />
-
-            {/* PANEL 3 (RIGHT): Google Favorite, Sponsored Ads, Video, E-Paper */}
-            <RightSponsoredSidebar />
-
           </div>
         )}
 

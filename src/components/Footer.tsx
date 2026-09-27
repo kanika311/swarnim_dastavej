@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ShieldCheck, Mail, Phone, MapPin, Award, FileText, Heart } from 'lucide-react';
 
 export default function Footer() {
@@ -14,9 +15,16 @@ export default function Footer() {
           
           {/* Col 1: About Newspaper */}
           <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <div className="w-9 h-9 rounded-full bg-red-700 text-amber-300 font-bold flex items-center justify-center border border-amber-400">
-                स्वर्ण
+            <div className="flex items-center gap-2.5">
+              <div className="w-11 h-11 rounded-full bg-white p-0.5 flex items-center justify-center border-2 border-amber-400 shrink-0 overflow-hidden shadow-sm">
+                <Image
+                  src="/logo.png?v=4"
+                  alt="स्वर्णिम दस्तावेज़"
+                  width={44}
+                  height={44}
+                  className="w-full h-full object-contain rounded-full"
+                  unoptimized
+                />
               </div>
               <span className="text-xl font-bold text-white font-serif tracking-wide">स्वर्णिम दस्तावेज़</span>
             </div>

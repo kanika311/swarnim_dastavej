@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, UserRole, LanguageCode, EPaperEdition } from '@/types';
 import { INITIAL_USERS, INITIAL_EPAPER_EDITIONS } from '@/lib/initialData';
+import { getTranslation, Language } from '@/lib/translations';
 
 interface AppContextType {
   currentUser: User | null;
@@ -12,6 +13,9 @@ interface AppContextType {
   logout: () => void;
   registerUser: (userData: Partial<User>) => User;
   switchRole: (role: UserRole) => void;
+
+  // Translation helper
+  t: (key: string) => string;
 
   // Auth Modal State
   isAuthModalOpen: boolean;
@@ -104,8 +108,25 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           setEpaperEditions(parsed);
         }
       }
+
+      // Load saved language
+      const savedLang = localStorage.getItem('swarnim_language');
+      if (savedLang === 'hi' || savedLang === 'en' || savedLang === 'ur') {
+        setLanguage(savedLang);
+      }
     } catch (e) {}
   }, []);
+
+  const handleSetLanguage = (lang: LanguageCode) => {
+    setLanguage(lang);
+    try {
+      localStorage.setItem('swarnim_language', lang);
+    } catch (e) {}
+  };
+
+  const t = (key: string): string => {
+    return getTranslation(language as Language, key);
+  };
 
   const openAuthModal = (
     tab: 'login' | 'register' = 'login', 
@@ -254,13 +275,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         logout,
         registerUser,
         switchRole,
+        t,
         isAuthModalOpen,
         authModalInitialTab,
         authModalDefaultRole,
         openAuthModal,
         closeAuthModal,
         language,
-        setLanguage,
+        setLanguage: handleSetLanguage,
         selectedCity,
         setSelectedCity,
         fontSize,

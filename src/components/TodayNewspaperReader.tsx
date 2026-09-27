@@ -230,7 +230,7 @@ export default function TodayNewspaperReader() {
             </button>
 
             {/* Admin CMS link */}
-            {(currentUser.role === 'admin' || currentUser.role === 'editor') && (
+            {(currentUser?.role === 'admin' || currentUser?.role === 'editor') && (
               <Link
                 href="/admin?tab=epaper"
                 className="flex items-center gap-1 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black px-2.5 py-1.5 rounded-xl shadow-xs text-xs"
@@ -270,29 +270,49 @@ export default function TodayNewspaperReader() {
         </div>
       </div>
 
-      {/* 2. THE NEWSPAPER BROADSHEET CANVAS (FITS SCREEN PROPERLY, NOT OVERSIZED) */}
-      <div className="relative mx-auto flex items-center justify-center py-2 px-1">
-        
+      {/* 2. THE NEWSPAPER BROADSHEET CANVAS WITH CONTRASTING BACKDROP */}
+      <div className="relative mx-auto flex items-center justify-center py-6 px-3 sm:px-12 rounded-2xl bg-gradient-to-b from-slate-900 via-slate-800 to-slate-950 shadow-2xl border border-slate-800 my-2 overflow-hidden">
+        {/* Subtle ambient lighting effect in the background */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-slate-800/40 via-transparent to-transparent pointer-events-none"></div>
+
         {/* Left Arrow Trigger */}
-        {activePageIndex > 0 && (
+        {activePageIndex > 0 ? (
           <button
             onClick={handlePrevPage}
-            className="absolute left-1 sm:left-4 md:left-12 lg:left-24 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-white/95 dark:bg-slate-800/95 shadow-xl border border-slate-300 dark:border-slate-600 text-slate-800 dark:text-white flex items-center justify-center hover:scale-110 active:scale-95 transition cursor-pointer"
+            className="absolute left-2 sm:left-4 md:left-8 top-1/2 -translate-y-1/2 z-30 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white dark:bg-slate-800 text-slate-950 dark:text-white shadow-[0_10px_25px_rgba(0,0,0,0.5)] border-2 border-white dark:border-slate-500 flex items-center justify-center hover:bg-red-700 hover:text-white hover:border-red-600 hover:scale-110 active:scale-95 transition-all duration-200 cursor-pointer group"
             aria-label="पिछला पन्ना"
+            title="पिछला पन्ना (Previous Page)"
           >
-            <ChevronLeft className="w-6 h-6" />
+            <ChevronLeft className="w-7 h-7 sm:w-8 sm:h-8 stroke-[3] group-hover:scale-110 transition-transform" />
+            <span className="sr-only">पिछला पन्ना</span>
           </button>
+        ) : (
+          <div 
+            className="absolute left-2 sm:left-4 md:left-8 top-1/2 -translate-y-1/2 z-10 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-slate-800/40 border border-slate-700/40 flex items-center justify-center opacity-30 cursor-not-allowed"
+            title="प्रथम पृष्ठ पर हैं"
+          >
+            <ChevronLeft className="w-7 h-7 stroke-[2.5] text-slate-500" />
+          </div>
         )}
 
         {/* Right Arrow Trigger */}
-        {activePageIndex < totalPages - 1 && (
+        {activePageIndex < totalPages - 1 ? (
           <button
             onClick={handleNextPage}
-            className="absolute right-1 sm:right-4 md:right-12 lg:right-24 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-white/95 dark:bg-slate-800/95 shadow-xl border border-slate-300 dark:border-slate-600 text-slate-800 dark:text-white flex items-center justify-center hover:scale-110 active:scale-95 transition cursor-pointer"
+            className="absolute right-2 sm:right-4 md:right-8 top-1/2 -translate-y-1/2 z-30 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white dark:bg-slate-800 text-slate-950 dark:text-white shadow-[0_10px_25px_rgba(0,0,0,0.5)] border-2 border-white dark:border-slate-500 flex items-center justify-center hover:bg-red-700 hover:text-white hover:border-red-600 hover:scale-110 active:scale-95 transition-all duration-200 cursor-pointer group"
             aria-label="अगला पन्ना"
+            title="अगला पन्ना (Next Page)"
           >
-            <ChevronRight className="w-6 h-6" />
+            <ChevronRight className="w-7 h-7 sm:w-8 sm:h-8 stroke-[3] group-hover:scale-110 transition-transform" />
+            <span className="sr-only">अगला पन्ना</span>
           </button>
+        ) : (
+          <div 
+            className="absolute right-2 sm:right-4 md:right-8 top-1/2 -translate-y-1/2 z-10 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-slate-800/40 border border-slate-700/40 flex items-center justify-center opacity-30 cursor-not-allowed"
+            title="अंतिम पृष्ठ पर हैं"
+          >
+            <ChevronRight className="w-7 h-7 stroke-[2.5] text-slate-500" />
+          </div>
         )}
 
         {/* NEWSPAPER PAGE (Proper Broadsheet Ratio 1:1.414, Max Height ~72vh, Centered) */}

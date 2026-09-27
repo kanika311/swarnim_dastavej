@@ -16,7 +16,8 @@ import {
   TrendingUp, 
   MessageSquare,
   Sparkles,
-  MapPin
+  MapPin,
+  SlidersHorizontal
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 
@@ -24,12 +25,14 @@ interface DainikNewsFeedProps {
   articles: Article[];
   activeTopic: string;
   onSelectTopic: (topicId: string) => void;
+  onOpenFilterDrawer?: () => void;
 }
 
 export default function DainikNewsFeed({
   articles,
   activeTopic,
-  onSelectTopic
+  onSelectTopic,
+  onOpenFilterDrawer
 }: DainikNewsFeedProps) {
   const { savedArticleIds, toggleSaveArticle, selectedCity } = useApp();
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
@@ -115,8 +118,24 @@ export default function DainikNewsFeed({
   return (
     <div className="flex-1 min-w-0 space-y-6">
       
-      {/* 1. TRENDING TAGS BAR (Dainik Bhaskar Style) */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2.5 shadow-xs flex items-center gap-2 overflow-x-auto scrollbar-none">
+      {/* 1. TRENDING TAGS BAR WITH FILTER BUTTON */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 sm:px-4 sm:py-2.5 shadow-xs flex items-center gap-2 sm:gap-2.5 overflow-x-auto scrollbar-none">
+        
+        {/* Mobile Filter Button (right next to Trending) */}
+        {onOpenFilterDrawer && (
+          <button
+            onClick={onOpenFilterDrawer}
+            className="lg:hidden flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs shrink-0 shadow-xs transition active:scale-95 cursor-pointer"
+            title="विषय फ़िल्टर"
+          >
+            <SlidersHorizontal className="w-3.5 h-3.5" />
+            <span>फ़िल्टर</span>
+            {activeTopic !== 'all' && (
+              <span className="w-2 h-2 rounded-full bg-red-600 animate-ping"></span>
+            )}
+          </button>
+        )}
+
         <div className="flex items-center gap-1 text-red-600 dark:text-red-400 font-extrabold text-[13px] shrink-0">
           <Flame className="w-4 h-4 fill-current animate-bounce" />
           <span>ट्रेंडिंग:</span>

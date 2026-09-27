@@ -68,6 +68,7 @@ class PlatformStore {
       city: data.city || 'लखनऊ',
       language: data.language || 'hi',
       coverImage: data.coverImage || 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=1000&auto=format&fit=crop&q=80',
+      mediaGallery: data.mediaGallery || [],
       author: data.author || {
         id: 'user_editor_1',
         name: 'संपादकीय डेस्क',

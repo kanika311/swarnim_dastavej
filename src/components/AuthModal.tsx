@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { useApp } from '@/context/AppContext';
 import { UserRole } from '@/types';
 import { 
@@ -16,8 +17,7 @@ import {
   CheckCircle, 
   LogIn, 
   UserPlus, 
-  AlertCircle,
-  KeyRound
+  AlertCircle
 } from 'lucide-react';
 
 export default function AuthModal() {
@@ -82,28 +82,7 @@ export default function AuthModal() {
       addNotification('सफलतापूर्वक लॉगिन हो गए!');
       closeAuthModal();
     } else {
-      setLoginError('अमान्य विवरण। कृपया सही ईमेल/मोबाइल या डेमो क्रेडेंशियल्स का उपयोग करें।');
-    }
-  };
-
-  // Quick Demo Login Handler
-  const handleQuickDemoLogin = (role: 'reader' | 'citizen_journalist' | 'admin') => {
-    setLoginError('');
-    let email = '';
-    let password = 'password123';
-
-    if (role === 'reader') {
-      email = 'amit.reader@gmail.com';
-    } else if (role === 'citizen_journalist') {
-      email = 'vikas.citizen@gmail.com';
-    } else {
-      email = 'editor@swarnimdastavej.com';
-    }
-
-    const success = login(email, password);
-    if (success) {
-      addNotification(`स्वागत है! आप ${role === 'reader' ? 'पाठक' : role === 'citizen_journalist' ? 'नागरिक पत्रकार' : 'एडमिन'} के रूप में लॉगिन हुए।`);
-      closeAuthModal();
+      setLoginError('अमान्य विवरण। कृपया सही मोबाइल नंबर/ईमेल व पासवर्ड दर्ज करें।');
     }
   };
 
@@ -160,8 +139,15 @@ export default function AuthModal() {
         {/* Header Bar */}
         <div className="bg-gradient-to-r from-red-700 via-red-800 to-amber-700 px-6 py-4 text-white flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-xs flex items-center justify-center border border-white/20">
-              <span className="font-serif font-black text-amber-300 text-lg">स्व</span>
+            <div className="w-10 h-10 rounded-full bg-white p-0.5 flex items-center justify-center border-2 border-amber-300 shrink-0 shadow-xs overflow-hidden">
+              <Image
+                src="/logo.png?v=4"
+                alt="स्वर्णिम दस्तावेज़"
+                width={40}
+                height={40}
+                className="w-full h-full object-contain rounded-full"
+                unoptimized
+              />
             </div>
             <div>
               <h3 className="font-bold text-base leading-tight">स्वर्णिम दस्तावेज़</h3>
@@ -229,7 +215,7 @@ export default function AuthModal() {
                     required
                     value={loginIdentifier}
                     onChange={(e) => setLoginIdentifier(e.target.value)}
-                    placeholder="उदा: 9889012345 या vikas.citizen@gmail.com"
+                    placeholder="उदा: 9889012345 या user@example.com"
                     className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent"
                   />
                 </div>
@@ -256,48 +242,11 @@ export default function AuthModal() {
 
               <button
                 type="submit"
-                className="w-full py-2.5 px-4 bg-red-700 hover:bg-red-800 text-white font-bold text-sm rounded-lg shadow-sm transition flex items-center justify-center gap-2"
+                className="w-full py-2.5 px-4 bg-red-700 hover:bg-red-800 text-white font-bold text-sm rounded-lg shadow-sm transition flex items-center justify-center gap-2 cursor-pointer"
               >
                 <LogIn className="w-4 h-4" />
                 <span>लॉगिन करें</span>
               </button>
-
-              {/* Quick One-Click Demo Access */}
-              <div className="pt-3 border-t border-slate-200 dark:border-slate-800">
-                <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                  <KeyRound className="w-3.5 h-3.5 text-amber-600" />
-                  <span>तुरंत टेस्ट हेतु 1-क्लिक लॉगिन (Demo Credentials):</span>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleQuickDemoLogin('reader')}
-                    className="p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-amber-500 bg-slate-50 dark:bg-slate-800/60 text-left transition group"
-                  >
-                    <div className="flex items-center gap-1.5 font-bold text-xs text-slate-800 dark:text-slate-200 group-hover:text-amber-600">
-                      <BookOpen className="w-3.5 h-3.5 text-amber-600" />
-                      <span>पाठक (Reader)</span>
-                    </div>
-                    <div className="text-[10px] text-slate-500 mt-0.5 truncate">
-                      अमित कुमार सिंह (पढ़ें, वीडियो देखें)
-                    </div>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleQuickDemoLogin('citizen_journalist')}
-                    className="p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-red-500 bg-slate-50 dark:bg-slate-800/60 text-left transition group"
-                  >
-                    <div className="flex items-center gap-1.5 font-bold text-xs text-slate-800 dark:text-slate-200 group-hover:text-red-600">
-                      <PenTool className="w-3.5 h-3.5 text-red-600" />
-                      <span>नागरिक पत्रकार</span>
-                    </div>
-                    <div className="text-[10px] text-slate-500 mt-0.5 truncate">
-                      विकास शुक्ला (सीतापुर से खबर भेजें)
-                    </div>
-                  </button>
-                </div>
-              </div>
             </form>
           ) : (
             /* ================= REGISTER TAB ================= */
