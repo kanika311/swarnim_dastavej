@@ -45,12 +45,30 @@ export default function TodayNewspaperReader() {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [modalZoom, setModalZoom] = useState<number>(100);
   const [copiedLink, setCopiedLink] = useState<boolean>(false);
+  const [imprint, setImprint] = useState({
+    registrationNo: 'UPHIN/26/A7984',
+    editorInChief: 'रामेश्वर दयाल'
+  });
 
-  // Find edition matching selected date & city, or fallback to first
-  const currentEdition: EPaperEdition = 
-    epaperEditions.find(e => e.date === selectedDate && (selectedCity === 'सभी' || e.editionCity.includes(selectedCity))) ||
-    epaperEditions.find(e => e.date === selectedDate) ||
-    epaperEditions[0];
+  useEffect(() => {
+    fetch('/api/settings')
+      .then(r => r.json())
+      .then(d => {
+        if (d.success && d.data) {
+          setImprint({
+            registrationNo: d.data.registrationNo || 'UPHIN/26/A7984',
+            editorInChief: d.data.editorInChief || 'रामेश्वर दयाल'
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const publishedEditions = epaperEditions.filter((edition) => edition.isActive !== false);
+  const currentEdition: EPaperEdition | undefined =
+    publishedEditions.find(e => e.date === selectedDate && (selectedCity === 'सभी' || e.editionCity.includes(selectedCity))) ||
+    publishedEditions.find(e => e.date === selectedDate) ||
+    publishedEditions[0];
 
   const totalPages = currentEdition?.pages?.length || 6;
   const currentPage: EPaperPage = currentEdition?.pages?.[activePageIndex] || {
@@ -119,6 +137,14 @@ export default function TodayNewspaperReader() {
     }
   };
 
+  if (!currentEdition) {
+    return (
+      <section className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 text-sm text-slate-600 dark:text-slate-300">
+        आज का अखबार अभी उपलब्ध नहीं है।
+      </section>
+    );
+  }
+
   return (
     <section className="w-full space-y-4">
       
@@ -160,7 +186,7 @@ export default function TodayNewspaperReader() {
           </div>
 
           {/* Right: Sound Icon Only (No Text), Page Navigation & Fullscreen */}
-          <div className="flex items-center gap-2 ml-auto">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:ml-auto">
             
             {/* Page Flip Sound Toggle - ICON ONLY (no 'साउंड ऑन' text) */}
             <button
@@ -271,7 +297,7 @@ export default function TodayNewspaperReader() {
       </div>
 
       {/* 2. THE NEWSPAPER BROADSHEET CANVAS WITH CONTRASTING BACKDROP */}
-      <div className="relative mx-auto flex items-center justify-center py-6 px-3 sm:px-12 rounded-2xl bg-gradient-to-b from-slate-900 via-slate-800 to-slate-950 shadow-2xl border border-slate-800 my-2 overflow-hidden">
+      <div className="relative mx-auto flex items-center justify-center py-4 sm:py-6 px-11 sm:px-16 rounded-2xl bg-gradient-to-b from-slate-900 via-slate-800 to-slate-950 shadow-2xl border border-slate-800 my-2 overflow-hidden max-w-full">
         {/* Subtle ambient lighting effect in the background */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-slate-800/40 via-transparent to-transparent pointer-events-none"></div>
 
@@ -279,7 +305,7 @@ export default function TodayNewspaperReader() {
         {activePageIndex > 0 ? (
           <button
             onClick={handlePrevPage}
-            className="absolute left-2 sm:left-4 md:left-8 top-1/2 -translate-y-1/2 z-30 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white dark:bg-slate-800 text-slate-950 dark:text-white shadow-[0_10px_25px_rgba(0,0,0,0.5)] border-2 border-white dark:border-slate-500 flex items-center justify-center hover:bg-red-700 hover:text-white hover:border-red-600 hover:scale-110 active:scale-95 transition-all duration-200 cursor-pointer group"
+            className="absolute left-1.5 sm:left-4 md:left-8 top-1/2 -translate-y-1/2 z-30 w-9 h-9 sm:w-14 sm:h-14 rounded-full bg-white dark:bg-slate-800 text-slate-950 dark:text-white shadow-[0_10px_25px_rgba(0,0,0,0.5)] border-2 border-white dark:border-slate-500 flex items-center justify-center hover:bg-red-700 hover:text-white hover:border-red-600 hover:scale-110 active:scale-95 transition-all duration-200 cursor-pointer group"
             aria-label="पिछला पन्ना"
             title="पिछला पन्ना (Previous Page)"
           >
@@ -299,7 +325,7 @@ export default function TodayNewspaperReader() {
         {activePageIndex < totalPages - 1 ? (
           <button
             onClick={handleNextPage}
-            className="absolute right-2 sm:right-4 md:right-8 top-1/2 -translate-y-1/2 z-30 w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-white dark:bg-slate-800 text-slate-950 dark:text-white shadow-[0_10px_25px_rgba(0,0,0,0.5)] border-2 border-white dark:border-slate-500 flex items-center justify-center hover:bg-red-700 hover:text-white hover:border-red-600 hover:scale-110 active:scale-95 transition-all duration-200 cursor-pointer group"
+            className="absolute right-1.5 sm:right-4 md:right-8 top-1/2 -translate-y-1/2 z-30 w-9 h-9 sm:w-14 sm:h-14 rounded-full bg-white dark:bg-slate-800 text-slate-950 dark:text-white shadow-[0_10px_25px_rgba(0,0,0,0.5)] border-2 border-white dark:border-slate-500 flex items-center justify-center hover:bg-red-700 hover:text-white hover:border-red-600 hover:scale-110 active:scale-95 transition-all duration-200 cursor-pointer group"
             aria-label="अगला पन्ना"
             title="अगला पन्ना (Next Page)"
           >
@@ -318,7 +344,7 @@ export default function TodayNewspaperReader() {
         {/* NEWSPAPER PAGE (Proper Broadsheet Ratio 1:1.414, Max Height ~72vh, Centered) */}
         <div
           onClick={() => setIsModalOpen(true)}
-          className={`cursor-pointer bg-[#fbf9f4] text-slate-900 border-2 border-slate-300 dark:border-slate-700 rounded-sm shadow-2xl overflow-hidden transition-all duration-300 group hover:shadow-red-500/20 max-h-[72vh] sm:max-h-[76vh] aspect-[1/1.414] w-auto relative flex flex-col justify-between ${
+          className={`cursor-pointer bg-[#fbf9f4] text-slate-900 border-2 border-slate-300 dark:border-slate-700 rounded-sm shadow-2xl overflow-hidden transition-all duration-300 group hover:shadow-red-500/20 w-full max-w-[min(100%,520px)] aspect-[1/1.414] max-h-[76vh] relative flex flex-col justify-between ${
             isFlipping 
               ? flipDirection === 'next' 
                 ? 'scale-[0.98] rotate-y-6 opacity-80' 
@@ -348,7 +374,7 @@ export default function TodayNewspaperReader() {
               <div className="flex-1 flex flex-col justify-between space-y-2 text-slate-950">
                 {/* Registration & Issue Dateline */}
                 <div className="border-b border-slate-800 pb-1 flex items-center justify-between text-[9px] sm:text-[10px] font-mono text-slate-700">
-                  <span>RNI No. UPHIN/26/A7984</span>
+                  <span>RNI No. {imprint.registrationNo}</span>
                   <span className="font-bold">वर्ष 12 | अंक 245</span>
                   <span>मूल्य: ₹4.00</span>
                 </div>
@@ -575,7 +601,7 @@ export default function TodayNewspaperReader() {
                 </div>
 
                 <div className="border-t border-slate-300 pt-1 text-[9px] text-slate-500 text-center">
-                  प्रधान संपादक: रामेश्वर दयाल | वरिष्ठ संपादक: अनुराधा अवस्थी
+                  प्रधान संपादक: {imprint.editorInChief} | वरिष्ठ संपादक: अनुराधा अवस्थी
                 </div>
               </div>
             )}

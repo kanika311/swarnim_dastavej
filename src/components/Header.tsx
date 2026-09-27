@@ -85,15 +85,15 @@ export default function Header() {
     <header className="sticky top-0 z-50 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-xs transition-colors">
       
       {/* MAIN TOP BAR (EXACT DAINIK BHASKAR STYLE) */}
-      <div className="max-w-[1380px] mx-auto px-4 py-2.5 flex items-center justify-between gap-4">
+      <div className="max-w-[1380px] mx-auto px-3 sm:px-4 py-2.5 flex items-center justify-between gap-2 min-w-0">
         
         {/* LEFT: Sun Logo + Brand Title + Subtitle Date */}
-        <div className="flex items-center gap-3 sm:gap-5">
+        <div className="flex items-center gap-3 sm:gap-5 min-w-0 flex-1">
 
           {/* Logo & Live Time (Bhaskar Style) */}
-          <Link href="/" className="flex items-center gap-2.5 sm:gap-3 group">
+          <Link href="/" className="flex items-center gap-2 sm:gap-3 group min-w-0">
             {/* Official Brand Logo (New 3D Golden Emblem) */}
-            <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-full overflow-hidden bg-white shadow-md border-2 border-amber-400/80 dark:border-amber-500/80 flex items-center justify-center p-0.5 group-hover:scale-105 transition-transform shrink-0">
+            <div className="relative w-10 h-10 sm:w-14 sm:h-14 rounded-full overflow-hidden bg-white shadow-md border-2 border-amber-400/80 dark:border-amber-500/80 flex items-center justify-center p-0.5 group-hover:scale-105 transition-transform shrink-0">
               <Image
                 src="/logo.png?v=4"
                 alt="स्वर्णिम दस्तावेज़"
@@ -105,17 +105,17 @@ export default function Header() {
               />
             </div>
 
-            <div>
-              <div className="flex items-baseline gap-1.5">
-                <span className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight text-slate-900 dark:text-white font-serif">
+            <div className="min-w-0">
+              <div className="flex items-baseline gap-1.5 min-w-0">
+                <span className="text-lg sm:text-2xl md:text-3xl font-black tracking-tight text-slate-900 dark:text-white font-serif truncate">
                   {t('site_title')}
                 </span>
                 <span className="hidden sm:inline text-[10px] font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 px-1.5 py-0.2 rounded">
                   {t('daily')}
                 </span>
               </div>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
-                Sun, Sep 27, 2026 | Updated 02:53 PM IST
+              <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-medium truncate">
+                Sun, Sep 27, 2026
               </p>
             </div>
           </Link>
@@ -143,7 +143,7 @@ export default function Header() {
             </span>
           </button>
 
-          {/* 2. Home (3-Panel Live Feed) */}
+          {/* 2. Live news */}
           <button
             onClick={() => {
               setHomeViewMode('news');
@@ -180,12 +180,12 @@ export default function Header() {
         </nav>
 
         {/* RIGHT UTILITIES & ACTIONS (CLEAN & ELEGANT) */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
           
           {/* Quick Search Button */}
           <button
             onClick={() => setShowSearchModal(true)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-semibold border border-slate-200 dark:border-slate-700 transition cursor-pointer"
+            className="flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-semibold border border-slate-200 dark:border-slate-700 transition cursor-pointer"
             title="Search"
           >
             <Search className="w-3.5 h-3.5 text-amber-600" />
@@ -640,7 +640,7 @@ export default function Header() {
             >
               <div className="flex items-center gap-2.5">
                 <Newspaper className="w-5 h-5 text-red-600" />
-                <span className="text-sm">आज का अखबार (Today&apos;s E-Paper)</span>
+                <span className="text-sm">{t('todays_epaper')}</span>
               </div>
               <span className="text-[10px] bg-red-600 text-white font-black px-2 py-0.5 rounded-full">डिफ़ॉल्ट</span>
             </button>
@@ -654,7 +654,7 @@ export default function Header() {
               className="w-full p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 font-bold flex items-center gap-2.5 text-left border border-amber-200/60 dark:border-amber-900/60 cursor-pointer"
             >
               <Home className="w-5 h-5 text-amber-600" />
-              <span className="text-sm">होम (3-पैनल लाइव न्यूज़)</span>
+              <span className="text-sm">{t('home_news')}</span>
             </button>
 
             <div className="grid grid-cols-2 gap-2 pt-1">

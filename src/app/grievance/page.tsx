@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import BreakingTicker from '@/components/BreakingTicker';
@@ -15,6 +15,7 @@ import {
   Clock, 
   AlertCircle 
 } from 'lucide-react';
+import { SiteSettings } from '@/types';
 
 export default function GrievancePage() {
   // Form State
@@ -26,6 +27,24 @@ export default function GrievancePage() {
   const [complaintDetails, setComplaintDetails] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [tokenReceived, setTokenReceived] = useState<string | null>(null);
+  const [settings, setSettings] = useState<Pick<SiteSettings, 'email' | 'phone' | 'address' | 'registrationNo' | 'editorInChief' | 'publisher' | 'siteName'>>({
+    siteName: 'स्वर्णिम दस्तावेज़ (Swarnim Dastavej)',
+    email: 'swarnimdastavej@gmail.com',
+    phone: '+91 95196 231111',
+    address: 'Argada hussainganj, behind jwala hotel. Lucknow -226001',
+    registrationNo: 'UPHIN/26/A7984',
+    editorInChief: 'रामेश्वर दयाल (Rameshwar Dayal)',
+    publisher: 'स्वर्णिम दस्तावेज़ प्रकाशन'
+  });
+
+  useEffect(() => {
+    fetch('/api/settings')
+      .then(r => r.json())
+      .then(d => {
+        if (d.success && d.data) setSettings(prev => ({ ...prev, ...d.data }));
+      })
+      .catch(() => {});
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,28 +112,28 @@ export default function GrievancePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700/60">
               <span className="text-slate-500 font-medium block">समाचार पत्र का नाम:</span>
-              <strong className="text-slate-900 dark:text-slate-100 text-sm">स्वर्णिम दस्तावेज़ (Swarnim Dastavej)</strong>
+              <strong className="text-slate-900 dark:text-slate-100 text-sm">{settings.siteName}</strong>
             </div>
 
             <div className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700/60">
               <span className="text-slate-500 font-medium block">RNI पंजीयन संख्या:</span>
-              <strong className="text-amber-700 dark:text-amber-400 font-mono text-sm">UPHIN/26/A7984</strong>
+              <strong className="text-amber-700 dark:text-amber-400 font-mono text-sm">{settings.registrationNo}</strong>
             </div>
 
             <div className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700/60">
               <span className="text-slate-500 font-medium block">प्रधान संपादक (Editor-in-Chief):</span>
-              <strong className="text-slate-900 dark:text-slate-100">रामेश्वर दयाल (Rameshwar Dayal)</strong>
+              <strong className="text-slate-900 dark:text-slate-100">{settings.editorInChief}</strong>
             </div>
 
             <div className="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700/60">
               <span className="text-slate-500 font-medium block">मुद्रक एवं प्रकाशक (Publisher & Printer):</span>
-              <strong className="text-slate-900 dark:text-slate-100">स्वर्णिम दस्तावेज़ प्रकाशन</strong>
+              <strong className="text-slate-900 dark:text-slate-100">{settings.publisher}</strong>
             </div>
 
             <div className="sm:col-span-2 p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700/60">
               <span className="text-slate-500 font-medium block">पंजीकृत प्रेस एवं संपादकीय कार्यालय:</span>
               <strong className="text-slate-900 dark:text-slate-100">
-                स्वर्णिम दस्तावेज़ भवन, हजरतगंज, लखनऊ, उत्तर प्रदेश - 226001 (क्षेत्राधिकार: न्यायालय लखनऊ)
+                {settings.address} (क्षेत्राधिकार: न्यायालय लखनऊ)
               </strong>
             </div>
           </div>
@@ -139,14 +158,14 @@ export default function GrievancePage() {
               <div className="text-slate-500">नामित शिकायत अधिकारी (Grievance Officer)</div>
             </div>
             <div className="flex flex-wrap gap-4 pt-1">
-              <span className="flex items-center gap-1 text-slate-700 dark:text-slate-300">
+              <a href={`mailto:${settings.email}`} className="flex items-center gap-1 text-slate-700 dark:text-slate-300 hover:text-red-600">
                 <Mail className="w-3.5 h-3.5 text-red-600" />
-                <span>grievance@swarnimdastavej.com</span>
-              </span>
-              <span className="flex items-center gap-1 text-slate-700 dark:text-slate-300">
+                <span>{settings.email}</span>
+              </a>
+              <a href={`tel:${settings.phone.replace(/\s/g, '')}`} className="flex items-center gap-1 text-slate-700 dark:text-slate-300 hover:text-red-600">
                 <Phone className="w-3.5 h-3.5 text-red-600" />
-                <span>+91 98390 67890 (कार्यालय समय: प्रातः 10 से सायं 5 बजे)</span>
-              </span>
+                <span>{settings.phone} (कार्यालय समय: प्रातः 10 से सायं 5 बजे)</span>
+              </a>
             </div>
             <div className="text-[11px] text-amber-800 dark:text-amber-400 font-semibold pt-1">
               ⏱️ वैधानिक समयसीमा: शिकायत प्राप्ति की पावती 24 घंटे में तथा निस्तारण अधिकतम 15 कार्यदिवसों में सुनिश्चित किया जाएगा।

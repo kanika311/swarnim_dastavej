@@ -116,7 +116,7 @@ export default function DainikNewsFeed({
   };
 
   return (
-    <div className="flex-1 min-w-0 space-y-6">
+    <div className="flex-1 w-full min-w-0 space-y-4 sm:space-y-6">
       
       {/* 1. TRENDING TAGS BAR WITH FILTER BUTTON */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 sm:px-4 sm:py-2.5 shadow-xs flex items-center gap-2 sm:gap-2.5 overflow-x-auto scrollbar-none">
@@ -172,11 +172,11 @@ export default function DainikNewsFeed({
 
       {/* 2. MAIN FEATURED STORY (DAINIK BHASKAR STYLE) */}
       {leadArticle && (
-        <article className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xs hover:border-slate-300 dark:hover:border-slate-700 transition">
+        <article className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xs hover:border-slate-300 dark:hover:border-slate-700 transition min-w-0">
           
           {/* BIG HEADLINE (Dainik Bhaskar Signature Emerald/Dark Bold Font Size) */}
           <Link href={`/article/${leadArticle.id}`} className="block group">
-            <h1 className="text-2xl sm:text-3xl md:text-[32px] font-extrabold text-emerald-800 dark:text-emerald-400 group-hover:text-emerald-950 dark:group-hover:text-emerald-300 leading-snug tracking-tight font-serif">
+            <h1 className="text-xl sm:text-3xl md:text-[32px] font-extrabold text-emerald-800 dark:text-emerald-400 group-hover:text-emerald-950 dark:group-hover:text-emerald-300 leading-snug tracking-tight font-serif break-words">
               {leadArticle.headline}
             </h1>
           </Link>
@@ -242,7 +242,7 @@ export default function DainikNewsFeed({
 
           {/* Action Toolbar */}
           <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 min-w-0">
               <span className="font-bold text-slate-700 dark:text-slate-300">
                 ब्यूरो: {leadArticle.author.name}
               </span>
@@ -327,10 +327,10 @@ export default function DainikNewsFeed({
           return (
             <article
               key={art.id}
-              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 hover:border-slate-300 dark:hover:border-slate-700 shadow-xs transition group flex flex-col sm:flex-row gap-4 sm:gap-6"
+              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 hover:border-slate-300 dark:hover:border-slate-700 shadow-xs transition group flex flex-col md:flex-row gap-4 md:gap-6 min-w-0"
             >
               {/* Thumbnail */}
-              <div className="relative w-full sm:w-56 aspect-[16/10] shrink-0 rounded-xl overflow-hidden bg-slate-950">
+              <div className="relative w-full md:w-56 aspect-[16/10] shrink-0 rounded-xl overflow-hidden bg-slate-950">
                 <img
                   src={art.coverImage}
                   alt={art.headline}
@@ -347,7 +347,7 @@ export default function DainikNewsFeed({
               </div>
 
               {/* Story Details */}
-              <div className="flex-1 flex flex-col justify-between">
+              <div className="flex-1 min-w-0 flex flex-col justify-between">
                 <div>
                   <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-1.5">
                     <span className="font-extrabold text-red-700 dark:text-red-400">
@@ -376,7 +376,7 @@ export default function DainikNewsFeed({
                 </div>
 
                 {/* Footer bar */}
-                <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 pt-3 mt-3 border-t border-slate-100 dark:border-slate-800/80">
+                <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400 pt-3 mt-3 border-t border-slate-100 dark:border-slate-800/80">
                   <div className="flex items-center gap-3">
                     <span className="flex items-center gap-1">
                       <Clock className="w-3.5 h-3.5" />

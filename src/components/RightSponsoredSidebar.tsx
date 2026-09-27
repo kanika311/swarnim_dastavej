@@ -13,39 +13,25 @@ import {
   FileText,
   Megaphone
 } from 'lucide-react';
-import { INITIAL_ADS } from '@/lib/initialData';
+import { AdBanner } from '@/types';
 
 export default function RightSponsoredSidebar() {
   const [adIndex, setAdIndex] = useState(0);
-  const ads = [
-    {
-      id: 'ad-1',
-      title: 'उत्तर प्रदेश पर्यटन: अवध एवं नैमिषारण्य दर्शन 2026',
-      sponsor: 'UP Tourism Department',
-      imageUrl: 'https://images.unsplash.com/photo-1566552881560-0be862a7c445?w=800&auto=format&fit=crop&q=80',
-      tag: 'विशेष पैकेज',
-      url: 'https://uptourism.gov.in'
-    },
-    {
-      id: 'ad-2',
-      title: 'पीएम कुसुम सोलर पंप योजना: किसानों को 70% सब्सिडी',
-      sponsor: 'ऊर्जा एवं नवीन विकास अभिकरण (UPNEDA)',
-      imageUrl: 'https://images.unsplash.com/photo-1509391365360-2e959784a276?w=800&auto=format&fit=crop&q=80',
-      tag: 'सरकारी अनुदान',
-      url: 'https://upagriculture.com'
-    },
-    {
-      id: 'ad-3',
-      title: 'स्वर्णिम दस्तावेज़ एंड्रॉइड ऐप - रियल-टाइम ब्रेकिंग अलर्ट',
-      sponsor: 'स्वर्णिम मीडिया नेटवर्क',
-      imageUrl: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=800&auto=format&fit=crop&q=80',
-      tag: 'प्ले स्टोर पर उपलब्ध',
-      url: '#'
-    }
-  ];
+  const [ads, setAds] = useState<AdBanner[]>([]);
 
-  // Auto rotate ad
   useEffect(() => {
+    fetch('/api/ads')
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success && Array.isArray(d.data)) {
+          setAds(d.data.filter((ad: AdBanner) => ad.isActive));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (ads.length < 2) return;
     const timer = setInterval(() => {
       setAdIndex((prev) => (prev + 1) % ads.length);
     }, 6000);
@@ -53,7 +39,7 @@ export default function RightSponsoredSidebar() {
   }, [ads.length]);
 
   return (
-    <aside className="w-full lg:w-80 shrink-0 lg:sticky lg:top-20 lg:self-start lg:max-h-[calc(100vh-96px)] lg:overflow-y-auto scrollbar-none space-y-4">
+    <aside className="w-full min-w-0 lg:w-80 lg:shrink-0 lg:sticky lg:top-24 lg:z-20 lg:self-start lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto scrollbar-none space-y-4">
       
       {/* 1. GOOGLE NEWS FAVORITE CARD (Dainik Bhaskar Style) */}
       <div className="bg-amber-50/70 dark:bg-slate-800/80 border border-amber-200/80 dark:border-slate-700 rounded-xl p-3.5 shadow-xs flex items-center justify-between gap-3 hover:border-amber-400 transition group">
@@ -91,7 +77,8 @@ export default function RightSponsoredSidebar() {
         </Link>
       </div>
 
-      {/* 2. SPONSORED AD CAROUSEL (Dainik Bhaskar Style) */}
+      {/* 2. SPONSORED AD CAROUSEL */}
+      {ads.length > 0 && ads[adIndex] && (
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-xs">
         <div className="px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px]">
           <span className="font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1">
@@ -103,19 +90,21 @@ export default function RightSponsoredSidebar() {
 
         <div className="relative p-3">
           <div className="relative aspect-[16/10] w-full rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800">
+            <a href={ads[adIndex].targetUrl} target="_blank" rel="noopener noreferrer">
             <img
               src={ads[adIndex].imageUrl}
               alt={ads[adIndex].title}
               className="w-full h-full object-cover transition-opacity duration-500"
             />
+            </a>
             <div className="absolute top-2 left-2 bg-slate-900/80 backdrop-blur-xs text-amber-300 font-bold text-[10px] px-2 py-0.5 rounded">
-              {ads[adIndex].tag}
+              प्रायोजित
             </div>
           </div>
 
           <div className="mt-2.5">
             <p className="text-[11px] text-slate-400 font-medium">
-              {ads[adIndex].sponsor}
+              {ads[adIndex].advertiser}
             </p>
             <h4 className="text-[14px] font-bold text-slate-800 dark:text-slate-100 mt-0.5 line-clamp-2 leading-snug">
               {ads[adIndex].title}
@@ -139,6 +128,7 @@ export default function RightSponsoredSidebar() {
           </div>
         </div>
       </div>
+      )}
 
       {/* 3. VIDEO WIDGET (Dainik Bhaskar Style: 'वीडियो और देखें') */}
       <div className="bg-slate-950 text-white rounded-xl overflow-hidden shadow-md border border-slate-800">

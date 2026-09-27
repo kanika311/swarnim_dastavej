@@ -9,7 +9,7 @@ interface AppContextType {
   currentUser: User | null;
   setCurrentUser: (user: User | null) => void;
   usersList: User[];
-  login: (identifier: string, password?: string) => boolean;
+  login: (identifier: string, password?: string) => Promise<boolean>;
   logout: () => void;
   registerUser: (userData: Partial<User>) => User;
   switchRole: (role: UserRole) => void;
@@ -67,6 +67,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [selectedCity, setSelectedCity] = useState<string>('सभी शहर');
   const [fontSize, setFontSize] = useState<'sm' | 'base' | 'lg'>('base');
   const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
+  const [themeReady, setThemeReady] = useState(false);
   const [savedArticleIds, setSavedArticleIds] = useState<string[]>([]);
   const [notifications, setNotifications] = useState<string[]>([
     'लखनऊ-सीतापुर एक्सप्रेसवे को कैबिनेट मंजूरी: बड़ी खबर',
@@ -141,18 +142,41 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setIsAuthModalOpen(false);
   };
 
-  const login = (identifier: string, password?: string): boolean => {
+  const login = async (identifier: string, password?: string): Promise<boolean> => {
     const cleanId = identifier.trim().toLowerCase();
-    // Find matching user by email or phone
-    const found = usersList.find(u => 
-      u.email.toLowerCase() === cleanId || 
-      (u.phone && u.phone.replace(/\D/g, '') === cleanId.replace(/\D/g, ''))
+    const phoneDigits = cleanId.replace(/\D/g, '');
+
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier: identifier.trim(), password: password || '' })
+      });
+      const data = await res.json();
+      if (data.success && data.data) {
+        setCurrentUser(data.data);
+        try {
+          localStorage.setItem('swarnim_current_user', JSON.stringify(data.data));
+        } catch (e) {}
+        return true;
+      }
+      if (res.status === 401 || res.status === 403) {
+        return false;
+      }
+    } catch (e) {}
+
+    const found = usersList.find(u =>
+      u.email.toLowerCase() === cleanId ||
+      (u.phone && phoneDigits.length >= 10 && u.phone.replace(/\D/g, '') === phoneDigits)
     );
 
     if (found) {
-      setCurrentUser(found);
+      if (found.isBanned) return false;
+      if (found.password && found.password !== (password || '')) return false;
+      const { password: _password, ...session } = found;
+      setCurrentUser(session);
       try {
-        localStorage.setItem('swarnim_current_user', JSON.stringify(found));
+        localStorage.setItem('swarnim_current_user', JSON.stringify(session));
       } catch (e) {}
       return true;
     }
@@ -224,8 +248,35 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('swarnim_theme');
+      if (saved === 'dark' || document.documentElement.classList.contains('dark')) {
+        setIsDarkMode(true);
+      }
+    } catch (e) {}
+    setThemeReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!themeReady) return;
+    document.documentElement.classList.toggle('dark', isDarkMode);
+    document.documentElement.style.colorScheme = isDarkMode ? 'dark' : 'light';
+    try {
+      localStorage.setItem('swarnim_theme', isDarkMode ? 'dark' : 'light');
+    } catch (e) {}
+  }, [isDarkMode, themeReady]);
+
   const toggleDarkMode = () => {
-    setIsDarkMode(prev => !prev);
+    setIsDarkMode(prev => {
+      const next = !prev;
+      document.documentElement.classList.toggle('dark', next);
+      document.documentElement.style.colorScheme = next ? 'dark' : 'light';
+      try {
+        localStorage.setItem('swarnim_theme', next ? 'dark' : 'light');
+      } catch (e) {}
+      return next;
+    });
   };
 
   const toggleSaveArticle = (id: string) => {

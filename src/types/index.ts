@@ -35,6 +35,7 @@ export interface User {
     submittedAt: string;
     district: string;
   };
+  isBanned?: boolean;
 }
 
 export interface MediaItem {
@@ -153,6 +154,7 @@ export interface EPaperEdition {
   pagesCount: number;
   pages: EPaperPage[];
   thumbnailUrl: string;
+  isActive?: boolean;
 }
 
 export interface Poll {
@@ -195,3 +197,19 @@ export interface GrievanceComplaint {
   resolutionNotes?: string;
   resolvedAt?: string;
 }
+
+export interface SiteSettings {
+  siteName: string;
+  tagline: string;
+  email: string;
+  phone: string;
+  address: string;
+  registrationNo: string;
+  editorInChief: string;
+  publisher: string;
+  privacyPolicy: string;
+  termsOfService: string;
+  editorialPolicy: string;
+  updatedAt: string;
+}
+

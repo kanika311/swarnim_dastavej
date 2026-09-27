@@ -68,7 +68,7 @@ export default function AuthModal() {
   if (!isAuthModalOpen) return null;
 
   // Handle Login
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoginError('');
 
@@ -77,7 +77,7 @@ export default function AuthModal() {
       return;
     }
 
-    const success = login(loginIdentifier.trim(), loginPassword.trim());
+    const success = await login(loginIdentifier.trim(), loginPassword.trim());
     if (success) {
       addNotification('सफलतापूर्वक लॉगिन हो गए!');
       closeAuthModal();

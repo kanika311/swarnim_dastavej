@@ -10,10 +10,10 @@ import TodayNewspaperReader from '@/components/TodayNewspaperReader';
 import { INITIAL_ARTICLES } from '@/lib/initialData';
 import { Article } from '@/types';
 import { useApp } from '@/context/AppContext';
-import { MapPin, X, Newspaper, Home, Sparkles, Flame } from 'lucide-react';
+import { MapPin, X } from 'lucide-react';
 
 export default function HomePage() {
-  const { selectedCity, setSelectedCity, fontSize, homeViewMode, setHomeViewMode } = useApp();
+  const { selectedCity, setSelectedCity, fontSize, homeViewMode } = useApp();
   const [articles, setArticles] = useState<Article[]>(INITIAL_ARTICLES);
   const [activeTopic, setActiveTopic] = useState<string>('all');
   const [showMobileTopicsDrawer, setShowMobileTopicsDrawer] = useState<boolean>(false);
@@ -34,54 +34,12 @@ export default function HomePage() {
 
   return (
     <div className={`min-h-screen flex flex-col bg-[#f8f9fa] dark:bg-slate-950 text-slate-900 dark:text-slate-100 ${fontClass}`}>
-      {/* 1. Header (Dainik Bhaskar Style Top Nav) */}
       <Header />
 
-      {/* 2. Top View Mode Switcher: 'आज का अखबार (Default)' vs 'होम (3-Panel Feed)' */}
-      <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 py-2 shadow-xs">
-        <div className="max-w-[1380px] mx-auto px-4 flex flex-wrap items-center justify-between gap-3">
-          
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setHomeViewMode('epaper')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-black transition cursor-pointer ${
-                homeViewMode === 'epaper'
-                  ? 'bg-red-700 text-white shadow-sm ring-2 ring-red-400/40'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'
-              }`}
-            >
-              <Newspaper className="w-4 h-4 text-emerald-400" />
-              <span>आज का अखबार (Today&apos;s Newspaper)</span>
-              <span className="text-[10px] bg-amber-400 text-slate-950 font-black px-1.5 py-0.2 rounded-full">
-                डिफ़ॉल्ट
-              </span>
-            </button>
-
-            <button
-              onClick={() => setHomeViewMode('news')}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-black transition cursor-pointer ${
-                homeViewMode === 'news'
-                  ? 'bg-amber-600 text-white shadow-sm ring-2 ring-amber-400/40'
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200'
-              }`}
-            >
-              <Home className="w-4 h-4 text-amber-500" />
-              <span>होम (3-पैनल लाइव न्यूज़)</span>
-            </button>
-          </div>
-
-          <div className="hidden md:flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-medium">
-            <Sparkles className="w-4 h-4 text-amber-500 animate-spin" />
-            <span>मुद्रित अखबार का डिजिटल ई-पेपर संस्करण • पेज टर्न व साउंड सपोर्ट</span>
-          </div>
-
-        </div>
-      </div>
-
-      {/* 3. City Filter Indicator (if a specific city is selected) */}
+      {/* City filter, only when a city is selected */}
       {selectedCity !== 'सभी शहर' && (
         <div className="bg-amber-50 dark:bg-amber-950/40 border-b border-amber-200 dark:border-amber-800 text-amber-900 dark:text-amber-200 py-1.5 px-4 text-xs">
-          <div className="max-w-[1380px] mx-auto flex items-center justify-between">
+          <div className="max-w-[1380px] mx-auto flex flex-wrap items-center justify-between gap-2">
             <span className="flex items-center gap-1.5 font-bold">
               <MapPin className="w-4 h-4 text-red-600" />
               <span>संस्करण फ़िल्टर: आप केवल &lsquo;{selectedCity}&rsquo; की खबरें देख रहे हैं।</span>
@@ -98,38 +56,13 @@ export default function HomePage() {
       )}
 
       {/* 4. MAIN CONTENT CONTAINER */}
-      <main className="flex-1 max-w-[1380px] w-full mx-auto px-3 sm:px-4 py-4 sm:py-6">
+      <main className="flex-1 max-w-[1380px] w-full min-w-0 mx-auto px-3 sm:px-4 py-4 sm:py-6">
         
-        {/* VIEW 1: TODAY'S NEWSPAPER (E-PAPER READER WITH 3D FLIP, SOUND & FULL PAGE MODAL) */}
         {homeViewMode === 'epaper' ? (
-          <div className="space-y-8">
-            {/* The Full Newspaper Reader */}
-            <TodayNewspaperReader />
-
-            {/* Quick Switch Callout to Live News */}
-            <div className="mt-8 bg-gradient-to-r from-amber-500/10 via-red-500/10 to-transparent border border-amber-300 dark:border-amber-800 rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div>
-                <h3 className="font-extrabold text-base text-slate-900 dark:text-white flex items-center gap-2">
-                  <Flame className="w-5 h-5 text-red-600 fill-current" />
-                  <span>डिजिटल लाइव ब्रेकिंग न्यूज़ पढ़ना चाहते हैं?</span>
-                </h3>
-                <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-                  दैनिक भास्कर 3-पैनल लेआउट में सीतापुर, लखनऊ और देश-विदेश की ताज़ा खबरें सीधे देखें।
-                </p>
-              </div>
-              <button
-                onClick={() => setHomeViewMode('news')}
-                className="bg-red-700 hover:bg-red-800 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-xs transition shrink-0"
-              >
-                3-पैनल लाइव न्यूज़ खोलें →
-              </button>
-            </div>
-          </div>
+          <TodayNewspaperReader />
         ) : (
-          /* VIEW 2: THREE PANEL MAIN CONTAINER (EXACT DAINIK BHASKAR LAYOUT) */
-          <div>
-            {/* THREE PANELS */}
-            <div className="flex flex-col lg:flex-row gap-5 xl:gap-7 items-start">
+          <div className="w-full min-w-0">
+            <div className="flex flex-col lg:flex-row gap-5 xl:gap-7 items-stretch lg:items-start w-full min-w-0">
               {/* PANEL 1 (LEFT): Topics & Categories Navigation (Hidden on mobile, visible on desktop lg) */}
               <TopicsSidebar
                 activeTopic={activeTopic}

@@ -8,7 +8,8 @@ import {
   ClassifiedItem, 
   GrievanceComplaint,
   SubmissionStatus,
-  UserRole
+  UserRole,
+  SiteSettings
 } from '@/types';
 import { 
   INITIAL_ARTICLES, 
@@ -21,6 +22,67 @@ import {
   INITIAL_GRIEVANCES 
 } from './initialData';
 
+const DEFAULT_SETTINGS: SiteSettings = {
+  siteName: 'स्वर्णिम दस्तावेज़ (Swarnim Dastavej)',
+  tagline: 'उत्तर प्रदेश का अग्रणी, निष्पक्ष एवं निर्भीक हिंदी दैनिक समाचार पत्र व डिजिटल मीडिया नेटवर्क',
+  email: 'swarnimdastavej@gmail.com',
+  phone: '+91 95196 231111',
+  address: 'Argada hussainganj, behind jwala hotel. Lucknow -226001',
+  registrationNo: 'UPHIN/26/A7984',
+  editorInChief: 'रामेश्वर दयाल (Rameshwar Dayal)',
+  publisher: 'स्वर्णिम दस्तावेज़ प्रकाशन, लखनऊ',
+  privacyPolicy: `## गोपनीयता नीति (Privacy Policy) - स्वर्णिम दस्तावेज़
+
+अंतिम अद्यतन: 2026 | पंजीयन संख्या: UPHIN/26/A7984
+
+'स्वर्णिम दस्तावेज़' (Swarnim Dastavej) अपने पाठकों, आगंतुकों, और नागरिक संवाददाताओं की व्यक्तिगत गोपनीयता की पूर्ण रक्षा हेतु कटिबद्ध है। यह नीति स्पष्ट करती है कि हमारी वेबसाइट और डिजिटल सेवाओं के उपयोग के दौरान आपकी कौन-सी जानकारी एकत्रित की जाती है और उसे किस प्रकार सुरक्षित रखा जाता है।
+
+### 1. व्यक्तिगत जानकारी का संग्रह
+- **नागरिक पत्रकारिता (Citizen Journalism)**: जब आप हमारे पोर्टल पर समाचार, फोटो, अथवा वीडियो रिपोर्ट अपलोड करते हैं, तो आपकी पहचान, मोबाइल नंबर और जिला प्रमाणिक सत्यापन हेतु संगृहीत किया जाता है।
+- **शिकायत पंजीकरण (IT Rules 2021)**: सूचना प्रौद्योगिकी (मध्यवर्ती संदर्शिका एवं डिजिटल मीडिया आचार संहिता) नियमावली 2021 के अनुपालनार्थ दर्ज की गई विधिक शिकायतों में शिकायतकर्ता का नाम और संपर्क विवरण नियमानुसार दर्ज किया जाता है।
+- **डिजिटल ई-पेपर एवं सदस्यता**: ई-पेपर डाउनलोड एवं वैयक्तिकृत समाचार प्राथमिकताओं के लिए आवश्यक तकनीकी लॉग।
+
+### 2. एकत्रित जानकारी का उपयोग
+- समाचार सामग्री की सत्यता, स्रोत और प्रामाणिकता की पुष्टि के लिए।
+- ई-पेपर तथा महत्वपूर्ण ब्रेकिंग न्यूज़ अलर्ट्स प्रेषित करने हेतु।
+- विधिक व विनियामक अनुपालन तथा शिकायत निवारण के लिए।
+- हम आपकी व्यक्तिगत जानकारी को किसी भी तीसरे पक्ष, विज्ञापनदाता अथवा विपणन कंपनी को नहीं बेचते हैं।
+
+### 3. डेटा सुरक्षा और सुरक्षा मानक
+हम आपके डेटा की सुरक्षा के लिए अत्याधुनिक एन्क्रिप्शन और सुरक्षा प्रोटोकॉल का उपयोग करते हैं।
+
+### 4. संपर्क सूत्र एवं नोडल अधिकारी
+गोपनीयता नीति अथवा डेटा सुरक्षा से संबंधित किसी भी प्रश्न के लिए संपर्क करें:
+- **ईमेल**: swarnimdastavej@gmail.com
+- **हेल्पलाइन / फोन**: +91 95196 231111
+- **संपादकीय कार्यालय**: Argada hussainganj, behind jwala hotel. Lucknow -226001
+- **पंजीकरण संख्या**: RNI No. UPHIN/26/A7984`,
+  termsOfService: `## नियम एवं शर्तें (Terms & Conditions) - स्वर्णिम दस्तावेज़
+
+अंतिम अद्यतन: 2026
+
+स्वर्णिम दस्तावेज़ (Swarnim Dastavej) की वेबसाइट, मोबाइल इंटरफेस अथवा ई-पेपर का उपयोग करने पर आप निम्न शर्तों से आबद्ध होने की पूर्ण सहमति प्रदान करते हैं:
+
+### 1. बौद्धिक संपदा अधिकार एवं कॉपीराइट
+स्वर्णिम दस्तावेज़ पर प्रकाशित सभी लेख, आलेख, संपादकीय, छायाचित्र, वीडियो और ई-पेपर 'स्वर्णिम दस्तावेज़ प्रकाशन' की संरक्षित बौद्धिक संपदा हैं। किसी भी सामग्री का अनधिकृत व्यावसायिक उपयोग, कापी अथवा पुनःप्रकाशन दण्डनीय अपराध है।
+
+### 2. नागरिक पत्रकारिता आचार संहिता
+- कोई भी नागरिक पत्रकार अथवा पाठक ऐसी सामग्री प्रेषित नहीं करेगा जो मानहानिकारक, भ्रामक, साम्प्रदायिक सद्भाव बिगाड़ने वाली अथवा भारतीय विधि के प्रतिकूल हो।
+- पत्रकारिता के स्थापित मानकों और प्रेस परिषद (PCI) के दिशानिर्देशों का उल्लंघन पाए जाने पर सदस्य का खाता तत्काल निरस्त किया जा सकता है।
+
+### 3. विधिक क्षेत्राधिकार
+किसी भी विवाद अथवा कानूनी वाद की स्थिति में न्यायिक क्षेत्राधिकार केवल माननीय न्यायालय लखनऊ, उत्तर प्रदेश होगा।
+
+### 4. संपर्क एवं आधिकारिक संवाद
+- **ईमेल**: swarnimdastavej@gmail.com
+- **दूरभाष**: +91 95196 231111
+- **कार्यालय**: Argada hussainganj, behind jwala hotel. Lucknow -226001`,
+  editorialPolicy: `## संपादकीय नीति एवं आचार संहिता (Editorial Policy)
+
+'स्वर्णिम दस्तावेज़' निर्भीक, निष्पक्ष एवं जनसरोकारी पत्रकारिता के सिद्धांतों पर अडिग है। हम भारतीय प्रेस परिषद (PCI) और डिजिटल मीडिया आचार संहिता (IT Rules 2021) का पूर्णतः अनुपालन करते हैं।`,
+  updatedAt: new Date().toISOString()
+};
+
 // Global singleton in-memory state for API routes and SSR
 class PlatformStore {
   private articles: Article[] = [...INITIAL_ARTICLES];
@@ -31,6 +93,8 @@ class PlatformStore {
   private ads: AdBanner[] = [...INITIAL_ADS];
   private classifieds: ClassifiedItem[] = [...INITIAL_CLASSIFIEDS];
   private grievances: GrievanceComplaint[] = [...INITIAL_GRIEVANCES];
+  private siteSettings: SiteSettings = { ...DEFAULT_SETTINGS };
+
 
   // Articles
   getArticles(filter?: { category?: string; city?: string; search?: string; language?: string }) {
@@ -107,6 +171,25 @@ class PlatformStore {
       return art.likesCount;
     }
     return 0;
+  }
+
+  updateArticle(id: string, data: Partial<Article>): Article | null {
+    const art = this.articles.find(a => a.id === id);
+    if (!art) return null;
+    const { id: _id, ...rest } = data;
+    Object.assign(art, rest);
+    if (data.body) {
+      art.excerpt = data.excerpt || `${data.body.slice(0, 150)}...`;
+      art.readingTimeMinutes = Math.max(1, Math.ceil(data.body.length / 400));
+    }
+    return art;
+  }
+
+  deleteArticle(id: string): boolean {
+    const index = this.articles.findIndex(a => a.id === id);
+    if (index === -1) return false;
+    this.articles.splice(index, 1);
+    return true;
   }
 
   // Citizen Submissions
@@ -227,6 +310,53 @@ class PlatformStore {
     return null;
   }
 
+  updateUser(userId: string, data: Partial<User>) {
+    const u = this.users.find(x => x.id === userId);
+    if (u) {
+      Object.assign(u, data);
+      return u;
+    }
+    return null;
+  }
+
+  toggleBanUser(userId: string) {
+    const u = this.users.find(x => x.id === userId);
+    if (u) {
+      u.isBanned = !u.isBanned;
+      return u;
+    }
+    return null;
+  }
+
+  deleteUser(userId: string) {
+    const user = this.users.find(x => x.id === userId);
+    if (!user) return false;
+    const privileged = user.role === 'admin' || user.role === 'super_admin';
+    if (privileged) {
+      const remaining = this.users.filter(u =>
+        (u.role === 'admin' || u.role === 'super_admin') && u.id !== userId
+      );
+      if (remaining.length === 0) return false;
+    }
+    const index = this.users.findIndex(x => x.id === userId);
+    this.users.splice(index, 1);
+    return true;
+  }
+
+  authenticate(identifier: string, password: string): { status: 'ok' | 'invalid' | 'not_found' | 'banned'; user?: User } {
+    const clean = identifier.trim().toLowerCase();
+    const digits = clean.replace(/\D/g, '');
+    const user = this.users.find(u =>
+      u.email.toLowerCase() === clean ||
+      (u.phone && digits.length >= 10 && u.phone.replace(/\D/g, '') === digits)
+    );
+    if (!user) return { status: 'not_found' };
+    if (user.isBanned) return { status: 'banned' };
+    if (user.password && user.password !== password) return { status: 'invalid' };
+    const { password: _password, ...safe } = user;
+    return { status: 'ok', user: safe };
+  }
+
   // Poll
   getPoll() {
     return this.poll;
@@ -254,7 +384,8 @@ class PlatformStore {
       editionTitle: edition.editionTitle || 'स्वर्णिम दस्तावेज़ दैनिक',
       pagesCount: edition.pages?.length || 1,
       pages: edition.pages || [],
-      thumbnailUrl: edition.thumbnailUrl || 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=600&auto=format&fit=crop&q=80'
+      thumbnailUrl: edition.thumbnailUrl || 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=600&auto=format&fit=crop&q=80',
+      isActive: edition.isActive !== false,
     };
     this.epaperEditions.unshift(newEd);
     return newEd;
@@ -273,6 +404,38 @@ class PlatformStore {
   recordAdImpression(adId: string) {
     const ad = this.ads.find(a => a.id === adId);
     if (ad) ad.impressions += 1;
+  }
+
+  createAd(data: Partial<AdBanner>): AdBanner {
+    const ad: AdBanner = {
+      id: `ad-${Date.now()}`,
+      title: data.title || 'Sponsored',
+      advertiser: data.advertiser || '',
+      imageUrl: data.imageUrl || '',
+      targetUrl: data.targetUrl || '#',
+      placement: data.placement || 'sidebar',
+      impressions: 0,
+      clicks: 0,
+      isActive: data.isActive !== false,
+      isSponsoredPost: data.isSponsoredPost
+    };
+    this.ads.unshift(ad);
+    return ad;
+  }
+
+  updateAd(id: string, data: Partial<AdBanner>): AdBanner | null {
+    const ad = this.ads.find(a => a.id === id);
+    if (!ad) return null;
+    const { id: _id, ...rest } = data;
+    Object.assign(ad, rest);
+    return ad;
+  }
+
+  deleteAd(id: string): boolean {
+    const index = this.ads.findIndex(a => a.id === id);
+    if (index === -1) return false;
+    this.ads.splice(index, 1);
+    return true;
   }
 
   // Classifieds
@@ -327,14 +490,84 @@ class PlatformStore {
     }
     return null;
   }
+
+  // Site Settings & Legal Policies CMS
+  getSettings(): SiteSettings {
+    return { ...this.siteSettings };
+  }
+
+  updateSettings(data: Partial<SiteSettings>): SiteSettings {
+    this.siteSettings = {
+      ...this.siteSettings,
+      ...data,
+      updatedAt: new Date().toISOString()
+    };
+    return { ...this.siteSettings };
+  }
+
+  // Admin Account & Credential Management
+  getAdmins(): User[] {
+    return this.users.filter(u => u.role === 'admin' || u.role === 'super_admin' || u.role === 'editor');
+  }
+
+  createAdminUser(data: {
+    name: string;
+    email: string;
+    phone?: string;
+    password?: string;
+    role?: UserRole;
+    city?: string;
+  }): User {
+    const newAdmin: User = {
+      id: `admin_${Date.now()}`,
+      name: data.name,
+      email: data.email,
+      phone: data.phone || '+91 95196 231111',
+      password: data.password || 'admin123@swarnim',
+      role: data.role || 'admin',
+      city: data.city || 'लखनऊ',
+      preferredLanguage: 'hi',
+      avatarUrl: `https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80`,
+      kycStatus: 'verified'
+    };
+    this.users.unshift(newAdmin);
+    return newAdmin;
+  }
+
+  changeUserPassword(userId: string, newPassword: string): boolean {
+    const user = this.users.find(u => u.id === userId);
+    if (user) {
+      user.password = newPassword;
+      return true;
+    }
+    return false;
+  }
 }
 
-// Global instance
+// Global instance. Dev hot reload keeps the old object, so rebind new methods
+// and fill in fields added after the process started.
 declare global {
   var __platformStore: PlatformStore | undefined;
 }
 
-export const platformStore = global.__platformStore || new PlatformStore();
+function getPlatformStore(): PlatformStore {
+  const existing = global.__platformStore;
+  if (existing) {
+    Object.setPrototypeOf(existing, PlatformStore.prototype);
+    const record = existing as unknown as { siteSettings?: SiteSettings };
+    if (!record.siteSettings) {
+      record.siteSettings = { ...DEFAULT_SETTINGS };
+    }
+    return existing;
+  }
+  const created = new PlatformStore();
+  if (process.env.NODE_ENV !== 'production') {
+    global.__platformStore = created;
+  }
+  return created;
+}
+
+export const platformStore = getPlatformStore();
 if (process.env.NODE_ENV !== 'production') {
   global.__platformStore = platformStore;
 }

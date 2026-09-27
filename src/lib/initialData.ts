@@ -4,8 +4,9 @@ export const INITIAL_USERS: User[] = [
   {
     id: 'user_admin_1',
     name: 'रामेश्वर दयाल (प्रधान संपादक)',
-    email: 'editor@swarnimdastavej.com',
-    phone: '+91 94500 12345',
+    email: 'swarnimdastavej@gmail.com',
+    phone: '+91 95196 231111',
+    password: 'admin123@swarnim',
     role: 'admin',
     city: 'लखनऊ',
     preferredLanguage: 'hi',
@@ -424,6 +425,7 @@ export const INITIAL_EPAPER_EDITIONS: EPaperEdition[] = [
     editionCity: 'लखनऊ',
     editionTitle: 'स्वर्णिम दस्तावेज़ - लखनऊ दैनिक मुख्य संस्करण',
     pagesCount: 6,
+    isActive: true,
     thumbnailUrl: 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=600&auto=format&fit=crop&q=80',
     pages: [
       {
@@ -464,6 +466,7 @@ export const INITIAL_EPAPER_EDITIONS: EPaperEdition[] = [
     editionCity: 'लखनऊ',
     editionTitle: 'स्वर्णिम दस्तावेज़ - लखनऊ दैनिक (26 सितम्बर)',
     pagesCount: 6,
+    isActive: true,
     thumbnailUrl: 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600&auto=format&fit=crop&q=80',
     pages: [
       {

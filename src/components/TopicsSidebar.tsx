@@ -57,7 +57,7 @@ export default function TopicsSidebar({ activeTopic, onSelectTopic }: TopicsSide
   const { t } = useApp();
 
   return (
-    <aside className="hidden lg:block w-56 shrink-0 lg:sticky lg:top-20 lg:self-start lg:max-h-[calc(100vh-96px)] lg:overflow-y-auto scrollbar-none">
+    <aside className="hidden lg:block w-56 shrink-0 lg:sticky lg:top-24 lg:z-20 lg:self-start lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto scrollbar-none">
       <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-2 shadow-sm">
         
         {/* Section title (Dainik Bhaskar style minimal header) */}
@@ -148,17 +148,14 @@ export function MobileTopicsDrawer({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 lg:hidden flex flex-col justify-start items-start">
-      {/* Backdrop (tap anywhere to close) */}
+    <div className="fixed inset-0 z-50 lg:hidden">
       <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
+        className="absolute inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
         onClick={onClose}
       />
 
-      {/* Top Drawer - spans from Left to Center only */}
-      <div className="relative z-10 w-[78%] max-w-[320px] bg-white dark:bg-slate-900 rounded-br-2xl rounded-bl-2xl max-h-[85vh] flex flex-col shadow-2xl border-r border-b border-slate-200 dark:border-slate-800 animate-in slide-in-from-top duration-300 overflow-hidden">
-        {/* Header */}
-        <div className="px-4 py-3 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+      <div className="relative z-10 h-dvh w-[86%] max-w-[360px] bg-white dark:bg-slate-900 rounded-r-2xl flex flex-col shadow-2xl border-r border-slate-200 dark:border-slate-800 animate-in slide-in-from-left duration-300 overflow-hidden">
+        <div className="shrink-0 px-4 py-3 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
           <div>
             <h3 className="font-extrabold text-sm text-slate-900 dark:text-white flex items-center gap-1.5">
               <span className="w-2.5 h-2.5 rounded-full bg-red-600 animate-pulse"></span>
@@ -176,7 +173,7 @@ export function MobileTopicsDrawer({
         </div>
 
         {/* Topics List */}
-        <div className="p-2.5 overflow-y-auto max-h-[calc(85vh-115px)] space-y-1 scrollbar-none">
+        <div className="topics-scroll flex-1 min-h-0 overflow-y-scroll p-2.5 space-y-1">
           {TOPICS.map((item) => {
             const Icon = item.icon;
             const isActive = activeTopic === item.id;
@@ -226,7 +223,7 @@ export function MobileTopicsDrawer({
         </div>
 
         {/* Quick Footer Links */}
-        <div className="p-2.5 bg-slate-50 dark:bg-slate-950/60 border-t border-slate-100 dark:border-slate-800 flex gap-2">
+        <div className="shrink-0 p-2.5 bg-slate-50 dark:bg-slate-950/60 border-t border-slate-100 dark:border-slate-800 flex gap-2">
           <Link
             href="/epaper"
             onClick={onClose}

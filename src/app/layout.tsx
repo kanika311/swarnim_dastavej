@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { AppProvider } from '@/context/AppContext';
@@ -7,6 +7,11 @@ const inter = Inter({
   subsets: ['latin'],
   display: 'swap',
 });
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+};
 
 export const metadata: Metadata = {
   title: 'स्वर्णिम दस्तावेज़ (Swarnim Dastavej) | डिजिटल न्यूज़, नागरिक पत्रकारिता एवं ई-पेपर',
@@ -48,6 +53,7 @@ export default function RootLayout({
   return (
     <html lang="hi" suppressHydrationWarning>
       <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/image.png?v=3" type="image/png" sizes="any" />
         <link rel="apple-touch-icon" href="/image.png?v=3" />
         <link rel="shortcut icon" href="/image.png?v=3" />
@@ -55,7 +61,12 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700;800;900&family=Rozha+One&display=swap" rel="stylesheet" />
       </head>
-      <body className={`${inter.className} min-h-screen flex flex-col antialiased selection:bg-red-600 selection:text-white`}>
+      <body className={`${inter.className} min-h-screen flex flex-col overflow-x-clip antialiased selection:bg-red-600 selection:text-white`}>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{if(localStorage.getItem('swarnim_theme')==='dark'){document.documentElement.classList.add('dark')}}catch(e){}`
+          }}
+        />
         <AppProvider>
           {children}
         </AppProvider>

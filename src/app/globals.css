@@ -1,6 +1,14 @@
 @import "tailwindcss";
 
+/* Toggle with the .dark class instead of the operating-system color scheme. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @layer base {
+  html, body {
+    max-width: 100%;
+    overflow-x: clip;
+  }
+
   body {
     font-family: 'Noto Sans Devanagari', 'Mukta', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   }
@@ -24,6 +32,22 @@
 }
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(150, 150, 150, 0.7);
+}
+
+.topics-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #d97706 #e2e8f0;
+}
+.topics-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+.topics-scroll::-webkit-scrollbar-track {
+  background: #e2e8f0;
+  border-radius: 9999px;
+}
+.topics-scroll::-webkit-scrollbar-thumb {
+  background: #d97706;
+  border-radius: 9999px;
 }
 
 .scrollbar-none::-webkit-scrollbar {
