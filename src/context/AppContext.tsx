@@ -106,7 +106,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (savedEditions) {
         const parsed = JSON.parse(savedEditions);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          setEpaperEditions(parsed);
+          // Merge initial editions (e.g. English, Urdu) if missing from old cache
+          const existingIds = new Set(parsed.map((e: EPaperEdition) => e.id));
+          const missing = INITIAL_EPAPER_EDITIONS.filter(e => !existingIds.has(e.id));
+          const updated = [...parsed, ...missing];
+          setEpaperEditions(updated);
         }
       }
 
@@ -291,7 +295,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const addOrUpdateEdition = (edition: EPaperEdition) => {
     setEpaperEditions(prev => {
-      const existsIndex = prev.findIndex(e => e.id === edition.id || (e.date === edition.date && e.editionCity === edition.editionCity));
+      const existsIndex = prev.findIndex(
+        e => e.id === edition.id || 
+        (e.date === edition.date && e.editionCity === edition.editionCity && (e.language || 'hi') === (edition.language || 'hi'))
+      );
       let updated: EPaperEdition[];
       if (existsIndex >= 0) {
         updated = [...prev];

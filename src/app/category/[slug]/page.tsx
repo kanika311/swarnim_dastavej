@@ -8,24 +8,37 @@ import BreakingTicker from '@/components/BreakingTicker';
 import { INITIAL_ARTICLES } from '@/lib/initialData';
 import { Article } from '@/types';
 import Link from 'next/link';
-import { Clock, Eye, MapPin, ChevronRight, ArrowLeft } from 'lucide-react';
+import { Clock, Eye, MapPin, ChevronRight, ArrowLeft, Play } from 'lucide-react';
+
+import { useApp } from '@/context/AppContext';
 
 export default function CategoryListingPage() {
   const params = useParams();
   const slug = (params?.slug as string) || 'all';
+  const { language } = useApp();
+  const [playingId, setPlayingId] = useState<string | null>(null);
 
-  const [articles, setArticles] = useState<Article[]>(INITIAL_ARTICLES);
+  const [articles, setArticles] = useState<Article[]>(() => {
+    const matching = INITIAL_ARTICLES.filter(a => (a.language || 'hi') === language);
+    return matching.length > 0 ? matching : INITIAL_ARTICLES;
+  });
 
   useEffect(() => {
-    fetch('/api/articles')
+    fetch(`/api/articles?lang=${language}`)
       .then(res => res.json())
       .then(data => {
-        if (data.success && data.data) {
+        if (data.success && data.data && data.data.length > 0) {
           setArticles(data.data);
+        } else {
+          const matching = INITIAL_ARTICLES.filter(a => (a.language || 'hi') === language);
+          setArticles(matching.length > 0 ? matching : INITIAL_ARTICLES);
         }
       })
-      .catch(() => {});
-  }, []);
+      .catch(() => {
+        const matching = INITIAL_ARTICLES.filter(a => (a.language || 'hi') === language);
+        setArticles(matching.length > 0 ? matching : INITIAL_ARTICLES);
+      });
+  }, [language]);
 
   const getCategoryTitle = (s: string) => {
     switch (s) {
@@ -44,9 +57,11 @@ export default function CategoryListingPage() {
   const meta = getCategoryTitle(slug);
 
   const filtered = articles.filter(a => {
+    if ((a.language || 'hi') !== language) return false;
     if (slug === 'all') return true;
-    if (slug === 'sitapur') return a.category === 'sitapur' || a.city === 'सीतापुर';
-    if (slug === 'lucknow') return a.category === 'lucknow' || a.city === 'लखनऊ';
+    if (slug === 'videos') return a.showOnVideos === true;
+    if (slug === 'sitapur') return a.category === 'sitapur' || a.city === 'सीतापुर' || a.city === 'Sitapur';
+    if (slug === 'lucknow') return a.category === 'lucknow' || a.city === 'लखनऊ' || a.city === 'Lucknow';
     return a.category.toLowerCase() === slug.toLowerCase();
   });
 
@@ -87,18 +102,45 @@ export default function CategoryListingPage() {
               इस श्रेणी में अभी और खबरें संकलित की जा रही हैं...
             </div>
           ) : (
-            filtered.map((art) => (
+            filtered.map((art) => {
+              const videoUrl = art.mediaGallery?.find((item) => item.type === 'video')?.url;
+              return (
               <article
                 key={art.id}
                 className="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 hover:border-red-500 hover:shadow-lg transition flex flex-col justify-between group"
               >
                 <div>
                   <div className="relative aspect-video w-full overflow-hidden bg-slate-900">
-                    <img
-                      src={art.coverImage}
-                      alt={art.headline}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
+                    {videoUrl && playingId === art.id ? (
+                      <video
+                        src={videoUrl}
+                        poster={art.coverImage}
+                        controls
+                        autoPlay
+                        playsInline
+                        className="w-full h-full object-contain bg-black"
+                      />
+                    ) : (
+                      <>
+                        <img
+                          src={art.coverImage}
+                          alt={art.headline}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
+                        {videoUrl && (
+                          <button
+                            type="button"
+                            onClick={() => setPlayingId(art.id)}
+                            className="absolute inset-0 flex items-center justify-center bg-black/30"
+                            aria-label="वीडियो चलाएँ"
+                          >
+                            <span className="w-12 h-12 rounded-full bg-red-600 text-white flex items-center justify-center shadow-lg">
+                              <Play className="w-6 h-6 ml-0.5 fill-current" />
+                            </span>
+                          </button>
+                        )}
+                      </>
+                    )}
                     <span className="absolute top-2 left-2 bg-slate-950/80 text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded backdrop-blur-sm flex items-center gap-1">
                       <MapPin className="w-3 h-3" />
                       {art.city}
@@ -149,7 +191,8 @@ export default function CategoryListingPage() {
                   </Link>
                 </div>
               </article>
-            ))
+              );
+            })
           )}
         </div>
 

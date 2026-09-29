@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import { useApp } from '@/context/AppContext';
 import { UserRole } from '@/types';
+import { ALL_INDIA_LOCATIONS } from '@/lib/locations';
 import { 
   X, 
   User as UserIcon, 
@@ -28,7 +29,9 @@ export default function AuthModal() {
     authModalDefaultRole, 
     login, 
     registerUser,
-    addNotification 
+    addNotification,
+    currentUser,
+    switchRole
   } = useApp();
 
   const [activeTab, setActiveTab] = useState<'login' | 'register'>(authModalInitialTab || 'login');
@@ -192,6 +195,40 @@ export default function AuthModal() {
 
         {/* Modal Body (Scrollable) */}
         <div className="p-6 overflow-y-auto space-y-5">
+          {currentUser && (
+            <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 p-3.5 rounded-xl text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+              <div>
+                <span className="text-slate-500 block text-[10px]">वर्तमान में सक्रिय आईडी (Already Logged In):</span>
+                <span className="font-bold text-slate-900 dark:text-white text-sm">{currentUser.name}</span>
+                <span className="text-[11px] text-amber-700 dark:text-amber-300 font-semibold block">
+                  भूमिका: {currentUser.role === 'citizen_journalist' ? '✍️ नागरिक पत्रकार' : currentUser.role === 'admin' ? '🛡️ प्रधान संपादक / एडमिन' : '📖 सामान्य पाठक'}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                {currentUser.role === 'reader' && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      switchRole('citizen_journalist');
+                      addNotification('आप नागरिक पत्रकार मोड में आ गए हैं!');
+                      closeAuthModal();
+                    }}
+                    className="px-3 py-1.5 rounded-lg bg-red-700 text-white font-bold text-xs shadow-xs hover:bg-red-800 transition cursor-pointer"
+                  >
+                    ✍️ पत्रकार मोड सक्रिय करें
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={closeAuthModal}
+                  className="px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                >
+                  जारी रखें
+                </button>
+              </div>
+            </div>
+          )}
+
           {activeTab === 'login' ? (
             /* ================= LOGIN TAB ================= */
             <form onSubmit={handleLoginSubmit} className="space-y-4">
@@ -247,6 +284,53 @@ export default function AuthModal() {
                 <LogIn className="w-4 h-4" />
                 <span>लॉगिन करें</span>
               </button>
+
+              {/* Quick 1-Click Demo Logins */}
+              <div className="pt-3 border-t border-slate-200 dark:border-slate-800 space-y-2">
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block text-center">
+                  त्वरित 1-क्लिक डेमो लॉगिन:
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      switchRole('citizen_journalist');
+                      addNotification('नागरिक पत्रकार (विकास शुक्ला) के रूप में लॉगिन हो गए!');
+                      closeAuthModal();
+                    }}
+                    className="p-2.5 rounded-xl border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/30 hover:bg-red-100 dark:hover:bg-red-950/60 text-left transition cursor-pointer"
+                  >
+                    <div className="text-[11px] font-extrabold text-red-700 dark:text-red-400">✍️ नागरिक पत्रकार</div>
+                    <div className="text-[10px] text-slate-500 truncate">विकास शुक्ला (सीतापुर)</div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      switchRole('reader');
+                      addNotification('सामान्य पाठक (अमित कुमार सिंह) के रूप में लॉगिन हो गए!');
+                      closeAuthModal();
+                    }}
+                    className="p-2.5 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-950/30 hover:bg-amber-100 dark:hover:bg-amber-950/60 text-left transition cursor-pointer"
+                  >
+                    <div className="text-[11px] font-extrabold text-amber-700 dark:text-amber-400">📖 सामान्य पाठक</div>
+                    <div className="text-[10px] text-slate-500 truncate">अमित कुमार सिंह (लखनऊ)</div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      switchRole('admin');
+                      addNotification('प्रधान संपादक / एडमिन के रूप में लॉगिन हो गए!');
+                      closeAuthModal();
+                    }}
+                    className="p-2.5 rounded-xl border border-purple-200 dark:border-purple-900/60 bg-purple-50 dark:bg-purple-950/30 hover:bg-purple-100 dark:hover:bg-purple-950/60 text-left transition cursor-pointer"
+                  >
+                    <div className="text-[11px] font-extrabold text-purple-700 dark:text-purple-400">🛡️ CMS एडमिन</div>
+                    <div className="text-[10px] text-slate-500 truncate">रामेश्वर दयाल (लखनऊ)</div>
+                  </button>
+                </div>
+              </div>
             </form>
           ) : (
             /* ================= REGISTER TAB ================= */
@@ -389,20 +473,36 @@ export default function AuthModal() {
 
               <div>
                 <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
-                  शहर / जिला (City / District)
+                  शहर / जिला (City / District - All India) *
                 </label>
                 <select
                   value={regCity}
                   onChange={(e) => setRegCity(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-600"
                 >
-                  <option value="सीतापुर">सीतापुर (Sitapur)</option>
-                  <option value="लखनऊ">लखनऊ (Lucknow)</option>
-                  <option value="लखीमपुर">लखीमपुर खीरी</option>
-                  <option value="हरदोई">हरदोई</option>
-                  <option value="बाराबंकी">बाराबंकी</option>
-                  <option value="उन्नाव">उन्नाव</option>
-                  <option value="अन्य">अन्य (Other)</option>
+                  <optgroup label="प्रमुख शहर (Featured Cities)">
+                    <option value="सीतापुर">सीतापुर (Sitapur)</option>
+                    <option value="लखनऊ">लखनऊ (Lucknow)</option>
+                    <option value="कानपुर">कानपुर (Kanpur)</option>
+                    <option value="अयोध्या">अयोध्या (Ayodhya)</option>
+                    <option value="वाराणसी">वाराणसी (Varanasi)</option>
+                    <option value="प्रयागराज">प्रयागराज (Prayagraj)</option>
+                    <option value="नई दिल्ली">नई दिल्ली (New Delhi)</option>
+                    <option value="नोएडा">नोएडा (Noida / NCR)</option>
+                    <option value="पटना">पटना (Patna)</option>
+                    <option value="भोपाल">भोपाल (Bhopal)</option>
+                    <option value="मुंबई">मुंबई (Mumbai)</option>
+                  </optgroup>
+                  {ALL_INDIA_LOCATIONS.map((state) => (
+                    <optgroup key={state.name} label={`${state.name} (${state.nameHi})`}>
+                      {state.cities.map((city) => (
+                        <option key={city.name} value={city.nameHi}>
+                          {city.nameHi} ({city.name})
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                  <option value="अन्य">✍️ अन्य (Other City / Town)</option>
                 </select>
               </div>
 

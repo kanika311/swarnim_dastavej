@@ -34,11 +34,28 @@ export default function DainikNewsFeed({
   onSelectTopic,
   onOpenFilterDrawer
 }: DainikNewsFeedProps) {
-  const { savedArticleIds, toggleSaveArticle, selectedCity } = useApp();
+  const { savedArticleIds, toggleSaveArticle, selectedCity, language, t } = useApp();
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
   const [activeTrendingTag, setActiveTrendingTag] = useState<string | null>(null);
 
-  const trendingTags = [
+  const trendingTags = language === 'en' ? [
+    'Election Commission Dispute',
+    'Asian Games 2026',
+    'UN General Debate',
+    'Monsoon Alert',
+    'Lucknow-Sitapur Expressway',
+    'Gaganyaan Mission',
+    'Bank Strike'
+  ] : language === 'ur' ? [
+    'الیکشن کمیشن تنازعہ',
+    'ایشین گیمز',
+    'اقوام متحدہ بحث',
+    'بارش الرٹ',
+    'لکھنؤ ایکسپریس وے',
+    'گگن یان مشن',
+    'بینک ہڑتال'
+  ] : [
     'चुनाव आयोग विवाद',
     'एशियन गेम्स',
     'UN जनरल डिबेट',
@@ -50,9 +67,28 @@ export default function DainikNewsFeed({
 
   // Filter based on active topic, city, and trending tag
   const filteredArticles = articles.filter((art) => {
-    // City filter
-    if (selectedCity !== 'सभी शहर' && art.city !== selectedCity) {
+    // Language filter: if article language is specified, match current language
+    if (art.language && art.language !== language) {
       return false;
+    }
+
+    // City filter (Bilingual & resilient matching)
+    if (selectedCity && selectedCity !== 'सभी शहर' && selectedCity !== 'All Cities') {
+      const cityQuery = selectedCity.trim().toLowerCase();
+      const artCity = (art.city || '').trim().toLowerCase();
+      const matchCity = 
+        artCity === cityQuery ||
+        artCity.includes(cityQuery) ||
+        cityQuery.includes(artCity) ||
+        (cityQuery.includes('लखनऊ') && artCity.includes('lucknow')) ||
+        (cityQuery.includes('lucknow') && artCity.includes('लखनऊ')) ||
+        (cityQuery.includes('सीतापुर') && artCity.includes('sitapur')) ||
+        (cityQuery.includes('sitapur') && artCity.includes('सीतापुर')) ||
+        art.tags.some(t => t.toLowerCase().includes(cityQuery)) ||
+        art.headline.toLowerCase().includes(cityQuery);
+      if (!matchCity) {
+        return false;
+      }
     }
 
     // Trending tag search filter
@@ -63,16 +99,15 @@ export default function DainikNewsFeed({
       if (!match) return false;
     }
 
-    // Topic filter
     if (activeTopic === 'all') return true;
-    if (activeTopic === 'state-city') return art.category === 'state' || art.category === 'lucknow' || art.category === 'sitapur';
-    if (activeTopic === 'sports' || activeTopic === 'cricket') return art.category === 'sports';
-    if (activeTopic === 'business') return art.category === 'business';
+    if (activeTopic === 'state-city') {
+      return art.category === 'state-city' || art.category === 'state' || art.category === 'lucknow' || art.category === 'sitapur';
+    }
+    if (activeTopic === 'sports') return art.category === 'sports' || art.category === 'cricket';
+    if (activeTopic === 'cricket') return art.category === 'cricket' || art.category === 'sports';
     if (activeTopic === 'entertainment') return art.category === 'entertainment';
-    if (activeTopic === 'citizen') return art.author.role === 'citizen_journalist';
-    if (activeTopic === 'investigation' || activeTopic === 'special') return art.isTrending;
-    
-    return true;
+    if (activeTopic === 'citizen') return art.category === 'citizen' || art.author.role === 'citizen_journalist';
+    return art.category === activeTopic;
   });
 
   const leadArticle = filteredArticles[0] || articles[0];
@@ -82,7 +117,7 @@ export default function DainikNewsFeed({
   const handleAudioListen = (e: React.MouseEvent) => {
     e.preventDefault();
     if (!('speechSynthesis' in window)) {
-      alert('आपके ब्राउज़र में वॉइस सपोर्ट उपलब्ध नहीं है');
+      alert(language === 'en' ? 'Voice support not available in browser' : 'आपके ब्राउज़र में वॉइस सपोर्ट उपलब्ध नहीं है');
       return;
     }
 
@@ -92,7 +127,7 @@ export default function DainikNewsFeed({
     } else {
       const textToSpeak = `${leadArticle.headline}. ${leadArticle.subHeadline || leadArticle.excerpt}`;
       const utterance = new SpeechSynthesisUtterance(textToSpeak);
-      utterance.lang = 'hi-IN';
+      utterance.lang = language === 'en' ? 'en-IN' : language === 'ur' ? 'ur-PK' : 'hi-IN';
       utterance.rate = 0.95;
       utterance.onend = () => setIsPlayingAudio(false);
       utterance.onerror = () => setIsPlayingAudio(false);
@@ -188,73 +223,87 @@ export default function DainikNewsFeed({
             </p>
           )}
 
-          {/* Big Media Player / Image Container */}
-          <div className="relative mt-4 aspect-video w-full rounded-xl overflow-hidden bg-slate-950 group">
-            <img
-              src={leadArticle.coverImage}
-              alt={leadArticle.headline}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-102"
-            />
-            
-            {/* Dainik Bhaskar Style Center Play Button Circle */}
-            <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/10 transition">
-              <div className="w-16 h-16 rounded-full bg-black/75 hover:bg-red-600 text-white flex items-center justify-center backdrop-blur-xs shadow-2xl transition transform group-hover:scale-110">
-                <Play className="w-7 h-7 fill-current ml-1 text-white" />
-              </div>
-            </div>
-
-            {/* Bottom Badges */}
-            <div className="absolute bottom-3 left-3 flex items-center gap-2">
-              <span className="bg-slate-950/80 text-amber-300 text-[11px] font-bold px-2 py-0.5 rounded backdrop-blur-xs">
-                | स्वर्णिम विशेष ग्राउंड रिपोर्ट
-              </span>
-              <span className="bg-red-600 text-white text-[11px] font-bold px-2 py-0.5 rounded">
-                {leadArticle.city}
-              </span>
-            </div>
-
-            <div className="absolute bottom-3 right-3 bg-black/85 text-white text-[12px] font-mono px-2 py-0.5 rounded">
-              0:49
-            </div>
-          </div>
-
-          {/* Bulleted Key Takeaways (Dainik Bhaskar Signature Format) */}
-          <div className="mt-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-100 dark:border-slate-800 space-y-2">
-            <div className="flex items-start gap-2 text-slate-800 dark:text-slate-200 text-sm sm:text-[15px] font-semibold leading-relaxed">
-              <span className="text-emerald-700 dark:text-emerald-400 font-black text-lg leading-none mt-0.5">●</span>
-              <span>
-                138 किलोमीटर लंबा 6-लेन ग्रीनफील्ड कॉरिडोर: सीतापुर और लखनऊ के बीच की दूरी अब मात्र 45 मिनट में तय होगी।
-              </span>
-            </div>
-            <div className="flex items-start gap-2 text-slate-800 dark:text-slate-200 text-sm sm:text-[15px] font-semibold leading-relaxed">
-              <span className="text-emerald-700 dark:text-emerald-400 font-black text-lg leading-none mt-0.5">●</span>
-              <span>
-                4,200 करोड़ की लागत से बनने वाले इस आधुनिक हाईवे पर 3 बड़े लॉजिस्टिक्स हब और एग्री-प्रोसेसिंग क्लस्टर बनेंगे।
-              </span>
-            </div>
-            <div className="flex items-start gap-2 text-slate-800 dark:text-slate-200 text-sm sm:text-[15px] font-semibold leading-relaxed">
-              <span className="text-emerald-700 dark:text-emerald-400 font-black text-lg leading-none mt-0.5">●</span>
-              <span>
-                कैबिनेट बैठक में मिली हरी झंडी, अगले महीने से शुरू होगी भूमि अधिग्रहण प्रक्रिया।
-              </span>
-            </div>
-          </div>
+          {(() => {
+            const leadVideo = leadArticle.mediaGallery?.find((item) => item.type === 'video')?.url;
+            const takeaways = (leadArticle.body || leadArticle.excerpt || '')
+              .split(/\n+/)
+              .map((line) => line.replace(/^[\s•●\-–]+/, '').trim())
+              .filter((line) => line.length > 0)
+              .slice(0, 4);
+            const videoOn = Boolean(leadVideo && playingVideoId === leadArticle.id);
+            return (
+              <>
+                <div className="relative mt-4 aspect-video w-full rounded-xl overflow-hidden bg-slate-950 group">
+                  {videoOn ? (
+                    <video
+                      src={leadVideo}
+                      poster={leadArticle.coverImage}
+                      controls
+                      autoPlay
+                      playsInline
+                      className="w-full h-full object-contain bg-black"
+                    />
+                  ) : (
+                    <>
+                      <img
+                        src={leadArticle.coverImage}
+                        alt={leadArticle.headline}
+                        className="w-full h-full object-cover"
+                      />
+                      {leadVideo && (
+                        <button
+                          type="button"
+                          onClick={() => setPlayingVideoId(leadArticle.id)}
+                          className="absolute inset-0 flex items-center justify-center bg-black/25 hover:bg-black/10 transition cursor-pointer"
+                          aria-label="Play video"
+                        >
+                          <span className="w-16 h-16 rounded-full bg-red-600 text-white flex items-center justify-center shadow-2xl">
+                            <Play className="w-7 h-7 fill-current ml-1 text-white" />
+                          </span>
+                        </button>
+                      )}
+                    </>
+                  )}
+                  {!videoOn && (
+                    <div className="absolute bottom-3 left-3 flex items-center gap-2 pointer-events-none">
+                      <span className="bg-slate-950/80 text-amber-300 text-[11px] font-bold px-2 py-0.5 rounded backdrop-blur-xs">
+                        {language === 'en' ? '| Swarnim Ground Report' : language === 'ur' ? '| سوَرنم زمینی رپورٹ' : '| स्वर्णिम विशेष ग्राउंड रिपोर्ट'}
+                      </span>
+                      <span className="bg-red-600 text-white text-[11px] font-bold px-2 py-0.5 rounded">
+                        {leadArticle.city}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                {takeaways.length > 0 && (
+                  <div className="mt-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-100 dark:border-slate-800 space-y-2">
+                    {takeaways.map((line) => (
+                      <div key={line} className="flex items-start gap-2 text-slate-800 dark:text-slate-200 text-sm sm:text-[15px] font-semibold leading-relaxed">
+                        <span className="text-emerald-700 dark:text-emerald-400 font-black text-lg leading-none mt-0.5">●</span>
+                        <span>{line}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            );
+          })()}
 
           {/* Action Toolbar */}
           <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 min-w-0">
               <span className="font-bold text-slate-700 dark:text-slate-300">
-                ब्यूरो: {leadArticle.author.name}
+                {language === 'en' ? 'Bureau: ' : language === 'ur' ? 'بیورو: ' : 'ब्यूरो: '}{leadArticle.author.name}
               </span>
               <span>•</span>
               <span className="flex items-center gap-1">
                 <Clock className="w-3.5 h-3.5" />
-                {leadArticle.readingTimeMinutes} मिनट पठन
+                {leadArticle.readingTimeMinutes} {language === 'en' ? 'min read' : language === 'ur' ? 'منٹ مطالعہ' : 'मिनट पठन'}
               </span>
               <span>•</span>
               <span className="flex items-center gap-1">
                 <Eye className="w-3.5 h-3.5" />
-                {leadArticle.viewsCount.toLocaleString('en-IN')} देखा गया
+                {leadArticle.viewsCount.toLocaleString('en-IN')} {language === 'en' ? 'views' : language === 'ur' ? 'ملاحظات' : 'देखा गया'}
               </span>
             </div>
 
@@ -267,10 +316,14 @@ export default function DainikNewsFeed({
                     ? 'bg-red-600 text-white animate-pulse'
                     : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-200'
                 }`}
-                title="खबर सुनें (Text to Speech)"
+                title={language === 'en' ? 'Listen (TTS)' : language === 'ur' ? 'خبر سنیں (TTS)' : 'खबर सुनें (Text to Speech)'}
               >
                 <Volume2 className="w-4 h-4" />
-                <span>{isPlayingAudio ? 'रोकें' : 'सुनें'}</span>
+                <span>
+                  {isPlayingAudio 
+                    ? (language === 'en' ? 'Stop' : language === 'ur' ? 'روکیں' : 'रोकें') 
+                    : (language === 'en' ? 'Listen' : language === 'ur' ? 'سنیں' : 'सुनें')}
+                </span>
               </button>
 
               {/* Bookmark */}
@@ -281,7 +334,7 @@ export default function DainikNewsFeed({
                     ? 'bg-amber-100 border-amber-400 text-amber-700'
                     : 'border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800'
                 }`}
-                title="बुकमार्क"
+                title={language === 'en' ? 'Bookmark' : language === 'ur' ? 'بک مارک' : 'बुकमार्क'}
               >
                 <Bookmark className="w-4 h-4" />
               </button>
@@ -290,7 +343,7 @@ export default function DainikNewsFeed({
               <button
                 onClick={(e) => handleShare(leadArticle, e)}
                 className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-                title="शेयर करें"
+                title={language === 'en' ? 'Share' : language === 'ur' ? 'شیئر' : 'शेयर करें'}
               >
                 <Share2 className="w-4 h-4" />
               </button>
@@ -300,7 +353,7 @@ export default function DainikNewsFeed({
                 href={`/article/${leadArticle.id}`}
                 className="ml-1 text-xs font-bold text-red-700 dark:text-red-400 hover:underline flex items-center gap-0.5"
               >
-                <span>पूरी खबर</span>
+                <span>{language === 'en' ? 'Full Story' : language === 'ur' ? 'مکمل خبر' : 'पूरी खबर'}</span>
                 <ChevronRight className="w-3.5 h-3.5" />
               </Link>
             </div>
@@ -314,15 +367,42 @@ export default function DainikNewsFeed({
         <div className="flex items-center justify-between pb-1 border-b-2 border-red-700">
           <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-red-700"></span>
-            <span>ताज़ा सुर्खियां एवं जमीनी खबरें</span>
+            <span>
+              {language === 'en' ? 'Top Headlines & Ground News' : language === 'ur' ? 'تازہ سرخیاں اور زمینی خبریں' : 'ताज़ा सुर्खियां एवं जमीनी खबरें'}
+            </span>
           </h2>
           <span className="text-xs text-slate-500">
-            {streamArticles.length} अन्य खबरें उपलब्ध
+            {streamArticles.length} {language === 'en' ? 'more stories available' : language === 'ur' ? 'مزید خبریں دستیاب' : 'अन्य खबरें उपलब्ध'}
           </span>
         </div>
 
         {streamArticles.map((art) => {
           const isSaved = savedArticleIds.includes(art.id);
+
+          const getCategoryDisplay = () => {
+            if (language === 'en') {
+              if (art.category === 'sitapur') return 'Sitapur Local';
+              if (art.category === 'lucknow') return 'Lucknow Daily';
+              if (art.category === 'sports') return 'Sports Arena';
+              if (art.category === 'business') return 'Business & Economy';
+              if (art.category === 'state') return 'Uttar Pradesh';
+              return art.category.toUpperCase();
+            }
+            if (language === 'ur') {
+              if (art.category === 'sitapur') return 'سیتاپور خبریں';
+              if (art.category === 'lucknow') return 'لکھنؤ نامہ';
+              if (art.category === 'sports') return 'کھیل کود';
+              if (art.category === 'business') return 'کاروبار';
+              if (art.category === 'state') return 'ریاستی خبریں';
+              return art.category;
+            }
+            if (art.category === 'sitapur') return 'सीतापुर हलचल';
+            if (art.category === 'lucknow') return 'लखनऊ दैनिक';
+            if (art.category === 'sports') return 'खेल जगत';
+            if (art.category === 'business') return 'व्यापार';
+            if (art.category === 'state') return 'उत्तर प्रदेश';
+            return art.category;
+          };
 
           return (
             <article
@@ -341,7 +421,7 @@ export default function DainikNewsFeed({
                 </span>
                 {art.isSponsored && (
                   <span className="absolute bottom-2 left-2 bg-purple-700 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">
-                    प्रायोजित
+                    {language === 'en' ? 'Sponsored' : language === 'ur' ? 'سپانسر شدہ' : 'प्रायोजित'}
                   </span>
                 )}
               </div>
@@ -351,13 +431,13 @@ export default function DainikNewsFeed({
                 <div>
                   <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-1.5">
                     <span className="font-extrabold text-red-700 dark:text-red-400">
-                      {art.category === 'sitapur' ? 'सीतापुर हलचल' : art.category === 'lucknow' ? 'लखनऊ दैनिक' : art.category === 'sports' ? 'खेल जगत' : art.category}
+                      {getCategoryDisplay()}
                     </span>
                     <span>•</span>
                     <span>{art.author.name}</span>
                     {art.author.role === 'citizen_journalist' && (
                       <span className="bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded">
-                        नागरिक पत्रकार
+                        {language === 'en' ? 'Citizen Journalist' : language === 'ur' ? 'شہری صحافی' : 'नागरिक पत्रकार'}
                       </span>
                     )}
                   </div>
@@ -380,7 +460,7 @@ export default function DainikNewsFeed({
                   <div className="flex items-center gap-3">
                     <span className="flex items-center gap-1">
                       <Clock className="w-3.5 h-3.5" />
-                      {art.readingTimeMinutes} मिनट
+                      {art.readingTimeMinutes} {language === 'en' ? 'min' : language === 'ur' ? 'منٹ' : 'मिनट'}
                     </span>
                     <span className="flex items-center gap-1">
                       <Eye className="w-3.5 h-3.5" />
@@ -392,14 +472,14 @@ export default function DainikNewsFeed({
                     <button
                       onClick={() => toggleSaveArticle(art.id)}
                       className={`p-1 rounded ${isSaved ? 'text-amber-600' : 'text-slate-400 hover:text-slate-600'}`}
-                      title="बुकमार्क"
+                      title={language === 'en' ? 'Bookmark' : language === 'ur' ? 'بک مارک' : 'बुकमार्क'}
                     >
                       <Bookmark className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={(e) => handleShare(art, e)}
                       className="p-1 text-slate-400 hover:text-slate-600"
-                      title="शेयर"
+                      title={language === 'en' ? 'Share' : language === 'ur' ? 'شیئر' : 'शेयर'}
                     >
                       <Share2 className="w-3.5 h-3.5" />
                     </button>
@@ -407,7 +487,7 @@ export default function DainikNewsFeed({
                       href={`/article/${art.id}`}
                       className="font-bold text-red-700 dark:text-red-400 hover:underline flex items-center gap-0.5 ml-2"
                     >
-                      <span>विस्तार से</span>
+                      <span>{language === 'en' ? 'Read More' : language === 'ur' ? 'مزید پڑھیں' : 'विस्तार से'}</span>
                       <ChevronRight className="w-3.5 h-3.5" />
                     </Link>
                   </div>

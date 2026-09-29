@@ -13,22 +13,33 @@ import { useApp } from '@/context/AppContext';
 import { MapPin, X } from 'lucide-react';
 
 export default function HomePage() {
-  const { selectedCity, setSelectedCity, fontSize, homeViewMode } = useApp();
-  const [articles, setArticles] = useState<Article[]>(INITIAL_ARTICLES);
+  const { selectedCity, setSelectedCity, fontSize, homeViewMode, language } = useApp();
+  const [articles, setArticles] = useState<Article[]>(() => {
+    const matching = INITIAL_ARTICLES.filter(a => (a.language || 'hi') === language);
+    return matching.length > 0 ? matching : INITIAL_ARTICLES;
+  });
   const [activeTopic, setActiveTopic] = useState<string>('all');
   const [showMobileTopicsDrawer, setShowMobileTopicsDrawer] = useState<boolean>(false);
 
-  // Load latest articles if API is active
+  // Load latest articles whenever active language changes
   useEffect(() => {
-    fetch('/api/articles')
+    fetch(`/api/articles?lang=${language}`)
       .then((res) => res.json())
       .then((data) => {
-        if (data.success && data.data && data.data.length > 0) {
-          setArticles(data.data);
-        }
+        const incoming: Article[] = data.success && Array.isArray(data.data) ? data.data : [];
+        const base = INITIAL_ARTICLES.filter(a => (a.language || 'hi') === language);
+        const seen = new Set(incoming.map(a => a.id));
+        const merged = [
+          ...incoming.filter(a => !a.language || a.language === language),
+          ...base.filter(a => !seen.has(a.id)),
+        ];
+        setArticles(merged.length > 0 ? merged : (base.length > 0 ? base : INITIAL_ARTICLES));
       })
-      .catch(() => {});
-  }, []);
+      .catch(() => {
+        const filtered = INITIAL_ARTICLES.filter(a => (a.language || 'hi') === language);
+        setArticles(filtered.length > 0 ? filtered : INITIAL_ARTICLES);
+      });
+  }, [language]);
 
   const fontClass = fontSize === 'lg' ? 'text-lg' : fontSize === 'sm' ? 'text-sm' : 'text-base';
 

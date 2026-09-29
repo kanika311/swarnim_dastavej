@@ -10,10 +10,13 @@ export async function GET(request: Request) {
   const search = searchParams.get('q') || undefined;
   const language = searchParams.get('lang') || undefined;
 
+  const storeArticles = platformStore.getArticles({ category, city, search, language });
+  let dbArticles: typeof storeArticles = [];
+
   try {
     const conn = await connectToDatabase();
     if (conn) {
-      const query: any = { status: 'published' };
+      const query: Record<string, unknown> = { status: 'published' };
       if (category && category !== 'all') query.category = category;
       if (city && city !== 'सभी शहर' && city !== 'सभी') query.city = city;
       if (language) query.language = language;
@@ -24,22 +27,19 @@ export async function GET(request: Request) {
         ];
       }
 
-      const dbArticles = await ArticleModel.find(query).sort({ publishedAt: -1 }).lean().exec();
-      if (dbArticles && dbArticles.length > 0) {
-        return NextResponse.json({
-          success: true,
-          count: dbArticles.length,
-          source: 'mongodb',
-          data: dbArticles
-        });
-      }
+      dbArticles = await ArticleModel.find(query).sort({ publishedAt: -1 }).lean().exec() as typeof storeArticles;
     }
-  } catch (e: any) {
-    console.warn('MongoDB articles GET error:', e?.message);
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : 'MongoDB articles GET error';
+    console.warn(message);
   }
 
-  const articles = platformStore.getArticles({ category, city, search, language });
-  return NextResponse.json({ success: true, count: articles.length, source: 'store', data: articles });
+  const seen = new Set(dbArticles.map((article) => article.id));
+  const articles = [
+    ...dbArticles,
+    ...storeArticles.filter((article) => !seen.has(article.id)),
+  ];
+  return NextResponse.json({ success: true, count: articles.length, source: dbArticles.length ? 'merged' : 'store', data: articles });
 }
 
 export async function POST(request: Request) {

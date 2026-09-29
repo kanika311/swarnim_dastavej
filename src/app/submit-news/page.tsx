@@ -5,13 +5,14 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import BreakingTicker from '@/components/BreakingTicker';
 import { useApp } from '@/context/AppContext';
+import { TOPICS } from '@/components/TopicsSidebar';
 import { CitizenSubmission, ArticleCategory, MediaItem } from '@/types';
 import { INITIAL_SUBMISSIONS } from '@/lib/initialData';
+import { ALL_INDIA_LOCATIONS } from '@/lib/locations';
 import { 
   PenSquare, 
   Video, 
   Camera, 
-  MapPin, 
   Upload, 
   CheckCircle, 
   AlertCircle, 
@@ -25,26 +26,25 @@ import {
 } from 'lucide-react';
 
 export default function SubmitNewsPage() {
-  const { currentUser, openAuthModal } = useApp();
+  const { currentUser, openAuthModal, switchRole } = useApp();
   const [activeTab, setActiveTab] = useState<'submit' | 'my_submissions'>('submit');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [highlightId, setHighlightId] = useState<string | null>(null);
 
   // Form State
   const [headline, setHeadline] = useState('');
   const [subHeadline, setSubHeadline] = useState('');
-  const [category, setCategory] = useState<ArticleCategory>('sitapur');
+  const [category, setCategory] = useState<ArticleCategory>('state-city');
+  const [selectedState, setSelectedState] = useState<string>('Uttar Pradesh');
   const [city, setCity] = useState(currentUser?.city || 'सीतापुर');
-  const [locationName, setLocationName] = useState('सीतापुर कलेक्ट्रेट परिसर');
+  const [isCustomCity, setIsCustomCity] = useState(false);
+  const [customCity, setCustomCity] = useState('');
+  const [locationName, setLocationName] = useState('कलेक्ट्रेट परिसर');
   const [bodyText, setBodyText] = useState('');
-  const [photos, setPhotos] = useState<MediaItem[]>([
-    {
-      id: 'm-default',
-      type: 'image',
-      url: 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=800&auto=format&fit=crop&q=80',
-      caption: 'घटनास्थल की प्रथम तस्वीर'
-    }
-  ]);
+  const [photos, setPhotos] = useState<MediaItem[]>([]);
   const [photoCaption, setPhotoCaption] = useState('');
-  const [photoUrlInput, setPhotoUrlInput] = useState('');
+  const [uploadingKind, setUploadingKind] = useState<'image' | 'video' | null>(null);
+  const [uploadError, setUploadError] = useState('');
   
   // MediaRecorder / Video recording state
   const [isRecording, setIsRecording] = useState(false);
@@ -59,6 +59,25 @@ export default function SubmitNewsPage() {
   const [submissionSuccessMsg, setSubmissionSuccessMsg] = useState<string | null>(null);
 
   // Fetch live submissions
+  const startEdit = (sub: CitizenSubmission) => {
+    setEditingId(sub.id);
+    setHeadline(sub.headline || '');
+    setSubHeadline(sub.subHeadline || '');
+    setBodyText(sub.body || '');
+    setCategory(sub.category || 'state-city');
+    setCity(sub.city || 'सीतापुर');
+    setLocationName(sub.geoTag?.locationName || '');
+    setPhotos(sub.media || []);
+    setActiveTab('submit');
+  };
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('tab') === 'mine') setActiveTab('my_submissions');
+    const editId = params.get('edit');
+    if (editId) setHighlightId(editId);
+  }, []);
+
   useEffect(() => {
     fetch('/api/submissions')
       .then(res => res.json())
@@ -102,19 +121,42 @@ export default function SubmitNewsPage() {
     setRecordedVideoUrl('https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4');
   };
 
-  const handleAddPhoto = () => {
-    if (!photoUrlInput.trim()) return;
-    setPhotos(prev => [
-      ...prev,
-      {
-        id: `img-${Date.now()}`,
-        type: 'image',
-        url: photoUrlInput.trim(),
-        caption: photoCaption.trim() || 'संलग्न फोटोग्राफ'
+  const handleMediaUpload = async (file: File | undefined, kind: 'image' | 'video') => {
+    if (!file) return;
+    if (kind === 'image' && !file.type.startsWith('image/')) {
+      setUploadError('कृपया फोटो फ़ाइल चुनें।');
+      return;
+    }
+    if (kind === 'video' && !file.type.startsWith('video/')) {
+      setUploadError('कृपया वीडियो फ़ाइल चुनें।');
+      return;
+    }
+    try {
+      setUploadingKind(kind);
+      setUploadError('');
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/upload', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (!data.success || !data.url) {
+        setUploadError(data.message || 'अपलोड नहीं हो सका।');
+        return;
       }
-    ]);
-    setPhotoUrlInput('');
-    setPhotoCaption('');
+      setPhotos(prev => [
+        ...prev,
+        {
+          id: `${kind}-${Date.now()}`,
+          type: kind,
+          url: data.url,
+          caption: photoCaption.trim() || (kind === 'video' ? 'संलग्न वीडियो' : 'संलग्न फोटोग्राफ')
+        }
+      ]);
+      setPhotoCaption('');
+    } catch {
+      setUploadError('अपलोड नहीं हो सका। फिर कोशिश करें।');
+    } finally {
+      setUploadingKind(null);
+    }
   };
 
   const handleRemovePhoto = (id: string) => {
@@ -129,21 +171,25 @@ export default function SubmitNewsPage() {
     }
 
     setIsSubmitting(true);
+    const finalCity = (isCustomCity && customCity.trim()) ? customCity.trim() : city;
     const payload = {
       headline: headline.trim(),
       subHeadline: subHeadline.trim(),
       body: bodyText.trim(),
       category,
-      city,
+      city: finalCity,
       language: 'hi',
       submittedBy: {
         id: currentUser?.id || 'citizen_guest',
         name: currentUser?.name || 'नागरिक पत्रकार',
-        role: currentUser?.role || 'citizen_journalist',
+        role: 'citizen_journalist',
         district: city
       },
-      media: photos,
-      hasRecordedVideo: !!recordedVideoUrl,
+      media: [
+        ...photos,
+        ...(recordedVideoUrl ? [{ id: `vid-live-${Date.now()}`, type: 'video' as const, url: recordedVideoUrl, caption: 'रिकॉर्डेड वीडियो' }] : [])
+      ],
+      hasRecordedVideo: photos.some((item) => item.type === 'video') || !!recordedVideoUrl,
       geoTag: {
         locationName: locationName.trim(),
         coordinates: '27.5684, 80.6829'
@@ -152,24 +198,33 @@ export default function SubmitNewsPage() {
     };
 
     try {
+      const revising = Boolean(editingId) && !isDraft;
       const res = await fetch('/api/submissions', {
-        method: 'POST',
+        method: revising ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(revising ? { ...payload, id: editingId, action: 'revise' } : payload)
       });
       const data = await res.json();
       if (data.success && data.data) {
-        setSubmissions(prev => [data.data, ...prev]);
+        setSubmissions(prev => revising
+          ? prev.map((item) => item.id === data.data.id ? data.data : item)
+          : [data.data, ...prev]);
+        if (currentUser?.role === 'reader') {
+          switchRole('citizen_journalist');
+        }
         setSubmissionSuccessMsg(
-          isDraft 
-            ? 'खबर ड्राफ्ट के रूप में सहेज ली गई है।' 
-            : 'आपकी खबर संपादकीय समीक्षा कक्ष में सफलतापूर्वक दर्ज हो गई है (स्थिति: समीक्षाधीन)। एडमिन द्वारा अनुमोदन (Approval) के बाद ही यह मुख्य पृष्ठ पर लाइव दिखेगी।'
+          isDraft
+            ? 'खबर ड्राफ्ट के रूप में सहेज ली गई है।'
+            : revising
+              ? 'संशोधित खबर दोबारा समीक्षा हेतु भेज दी गई है।'
+              : 'आपकी खबर संपादकीय समीक्षा कक्ष में सफलतापूर्वक दर्ज हो गई है (स्थिति: समीक्षाधीन)। एडमिन द्वारा अनुमोदन (Approval) के बाद ही यह मुख्य पृष्ठ पर लाइव दिखेगी।'
         );
-        // Reset form
         setHeadline('');
         setSubHeadline('');
         setBodyText('');
+        setPhotos([]);
         setRecordedVideoUrl(null);
+        setEditingId(null);
         setActiveTab('my_submissions');
       }
     } catch (err) {
@@ -195,6 +250,14 @@ export default function SubmitNewsPage() {
         return { label: status, bg: 'bg-slate-100 text-slate-800 border-slate-300' };
     }
   };
+
+  const ownSubmissions = currentUser
+    ? submissions.filter((sub) =>
+        sub.submittedBy?.id === currentUser.id ||
+        Boolean(currentUser.name && sub.submittedBy?.name?.includes(currentUser.name))
+      )
+    : submissions;
+  const visibleSubmissions = ownSubmissions.length > 0 ? ownSubmissions : submissions;
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950">
@@ -251,45 +314,74 @@ export default function SubmitNewsPage() {
             }`}
           >
             <History className="w-4 h-4" />
-            <span>मेरी भेजी गई खबरें एवं स्थिति ({submissions.length})</span>
+            <span>मेरी भेजी गई खबरें एवं स्थिति ({visibleSubmissions.length})</span>
           </button>
         </div>
 
         {/* TAB 1: SUBMISSION FORM */}
+        {activeTab === 'submit' && editingId && (
+          <div className="mb-4 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+            संपादक की टिप्पणी के अनुसार खबर सुधार रहे हैं। भेजने पर यह फिर समीक्षा में चली जाएगी।
+          </div>
+        )}
+
         {activeTab === 'submit' && (
-          (!currentUser || currentUser.role === 'reader') ? (
+          !currentUser ? (
             <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 border border-slate-200 dark:border-slate-700 shadow-sm text-center max-w-2xl mx-auto space-y-4 my-6">
               <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-950/50 text-red-700 dark:text-red-400 flex items-center justify-center mx-auto">
                 <PenSquare className="w-8 h-8" />
               </div>
               <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-                नागरिक पत्रकार (Citizen Journalist) खाता आवश्यक
+                नागरिक पत्रकारिता एवं संवाददाता पोर्टल
               </h2>
               <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                {currentUser 
-                  ? `नमस्ते ${currentUser.name}! आप वर्तमान में 'पाठक' (Reader) के रूप में लॉगिन हैं। पाठक के रूप में आप ताज़ा समाचार पढ़ सकते हैं, वीडियो व ई-पेपर देख सकते हैं। ज़मीनी स्तर की खबरें व ग्राउंड रिपोर्ट भेजने हेतु नागरिक पत्रकार (Citizen Journalist) के रूप में नया खाता बनाएं या लॉगिन करें।`
-                  : 'स्वर्णिम दस्तावेज़ पर अपने शहर, ब्लॉक या गांव की जनसमस्याएं और ग्राउंड रिपोर्ट भेजने के लिए कृपया नागरिक पत्रकार के रूप में लॉगिन या नया पंजीकरण करें।'}
+                स्वर्णिम दस्तावेज़ पर अपने शहर, ब्लॉक या गांव की जनसमस्याएं और ग्राउंड रिपोर्ट भेजने के लिए कृपया लॉगिन करें या तुरंत नागरिक पत्रकार के रूप में जुड़ें।
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-3">
                 <button
                   type="button"
-                  onClick={() => openAuthModal('register', 'citizen_journalist')}
-                  className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-red-700 hover:bg-red-800 text-white font-bold text-xs sm:text-sm shadow-sm transition"
+                  onClick={() => switchRole('citizen_journalist')}
+                  className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-gradient-to-r from-red-700 to-amber-600 hover:from-red-800 hover:to-amber-700 text-white font-bold text-xs sm:text-sm shadow-md transition cursor-pointer"
                 >
-                  ✍️ नागरिक पत्रकार पंजीकरण करें
+                  ⚡ 1-क्लिक नागरिक पत्रकार लॉगिन (विकास शुक्ला)
                 </button>
                 <button
                   type="button"
                   onClick={() => openAuthModal('login')}
-                  className="w-full sm:w-auto px-6 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold text-xs sm:text-sm transition"
+                  className="w-full sm:w-auto px-6 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold text-xs sm:text-sm transition cursor-pointer"
                 >
                   लॉगिन करें
+                </button>
+                <button
+                  type="button"
+                  onClick={() => openAuthModal('register', 'citizen_journalist')}
+                  className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 font-bold text-xs sm:text-sm transition cursor-pointer"
+                >
+                  नया पंजीकरण
                 </button>
               </div>
             </div>
           ) : (
           <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-8 border border-slate-200 dark:border-slate-700 shadow-sm">
             
+            {currentUser?.role === 'reader' && (
+              <div className="mb-6 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 p-3.5 rounded-xl text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span>
+                    आप <strong>{currentUser.name}</strong> (पाठक) के रूप में लॉगिन हैं। खबर दर्ज करते ही आपकी रिपोर्ट नागरिक पत्रकार डेस्क पर सबमिट हो जाएगी।
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => switchRole('citizen_journalist')}
+                  className="bg-red-700 hover:bg-red-800 text-white font-bold px-3 py-1.5 rounded-lg text-xs shrink-0 cursor-pointer shadow-xs transition"
+                >
+                  ✍️ पत्रकार मोड सक्रिय करें
+                </button>
+              </div>
+            )}
+
             {submissionSuccessMsg && (
               <div className="mb-6 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 p-4 rounded-xl text-xs sm:text-sm flex items-start gap-3">
                 <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
@@ -331,8 +423,8 @@ export default function SubmitNewsPage() {
                 />
               </div>
 
-              {/* Category & City Pickers */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {/* Category, State, District & Landmark Pickers (All India) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                     श्रेणी (Category) *
@@ -340,15 +432,36 @@ export default function SubmitNewsPage() {
                   <select
                     value={category}
                     onChange={(e) => setCategory(e.target.value as ArticleCategory)}
-                    className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-xs"
+                    className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-xs focus:ring-1 focus:ring-red-600 focus:outline-none"
                   >
-                    <option value="sitapur">सीतापुर (Sitapur)</option>
-                    <option value="lucknow">लखनऊ (Lucknow)</option>
-                    <option value="state">उत्तर प्रदेश (UP State)</option>
-                    <option value="national">देश / राष्ट्रीय</option>
-                    <option value="politics">राजनीति</option>
-                    <option value="sports">खेल</option>
-                    <option value="crime">अपराध / पुलिस</option>
+                    {TOPICS.filter((topic) => topic.id !== 'all').map((topic) => (
+                      <option key={topic.id} value={topic.id}>{topic.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                    राज्य / प्रदेश (State) *
+                  </label>
+                  <select
+                    value={selectedState}
+                    onChange={(e) => {
+                      const newState = e.target.value;
+                      setSelectedState(newState);
+                      const foundState = ALL_INDIA_LOCATIONS.find(s => s.name === newState);
+                      if (foundState && foundState.cities.length > 0) {
+                        setCity(foundState.cities[0].nameHi);
+                        setIsCustomCity(false);
+                      }
+                    }}
+                    className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-xs font-medium focus:ring-1 focus:ring-red-600 focus:outline-none"
+                  >
+                    {ALL_INDIA_LOCATIONS.map((st) => (
+                      <option key={st.name} value={st.name}>
+                        {st.name} ({st.nameHi})
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -357,33 +470,53 @@ export default function SubmitNewsPage() {
                     ज़िला / शहर (District/City) *
                   </label>
                   <select
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-xs"
+                    value={isCustomCity ? 'OTHER' : city}
+                    onChange={(e) => {
+                      if (e.target.value === 'OTHER') {
+                        setIsCustomCity(true);
+                      } else {
+                        setIsCustomCity(false);
+                        setCity(e.target.value);
+                      }
+                    }}
+                    className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-xs font-medium focus:ring-1 focus:ring-red-600 focus:outline-none"
                   >
-                    <option value="सीतापुर">सीतापुर</option>
-                    <option value="लखनऊ">लखनऊ</option>
-                    <option value="कानपुर">कानपुर</option>
-                    <option value="लखीमपुर खीरी">लखीमपुर खीरी</option>
-                    <option value="हरदोई">हरदोई</option>
-                    <option value="अयोध्या">अयोध्या</option>
+                    {(() => {
+                      const curStateObj = ALL_INDIA_LOCATIONS.find(s => s.name === selectedState) || ALL_INDIA_LOCATIONS[0];
+                      return (
+                        <>
+                          {curStateObj.cities.map((c) => (
+                            <option key={c.name} value={c.nameHi}>
+                              {c.nameHi} ({c.name})
+                            </option>
+                          ))}
+                          <option value="OTHER">✍️ अन्य शहर / कस्बा (Type Custom City)</option>
+                        </>
+                      );
+                    })()}
                   </select>
+                  {isCustomCity && (
+                    <input
+                      type="text"
+                      value={customCity}
+                      onChange={(e) => setCustomCity(e.target.value)}
+                      placeholder="अपने शहर/कस्बे का नाम लिखें"
+                      className="mt-1.5 w-full p-2 rounded-lg border border-red-300 dark:border-red-800 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-xs focus:ring-1 focus:ring-red-600"
+                    />
+                  )}
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                    स्थान / चौराहा (Geo-tag Location)
+                    स्थान / चौराहा (Geo-tag Landmark)
                   </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={locationName}
-                      onChange={(e) => setLocationName(e.target.value)}
-                      placeholder="उदा: महोली रोड, मानपुर चौराहा"
-                      className="w-full pl-8 p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-xs"
-                    />
-                    <MapPin className="w-4 h-4 text-red-600 absolute left-2.5 top-3" />
-                  </div>
+                  <input
+                    type="text"
+                    value={locationName}
+                    onChange={(e) => setLocationName(e.target.value)}
+                    placeholder="उदा: महोली रोड, मानपुर चौराहा"
+                    className="w-full p-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-xs focus:ring-1 focus:ring-red-600 focus:outline-none"
+                  />
                 </div>
               </div>
 
@@ -409,44 +542,57 @@ export default function SubmitNewsPage() {
                   <span>तस्वीरें एवं वीडियो प्रमाण संलग्न करें (Media Attachments)</span>
                 </h4>
 
-                {/* Photo URL & Caption input */}
                 <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 mb-4">
-                  <div className="sm:col-span-6">
-                    <input
-                      type="url"
-                      value={photoUrlInput}
-                      onChange={(e) => setPhotoUrlInput(e.target.value)}
-                      placeholder="फोटो वेब URL डालें (उदा: https://...)"
-                      className="w-full p-2 text-xs rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200"
-                    />
-                  </div>
                   <div className="sm:col-span-4">
                     <input
                       type="text"
                       value={photoCaption}
                       onChange={(e) => setPhotoCaption(e.target.value)}
-                      placeholder="फोटो कैप्शन (विवरण)"
+                      placeholder="कैप्शन (वैकल्पिक)"
                       className="w-full p-2 text-xs rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200"
                     />
                   </div>
-                  <div className="sm:col-span-2">
-                    <button
-                      type="button"
-                      onClick={handleAddPhoto}
-                      className="w-full bg-slate-800 text-white font-bold text-xs py-2 rounded hover:bg-slate-700 transition"
-                    >
-                      फोटो जोड़ें
-                    </button>
-                  </div>
+                  <label className="sm:col-span-4 bg-slate-800 text-white font-bold text-xs py-2 rounded hover:bg-slate-700 transition text-center cursor-pointer">
+                    {uploadingKind === 'image' ? 'फोटो WebP बन रही है...' : 'फोटो चुनें'}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      disabled={uploadingKind !== null}
+                      onChange={(e) => {
+                        handleMediaUpload(e.target.files?.[0], 'image');
+                        e.target.value = '';
+                      }}
+                    />
+                  </label>
+                  <label className="sm:col-span-4 bg-red-700 text-white font-bold text-xs py-2 rounded hover:bg-red-800 transition text-center cursor-pointer">
+                    {uploadingKind === 'video' ? 'वीडियो कंप्रेस हो रहा है...' : 'वीडियो चुनें'}
+                    <input
+                      type="file"
+                      accept="video/*,.mp4,.mov,.webm"
+                      className="hidden"
+                      disabled={uploadingKind !== null}
+                      onChange={(e) => {
+                        handleMediaUpload(e.target.files?.[0], 'video');
+                        e.target.value = '';
+                      }}
+                    />
+                  </label>
                 </div>
+                {uploadError && (
+                  <p className="mb-3 text-xs font-semibold text-red-600">{uploadError}</p>
+                )}
 
-                {/* Attached Photos Preview */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
                   {photos.map((p) => (
                     <div key={p.id} className="relative aspect-video rounded-lg overflow-hidden border border-slate-300 dark:border-slate-700 group bg-black">
-                      <img src={p.url} alt={p.caption} className="w-full h-full object-cover" />
-                      <div className="absolute inset-x-0 bottom-0 bg-black/80 text-[10px] text-white p-1 truncate">
-                        {p.caption}
+                      {p.type === 'video' ? (
+                        <video src={p.url} className="w-full h-full object-cover" controls playsInline />
+                      ) : (
+                        <img src={p.url} alt={p.caption} className="w-full h-full object-cover" />
+                      )}
+                      <div className="absolute inset-x-0 bottom-0 bg-black/80 text-[10px] text-white p-1 truncate pointer-events-none">
+                        {p.type === 'video' ? 'वीडियो' : 'फोटो'}{p.caption ? ` · ${p.caption}` : ''}
                       </div>
                       <button
                         type="button"
@@ -526,7 +672,7 @@ export default function SubmitNewsPage() {
                   className="bg-red-700 hover:bg-red-800 disabled:opacity-50 text-white font-bold text-xs sm:text-sm px-6 py-2.5 rounded-lg shadow-md flex items-center gap-2 transition active:scale-95"
                 >
                   <Send className="w-4 h-4" />
-                  <span>{isSubmitting ? 'प्रेषित हो रहा है...' : 'संपादकीय समीक्षा हेतु भेजें (Submit News)'}</span>
+                  <span>{isSubmitting ? 'प्रेषित हो रहा है...' : editingId ? 'संशोधन भेजें' : 'संपादकीय समीक्षा हेतु भेजें (Submit News)'}</span>
                 </button>
               </div>
 
@@ -555,12 +701,16 @@ export default function SubmitNewsPage() {
               </button>
             </div>
 
-            {submissions.map((sub) => {
+            {visibleSubmissions.map((sub) => {
               const badge = getStatusBadge(sub.status);
               return (
                 <div
                   key={sub.id}
-                  className="bg-white dark:bg-slate-800 rounded-xl p-5 border border-slate-200 dark:border-slate-700 shadow-sm space-y-3"
+                  className={`bg-white dark:bg-slate-800 rounded-xl p-5 border shadow-sm space-y-3 ${
+                    highlightId === sub.id
+                      ? 'border-amber-500 ring-2 ring-amber-300'
+                      : 'border-slate-200 dark:border-slate-700'
+                  }`}
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border ${badge.bg}`}>
@@ -598,7 +748,7 @@ export default function SubmitNewsPage() {
                   {/* Submission Audit Trail */}
                   <div className="pt-2 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between text-[11px] text-slate-500">
                     <div className="flex items-center gap-3">
-                      <span>श्रेणी: {sub.category}</span>
+                      <span>श्रेणी: {TOPICS.find((topic) => topic.id === sub.category)?.label || sub.category}</span>
                       <span>•</span>
                       <span>ज़िला: {sub.city}</span>
                       {sub.hasRecordedVideo && (
@@ -610,6 +760,15 @@ export default function SubmitNewsPage() {
                     </div>
                     <span className="font-mono text-[10px] text-slate-400">ID: {sub.id}</span>
                   </div>
+                  {sub.status === 'sent_back' && (
+                    <button
+                      type="button"
+                      onClick={() => startEdit(sub)}
+                      className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg"
+                    >
+                      खबर सुधारें (Edit)
+                    </button>
+                  )}
                 </div>
               );
             })}

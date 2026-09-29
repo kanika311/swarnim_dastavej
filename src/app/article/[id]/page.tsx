@@ -262,17 +262,34 @@ export default function ArticleDetailPage() {
             </div>
           </div>
 
-          {/* Featured Image */}
-          <div className="relative aspect-video w-full rounded-xl overflow-hidden mb-6 bg-slate-900 shadow">
-            <img
-              src={article.coverImage}
-              alt={article.headline}
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-3 text-white text-[11px]">
-              तस्वीर: {article.headline} - स्वर्णिम दस्तावेज़ डेस्क
-            </div>
-          </div>
+          {(() => {
+            const videoUrl = article.mediaGallery?.find((item) => item.type === 'video')?.url;
+            if (videoUrl) {
+              return (
+                <div className="relative aspect-video w-full rounded-xl overflow-hidden mb-6 bg-black shadow">
+                  <video
+                    src={videoUrl}
+                    poster={article.coverImage}
+                    controls
+                    playsInline
+                    className="w-full h-full object-contain bg-black"
+                  />
+                </div>
+              );
+            }
+            return (
+              <div className="relative aspect-video w-full rounded-xl overflow-hidden mb-6 bg-slate-900 shadow">
+                <img
+                  src={article.coverImage}
+                  alt={article.headline}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-3 text-white text-[11px]">
+                  तस्वीर: {article.headline} - स्वर्णिम दस्तावेज़ डेस्क
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Article Body Content */}
           <div className={`prose dark:prose-invert max-w-none ${fontClass} text-slate-800 dark:text-slate-200 space-y-4 mb-8 whitespace-pre-line`}>

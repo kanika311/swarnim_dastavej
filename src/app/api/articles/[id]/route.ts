@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { platformStore } from '@/lib/store';
+import { connectToDatabase } from '@/lib/mongodb';
+import ArticleModel from '@/models/Article';
 
 export async function GET(
   request: Request,
@@ -34,7 +36,21 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const updated = platformStore.updateArticle(id, body);
+    let updated = platformStore.updateArticle(id, body);
+    try {
+      const conn = await connectToDatabase();
+      if (conn && typeof body.showOnVideos === 'boolean') {
+        const doc = await ArticleModel.findOneAndUpdate(
+          { id },
+          { $set: { showOnVideos: body.showOnVideos } },
+          { new: true }
+        ).lean().exec();
+        if (doc) updated = doc as NonNullable<typeof updated>;
+      }
+    } catch (dbErr: unknown) {
+      const message = dbErr instanceof Error ? dbErr.message : 'MongoDB article update error';
+      console.warn(message);
+    }
     if (!updated) {
       return NextResponse.json({ success: false, message: 'Article not found' }, { status: 404 });
     }
@@ -49,8 +65,17 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const ok = platformStore.deleteArticle(id);
-  if (!ok) {
+  let removed = platformStore.deleteArticle(id);
+  try {
+    const conn = await connectToDatabase();
+    if (conn) {
+      const result = await ArticleModel.deleteOne({ id }).exec();
+      if (result.deletedCount) removed = true;
+    }
+  } catch {
+    // The in-memory copy is already removed.
+  }
+  if (!removed) {
     return NextResponse.json({ success: false, message: 'Article not found' }, { status: 404 });
   }
   return NextResponse.json({ success: true, message: 'Article deleted' });

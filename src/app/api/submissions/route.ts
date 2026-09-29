@@ -8,24 +8,29 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const status = searchParams.get('status') || undefined;
 
+  const storeSubmissions = platformStore.getSubmissions({ status });
+  let dbSubmissions: typeof storeSubmissions = [];
+
   try {
     const conn = await connectToDatabase();
     if (conn) {
-      const query: any = {};
+      const query: Record<string, unknown> = {};
       if (status && status !== 'all') {
         query.status = status;
       }
-      const submissions = await CitizenSubmissionModel.find(query).sort({ createdAt: -1 }).lean().exec();
-      if (submissions && submissions.length > 0) {
-        return NextResponse.json({ success: true, count: submissions.length, source: 'mongodb', data: submissions });
-      }
+      dbSubmissions = await CitizenSubmissionModel.find(query).sort({ createdAt: -1 }).lean().exec() as typeof storeSubmissions;
     }
-  } catch (e: any) {
-    console.warn('MongoDB submissions GET error:', e?.message);
+  } catch (e: unknown) {
+    const message = e instanceof Error ? e.message : 'MongoDB submissions GET error';
+    console.warn(message);
   }
 
-  const submissions = platformStore.getSubmissions({ status });
-  return NextResponse.json({ success: true, count: submissions.length, source: 'store', data: submissions });
+  const seen = new Set(dbSubmissions.map((item) => item.id));
+  const submissions = [
+    ...dbSubmissions,
+    ...storeSubmissions.filter((item) => !seen.has(item.id)),
+  ];
+  return NextResponse.json({ success: true, count: submissions.length, source: dbSubmissions.length ? 'merged' : 'store', data: submissions });
 }
 
 export async function POST(request: Request) {
@@ -61,9 +66,43 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const { id, action, comments, reviewerName = 'प्रधान संपादक' } = await request.json();
+    const body = await request.json();
+    const { id, action, comments, reviewerName = 'प्रधान संपादक' } = body;
     if (!id || !action) {
       return NextResponse.json({ success: false, message: 'ID and action are required' }, { status: 400 });
+    }
+
+    if (action === 'revise') {
+      const revised = platformStore.reviseSubmission(id, body);
+      let saved = revised;
+      try {
+        const conn = await connectToDatabase();
+        if (conn) {
+          const subDoc = await CitizenSubmissionModel.findOne({ id }).exec();
+          if (subDoc) {
+            subDoc.headline = body.headline || subDoc.headline;
+            subDoc.subHeadline = body.subHeadline ?? subDoc.subHeadline;
+            subDoc.body = body.body || subDoc.body;
+            subDoc.category = body.category || subDoc.category;
+            subDoc.city = body.city || subDoc.city;
+            subDoc.media = body.media || subDoc.media;
+            subDoc.geoTag = body.geoTag || subDoc.geoTag;
+            subDoc.hasRecordedVideo = Boolean(body.hasRecordedVideo);
+            subDoc.status = 'pending_review';
+            subDoc.editorComments = '';
+            subDoc.updatedAt = new Date().toISOString();
+            await subDoc.save();
+            saved = subDoc.toObject() as typeof revised;
+          }
+        }
+      } catch (dbErr: unknown) {
+        const message = dbErr instanceof Error ? dbErr.message : 'MongoDB revise error';
+        console.warn(message);
+      }
+      if (!saved) {
+        return NextResponse.json({ success: false, message: 'Submission not found' }, { status: 404 });
+      }
+      return NextResponse.json({ success: true, data: saved, message: 'संशोधित खबर दोबारा समीक्षा हेतु भेज दी गई।' });
     }
 
     const timestamp = new Date().toISOString();

@@ -14,8 +14,10 @@ import {
   Megaphone
 } from 'lucide-react';
 import { AdBanner } from '@/types';
+import { useApp } from '@/context/AppContext';
 
 export default function RightSponsoredSidebar() {
+  const { language, epaperEditions } = useApp();
   const [adIndex, setAdIndex] = useState(0);
   const [ads, setAds] = useState<AdBanner[]>([]);
 
@@ -181,48 +183,71 @@ export default function RightSponsoredSidebar() {
       </div>
 
       {/* 4. E-PAPER TODAY'S EDITION WIDGET */}
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xs">
-        <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-100 dark:border-slate-800">
-          <div className="flex items-center gap-1.5">
-            <FileText className="w-4 h-4 text-amber-600" />
-            <span className="font-bold text-[14px] text-slate-900 dark:text-white">
-              आज का ई-पेपर (E-Paper)
-            </span>
-          </div>
-          <span className="text-[10px] font-bold bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-300 px-2 py-0.5 rounded">
-            निशुल्क
-          </span>
-        </div>
+      {(() => {
+        const matchingEdition = epaperEditions.find(e => (e.language || 'hi') === language) || epaperEditions[0];
+        const previewImage = matchingEdition?.pages?.[0]?.imageUrl || "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=400&auto=format&fit=crop&q=80";
+        const editionTitle = matchingEdition 
+          ? (language === 'en' 
+              ? `${matchingEdition.editionCity.toUpperCase()} Daily Edition (English)` 
+              : language === 'ur'
+              ? `${matchingEdition.editionCity === 'lucknow' ? 'لکھنؤ' : 'سیتاپور'} روزنامہ ایڈیشن (اردو)`
+              : `${matchingEdition.editionCity === 'lucknow' ? 'लखनऊ' : 'सीतापुर'} संयुक्त संस्करण (हिन्दी)`)
+          : (language === 'en' ? 'Daily E-Paper Edition' : language === 'ur' ? 'روزنامہ ای-پیپر' : 'लखनऊ एवं सीतापुर संयुक्त संस्करण');
+        const pagesSummary = matchingEdition
+          ? (language === 'en'
+              ? `${matchingEdition.pages.length} Pages • Digital Print`
+              : language === 'ur'
+              ? `${matchingEdition.pages.length} صفحات • ڈیجیٹل ایڈیشن`
+              : `${matchingEdition.pages.length} मुख्य पृष्ठ • रंगीन मुद्रित स्वरूप`)
+          : (language === 'en' ? 'Full Digital Edition' : 'रंगीन मुद्रित स्वरूप');
 
-        <div className="flex gap-3 items-center">
-          <div className="w-20 aspect-[3/4] bg-slate-100 dark:bg-slate-800 rounded border border-slate-300 dark:border-slate-700 overflow-hidden shrink-0 shadow-xs relative">
-            <img
-              src="https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=400&auto=format&fit=crop&q=80"
-              alt="E-paper preview"
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 to-transparent flex items-end justify-center p-1">
-              <span className="text-[9px] font-bold text-white">27 सितम्बर</span>
+        return (
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xs">
+            <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-center gap-1.5">
+                <FileText className="w-4 h-4 text-amber-600" />
+                <span className="font-bold text-[14px] text-slate-900 dark:text-white">
+                  {language === 'en' ? "Today's E-Paper" : language === 'ur' ? 'آج کا ای-پیپر' : 'आज का ई-पेपर (E-Paper)'}
+                </span>
+              </div>
+              <span className="text-[10px] font-bold bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-300 px-2 py-0.5 rounded">
+                {language === 'en' ? 'Free Edition' : language === 'ur' ? 'مفت ایڈیشن' : 'निशुल्क'}
+              </span>
+            </div>
+
+            <div className="flex gap-3 items-center">
+              <div className="w-20 aspect-[3/4] bg-slate-100 dark:bg-slate-800 rounded border border-slate-300 dark:border-slate-700 overflow-hidden shrink-0 shadow-xs relative">
+                <img
+                  src={previewImage}
+                  alt={editionTitle}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 to-transparent flex items-end justify-center p-1">
+                  <span className="text-[9px] font-bold text-white uppercase">
+                    {matchingEdition?.language || 'hi'}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex-1">
+                <p className="text-[13px] font-bold text-slate-800 dark:text-slate-100 leading-snug">
+                  {editionTitle}
+                </p>
+                <p className="text-[11px] text-slate-500 mt-1">
+                  {pagesSummary}
+                </p>
+                <Link
+                  href="/epaper"
+                  className="inline-flex items-center gap-1 mt-2.5 text-[12px] font-bold text-white bg-red-700 hover:bg-red-800 px-3 py-1.5 rounded-md shadow-xs transition"
+                >
+                  <span>{language === 'en' ? 'Open E-Paper' : language === 'ur' ? 'ای-پیپر پڑھیں' : 'ई-पेपर खोलें'}</span>
+                  <ArrowUpRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
             </div>
           </div>
-
-          <div className="flex-1">
-            <p className="text-[13px] font-bold text-slate-800 dark:text-slate-100 leading-snug">
-              लखनऊ एवं सीतापुर संयुक्त संस्करण
-            </p>
-            <p className="text-[11px] text-slate-500 mt-1">
-              6 मुख्य पृष्ठ • रंगीन मुद्रित स्वरूप
-            </p>
-            <Link
-              href="/epaper"
-              className="inline-flex items-center gap-1 mt-2.5 text-[12px] font-bold text-white bg-red-700 hover:bg-red-800 px-3 py-1.5 rounded-md shadow-xs transition"
-            >
-              <span>ई-पेपर खोलें</span>
-              <ArrowUpRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-        </div>
-      </div>
+        );
+      })()}
 
       {/* 5. WEATHER & MANDI QUICK WIDGET */}
       <div className="bg-gradient-to-br from-slate-50 to-amber-50/40 dark:from-slate-800 dark:to-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-3.5 text-xs text-slate-700 dark:text-slate-300 space-y-2">

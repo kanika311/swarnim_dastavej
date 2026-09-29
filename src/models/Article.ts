@@ -26,6 +26,7 @@ export interface IArticle extends Document {
   isBreaking: boolean;
   isTrending: boolean;
   isSponsored: boolean;
+  showOnVideos?: boolean;
   sponsoredBy?: string;
   publishedAt: string;
   viewsCount: number;
@@ -68,6 +69,7 @@ const ArticleSchema = new Schema<IArticle>(
     isBreaking: { type: Boolean, default: false },
     isTrending: { type: Boolean, default: false },
     isSponsored: { type: Boolean, default: false },
+    showOnVideos: { type: Boolean, default: false },
     sponsoredBy: { type: String },
     publishedAt: { type: String, required: true },
     viewsCount: { type: Number, default: 0 },

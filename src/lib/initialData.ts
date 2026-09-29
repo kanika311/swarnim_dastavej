@@ -11,7 +11,10 @@ export const INITIAL_USERS: User[] = [
     city: 'लखनऊ',
     preferredLanguage: 'hi',
     avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-    kycStatus: 'verified'
+    kycStatus: 'verified',
+    isActive: true,
+    createdAt: '2026-08-01T10:00:00Z',
+    lastLoginAt: '2026-09-28T09:15:00Z'
   },
   {
     id: 'user_editor_1',
@@ -22,7 +25,10 @@ export const INITIAL_USERS: User[] = [
     city: 'लखनऊ',
     preferredLanguage: 'hi',
     avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80',
-    kycStatus: 'verified'
+    kycStatus: 'verified',
+    isActive: true,
+    createdAt: '2026-08-05T11:00:00Z',
+    lastLoginAt: '2026-09-28T08:30:00Z'
   },
   {
     id: 'user_reporter_1',
@@ -33,7 +39,10 @@ export const INITIAL_USERS: User[] = [
     city: 'सीतापुर',
     preferredLanguage: 'hi',
     avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
-    kycStatus: 'verified'
+    kycStatus: 'verified',
+    isActive: true,
+    createdAt: '2026-08-10T14:20:00Z',
+    lastLoginAt: '2026-09-27T17:40:00Z'
   },
   {
     id: 'user_citizen_1',
@@ -50,7 +59,50 @@ export const INITIAL_USERS: User[] = [
       idNumber: 'XXXX-XXXX-4589',
       submittedAt: '2026-09-10T10:00:00Z',
       district: 'सीतापुर'
-    }
+    },
+    isActive: true,
+    createdAt: '2026-09-10T09:30:00Z',
+    lastLoginAt: '2026-09-28T07:45:00Z'
+  },
+  {
+    id: 'user_citizen_2',
+    name: 'मो० रिज़वान खान (नागरिक पत्रकार - लखनऊ)',
+    email: 'rizwan.journalist@yahoo.com',
+    phone: '+91 94520 88712',
+    role: 'citizen_journalist',
+    city: 'लखनऊ',
+    preferredLanguage: 'hi',
+    avatarUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&auto=format&fit=crop&q=80',
+    kycStatus: 'verified',
+    kycDetails: {
+      idProofType: 'Voter ID',
+      idNumber: 'UP/24/182/9012',
+      submittedAt: '2026-09-12T11:00:00Z',
+      district: 'लखनऊ'
+    },
+    isActive: true,
+    createdAt: '2026-09-12T10:15:00Z',
+    lastLoginAt: '2026-09-26T16:20:00Z'
+  },
+  {
+    id: 'user_citizen_3',
+    name: 'दीपक अवस्थी (नागरिक पत्रकार - लखीमपुर)',
+    email: 'deepak.awasthi@rediffmail.com',
+    phone: '+91 98380 55432',
+    role: 'citizen_journalist',
+    city: 'लखीमपुर खीरी',
+    preferredLanguage: 'hi',
+    avatarUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
+    kycStatus: 'pending',
+    kycDetails: {
+      idProofType: 'Aadhaar Card',
+      idNumber: 'XXXX-XXXX-8921',
+      submittedAt: '2026-09-27T08:30:00Z',
+      district: 'लखीमपुर खीरी'
+    },
+    isActive: true,
+    createdAt: '2026-09-27T08:00:00Z',
+    lastLoginAt: '2026-09-27T08:45:00Z'
   },
   {
     id: 'user_reader_1',
@@ -61,7 +113,52 @@ export const INITIAL_USERS: User[] = [
     city: 'लखनऊ',
     preferredLanguage: 'hi',
     avatarUrl: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=150&auto=format&fit=crop&q=80',
-    kycStatus: 'not_submitted'
+    kycStatus: 'not_submitted',
+    isActive: true,
+    createdAt: '2026-09-15T12:00:00Z',
+    lastLoginAt: '2026-09-28T09:30:00Z'
+  },
+  {
+    id: 'user_reader_2',
+    name: 'प्रियंका मिश्रा (दैनिक पाठक)',
+    email: 'priyanka.mishra24@gmail.com',
+    phone: '+91 94150 77621',
+    role: 'reader',
+    city: 'सीतापुर',
+    preferredLanguage: 'hi',
+    avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80',
+    kycStatus: 'not_submitted',
+    isActive: true,
+    createdAt: '2026-09-18T16:40:00Z',
+    lastLoginAt: '2026-09-28T06:10:00Z'
+  },
+  {
+    id: 'user_reader_3',
+    name: 'राकेश चंद्र गुप्ता',
+    email: 'rakesh.gupta.kanpur@gmail.com',
+    phone: '+91 98391 22345',
+    role: 'reader',
+    city: 'कानपुर',
+    preferredLanguage: 'hi',
+    avatarUrl: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&auto=format&fit=crop&q=80',
+    kycStatus: 'not_submitted',
+    isActive: true,
+    createdAt: '2026-09-20T14:10:00Z',
+    lastLoginAt: '2026-09-27T19:50:00Z'
+  },
+  {
+    id: 'user_reader_4',
+    name: 'सुमन लता रस्तोगी',
+    email: 'suman.rastogi@yahoo.co.in',
+    phone: '+91 97920 44556',
+    role: 'reader',
+    city: 'अयोध्या',
+    preferredLanguage: 'hi',
+    avatarUrl: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80',
+    kycStatus: 'not_submitted',
+    isActive: false,
+    createdAt: '2026-09-22T09:15:00Z',
+    lastLoginAt: '2026-09-24T11:20:00Z'
   }
 ];
 
@@ -302,6 +399,277 @@ export const INITIAL_ARTICLES: Article[] = [
     tags: ['क्रिकेट', 'टीम इंडिया', 'खेल', 'कानपुर', 'टेस्ट क्रिकेट'],
     readingTimeMinutes: 3,
     status: 'published'
+  },
+  // ENGLISH ARTICLES
+  {
+    id: 'art-en-1',
+    slug: 'up-expressway-network-expansion-lucknow-sitapur',
+    headline: 'Mega Expansion of UP Highway Network: Lucknow-Sitapur-Lakhimpur 6-Lane Corridor Approved, Travel Time Halved',
+    subHeadline: 'Cabinet approves ₹4,200 crore high-speed greenfield project to accelerate industrial corridors and agribusiness',
+    excerpt: 'Uttar Pradesh government gives green signal to the 138-km 6-lane access-controlled greenfield expressway connecting capital Lucknow with Lakhimpur Kheri via Sitapur.',
+    body: `In a landmark cabinet meeting chaired by the Chief Minister, the Uttar Pradesh government approved the major high-speed Lucknow-Sitapur-Lakhimpur 6-lane expressway project.
+
+Key Highlights of the Project:
+• Constructed at an estimated cost of ₹4,200 crore spanning 138 kilometers of modern greenfield expressway.
+• Dedicated logistics hub and agro-processing clusters to be established near Sitapur and Maholi.
+• Commuting time between Lucknow and Sitapur slashed to just 45 minutes, and Lakhimpur within 1 hour 15 minutes.
+• Direct, high-speed freight access for regional sugarcane and grain farmers to major agricultural mandis in Lucknow and Delhi NCR.
+
+Officials from PWD and UPEIDA confirmed that land acquisition will commence next month, with target commissioning slated for 2028.`,
+    category: 'state',
+    city: 'Lucknow',
+    language: 'en',
+    coverImage: 'https://images.unsplash.com/photo-1545158826-6a3196c80251?w=1000&auto=format&fit=crop&q=80',
+    author: {
+      id: 'user_editor_1',
+      name: 'Anuradha Awasthi',
+      role: 'editor'
+    },
+    isBreaking: true,
+    isTrending: true,
+    publishedAt: '2026-09-27T08:30:00Z',
+    viewsCount: 16800,
+    likesCount: 1120,
+    commentsCount: 84,
+    sharesCount: 420,
+    tags: ['Uttar Pradesh', 'Lucknow', 'Sitapur', 'Expressway', 'Infrastructure', 'Cabinet'],
+    readingTimeMinutes: 3,
+    status: 'published'
+  },
+  {
+    id: 'art-en-2',
+    slug: 'sitapur-sarayan-river-cleanliness-drive-citizen-initiative',
+    headline: 'Youth Step Forward to Revitalize Sarayan River in Sitapur: 10 Tons of Waste Removed with Citizen Action',
+    subHeadline: 'Swarnim Dastavej Ground Report: Community-driven environmental action inspires civic authorities',
+    excerpt: 'Over 300 passionate volunteers and young citizens gathered early Sunday morning at Sitapur ghats to clean the historic Sarayan river.',
+    body: `Demonstrating exemplary civic consciousness, citizens and youths in Sitapur spearheaded a massive cleanup movement along the banks of the Sarayan river.
+
+Key Milestones:
+1. Five hours of volunteer manual labor retrieved over 10 tons of water hyacinth, plastics, and debris.
+2. Sitapur Municipal Council assisted by providing 6 tractor-trolleys and earthmoving machinery.
+3. Volunteers took a pledge to plant 500 indigenous shade and medicinal trees along both river banks.
+
+Local social activist Vikas Shukla stated that the weekend drives will continue until the historic waterbody achieves clean ecological balance.`,
+    category: 'sitapur',
+    city: 'Sitapur',
+    language: 'en',
+    coverImage: 'https://images.unsplash.com/photo-1618477461853-cf6ed80faba5?w=1000&auto=format&fit=crop&q=80',
+    author: {
+      id: 'user_citizen_1',
+      name: 'Vikas Shukla (Citizen Journalist)',
+      role: 'citizen_journalist'
+    },
+    isBreaking: false,
+    isTrending: true,
+    publishedAt: '2026-09-27T09:15:00Z',
+    viewsCount: 9400,
+    likesCount: 1350,
+    commentsCount: 105,
+    sharesCount: 580,
+    tags: ['Sitapur', 'Sarayan River', 'Cleanliness', 'Environment', 'Citizen Journalism'],
+    readingTimeMinutes: 3,
+    status: 'published'
+  },
+  {
+    id: 'art-en-3',
+    slug: 'isro-gaganyaan-crew-module-unmanned-mission-success',
+    headline: 'ISRO Scripts History: Flawless Splashdown of Gaganyaan Crew Module in Bay of Bengal',
+    subHeadline: 'Unmanned test vehicle accomplishes all critical mission milestones with pin-point precision; PM congratulates scientists',
+    excerpt: 'Indian Space Research Organisation (ISRO) successfully validated the Crew Escape System and emergency splashdown procedures for India’s premier human spaceflight mission.',
+    body: `The Indian Space Research Organisation (ISRO) recorded another historic milestone from the Satish Dhawan Space Centre in Sriharikota with the successful execution of the Gaganyaan unmanned flight test vehicle.
+
+Mission Milestones:
+• Crew Escape System executed flawless separation sequence at supersonic velocity.
+• Three stage drogue and main parachute deployment brought the module gently into Bay of Bengal waters.
+• Indian Navy recovery divers retrieved the intact crew module within 40 minutes.
+• All avionics and life-support simulation telemetry functioned within optimal operational parameters.`,
+    category: 'national',
+    city: 'New Delhi',
+    language: 'en',
+    coverImage: 'https://images.unsplash.com/photo-1517976487502-5f71bb4028d6?w=1000&auto=format&fit=crop&q=80',
+    author: {
+      id: 'user_reporter_1',
+      name: 'Sunil Kumar Verma',
+      role: 'staff_reporter'
+    },
+    isBreaking: true,
+    isTrending: true,
+    publishedAt: '2026-09-27T07:45:00Z',
+    viewsCount: 25800,
+    likesCount: 3890,
+    commentsCount: 190,
+    sharesCount: 1100,
+    tags: ['ISRO', 'Gaganyaan', 'Space Mission', 'India', 'Science'],
+    readingTimeMinutes: 3,
+    status: 'published'
+  },
+  {
+    id: 'art-en-4',
+    slug: 'lucknow-metro-phase-2-charbagh-to-vasant-kunj',
+    headline: 'Lucknow Metro Phase-2: Charbagh to Vasant Kunj DPR Approved, 12 Stations to Transform Old City Connectivity',
+    subHeadline: 'Major relief for commuters across Aminabad, Chowk, and KGMU medical hub',
+    excerpt: 'The Union Ministry gives in-principle clearance for the 11.16 km East-West Metro Corridor traversing the historic heart of Lucknow.',
+    body: `Historic commercial districts in Old Lucknow are set to welcome modern metro rail connectivity. The UP Metro Rail Corporation (UPMRC) has secured clearance for the 11.165 km East-West Corridor comprising 12 stations (7 underground and 5 elevated).
+
+The new line links Charbagh Railway Terminus through Aminabad, Chowk, and KGMU to Vasant Kunj, slashing congested road journey times from 90 minutes to under 20 minutes.`,
+    category: 'lucknow',
+    city: 'Lucknow',
+    language: 'en',
+    coverImage: 'https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=1000&auto=format&fit=crop&q=80',
+    author: {
+      id: 'user_editor_1',
+      name: 'Rameshwar Dayal',
+      role: 'admin'
+    },
+    isBreaking: false,
+    isTrending: false,
+    publishedAt: '2026-09-26T18:00:00Z',
+    viewsCount: 12400,
+    likesCount: 920,
+    commentsCount: 52,
+    sharesCount: 280,
+    tags: ['Lucknow', 'Metro', 'Urban Transport', 'Aminabad', 'Chowk'],
+    readingTimeMinutes: 3,
+    status: 'published'
+  },
+  {
+    id: 'art-en-5',
+    slug: 'ayodhya-international-ramayan-museum-construction',
+    headline: 'World-Class International Ramayana Museum in Ayodhya: Traditions of Over 100 Nations to Be Showcased',
+    subHeadline: '10-acre cultural complex on Saryu banks to feature immersive 3D holographic theatres and digitised palm-leaf manuscripts',
+    excerpt: 'Construction of the sprawling International Ramayana Museum and cultural pavilion is in full swing near the sacred banks of river Saryu.',
+    body: `Pilgrims and international scholars visiting Ayodhya will soon experience a premier global cultural repository. The 10-acre complex will house Ramayana traditions and folk arts spanning Indonesia, Thailand, Cambodia, Sri Lanka, Nepal, and Mauritius with 360-degree immersive projection theatres.`,
+    category: 'state',
+    city: 'Ayodhya',
+    language: 'en',
+    coverImage: 'https://images.unsplash.com/photo-1590050752117-238cb0fb12b1?w=1000&auto=format&fit=crop&q=80',
+    author: {
+      id: 'user_reporter_1',
+      name: 'Sunil Kumar Verma',
+      role: 'staff_reporter'
+    },
+    isBreaking: false,
+    isTrending: true,
+    publishedAt: '2026-09-26T15:30:00Z',
+    viewsCount: 17200,
+    likesCount: 1600,
+    commentsCount: 95,
+    sharesCount: 460,
+    tags: ['Ayodhya', 'Heritage', 'Culture', 'Tourism', 'Uttar Pradesh'],
+    readingTimeMinutes: 4,
+    status: 'published'
+  },
+  {
+    id: 'art-en-6',
+    slug: 'pm-kusum-solar-pump-scheme-uttar-pradesh',
+    headline: 'PM-KUSUM Scheme: Up to 70% Subsidy on Solar Pumps for UP Farmers, Online Registrations Open',
+    subHeadline: 'Eliminate diesel fuel costs for tubewells and earn revenue by supplying surplus clean power to grid',
+    excerpt: 'The Uttar Pradesh Agriculture Department invites applications on a first-come basis for 2 HP to 10 HP high-efficiency solar water pumping systems.',
+    body: `(Sponsored Article - Department of Agriculture & UPNEDA)
+Farmers across Uttar Pradesh can now drastically cut their irrigation costs with up to 70% direct government subsidies on solar pump systems, coupled with guaranteed grid buy-back for surplus solar energy.`,
+    category: 'business',
+    city: 'Lucknow',
+    language: 'en',
+    coverImage: 'https://images.unsplash.com/photo-1509391365360-2e959784a276?w=1000&auto=format&fit=crop&q=80',
+    author: {
+      id: 'user_editor_1',
+      name: 'Editorial Desk (Sponsored)',
+      role: 'editor'
+    },
+    isBreaking: false,
+    isTrending: false,
+    isSponsored: true,
+    sponsoredBy: 'UP New & Renewable Energy Development Agency (UPNEDA)',
+    publishedAt: '2026-09-26T11:00:00Z',
+    viewsCount: 8400,
+    likesCount: 410,
+    commentsCount: 22,
+    sharesCount: 180,
+    tags: ['Sponsored', 'Solar Energy', 'Farmers', 'Agriculture', 'Subsidy'],
+    readingTimeMinutes: 2,
+    status: 'published'
+  },
+  {
+    id: 'art-en-7',
+    slug: 'border-gavaskar-trophy-team-india-training-camp',
+    headline: 'Border-Gavaskar Trophy: Team India Kicks Off High-Intensity Training Camp in Kanpur, Young Pacers Fire in Nets',
+    subHeadline: 'Rohit Sharma and Virat Kohli lead comprehensive batting sessions tackling pace and bounce',
+    excerpt: 'The Indian cricket contingent commenced intensive practice drills at Green Park Stadium ahead of the premier test series.',
+    body: `Star cricketers assembled at Kanpur’s historic Green Park stadium to fine-tune strategies for the forthcoming Border-Gavaskar Trophy. The coaching staff oversaw dedicated yorker drills and short-ball countering techniques under lights.`,
+    category: 'sports',
+    city: 'Kanpur',
+    language: 'en',
+    coverImage: 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=1000&auto=format&fit=crop&q=80',
+    author: {
+      id: 'user_reporter_1',
+      name: 'Sunil Kumar Verma',
+      role: 'staff_reporter'
+    },
+    isBreaking: false,
+    isTrending: true,
+    publishedAt: '2026-09-26T14:15:00Z',
+    viewsCount: 21500,
+    likesCount: 3100,
+    commentsCount: 135,
+    sharesCount: 520,
+    tags: ['Cricket', 'Team India', 'Sports', 'Kanpur', 'Test Cricket'],
+    readingTimeMinutes: 3,
+    status: 'published'
+  },
+  // URDU ARTICLES
+  {
+    id: 'art-ur-1',
+    slug: 'up-expressway-network-expansion-lucknow-sitapur-ur',
+    headline: 'یوپی میں ہائی وے نیٹ ورک کی بڑی توسیع: لکھنؤ-سیتاپور-لکھیم پور 6 لین کوریڈور کی منظوری، سفری وقت آدھا ہوگا',
+    subHeadline: 'کابینہ میٹنگ میں 4,200 کروڑ روپے کے منصوبے پر مہر، صنعتی کوریڈور کو نئی رفتار ملے گی',
+    excerpt: 'اتر پردیش حکومت نے راجدھانی لکھنؤ سے سیتاپور ہوتے ہوئے لکھیم پور کھیری تک 6 لین ایکسپریس وے کی تعمیر کو منظوری دے دی ہے۔',
+    body: `اتر پردیش کابینہ کی اہم میٹنگ میں ریاست کے بنیادی ڈھانچے کو نئی بلندی دینے والا بڑا فیصلہ لیا گیا ہے۔ لکھنؤ-سیتاپور-لکھیم پور 6 لین کوریڈور منصوبے کو حتمی منظوری مل گئی ہے۔`,
+    category: 'state',
+    city: 'لکھنؤ',
+    language: 'ur',
+    coverImage: 'https://images.unsplash.com/photo-1545158826-6a3196c80251?w=1000&auto=format&fit=crop&q=80',
+    author: {
+      id: 'user_editor_1',
+      name: 'انورادھا اوستھی',
+      role: 'editor'
+    },
+    isBreaking: true,
+    isTrending: true,
+    publishedAt: '2026-09-27T08:30:00Z',
+    viewsCount: 6500,
+    likesCount: 420,
+    commentsCount: 38,
+    sharesCount: 180,
+    tags: ['اتر پردیش', 'لکھنؤ', 'سیتاپور', 'ایکسپریس وے'],
+    readingTimeMinutes: 3,
+    status: 'published'
+  },
+  {
+    id: 'art-ur-2',
+    slug: 'isro-gaganyaan-crew-module-unmanned-mission-success-ur',
+    headline: 'اسرو کی تاریخی کامیابی: گگن یان مشن کے کرو ماڈیول کی بحیرہ بنگال میں محفوظ لینڈنگ',
+    subHeadline: 'خلا میں ہندوستان کا دبدبہ، بغیر پائلٹ کے ٹیسٹ وہیکل نے تمام طے شدہ معیارات کامیابی سے مکمل کیے',
+    excerpt: 'ہندوستانی خلائی تحقیقی تنظیم (اسرو) نے گگن یان مشن کے پہلے اہم مرحلے کو کامیابی کے ساتھ مکمل کر لیا ہے۔',
+    body: `سری ہریکوٹا سے داغے گئے گگن یان کے بغیر پائلٹ ٹیسٹ وہیکل نے بحیرہ بنگال میں محفوظ لینڈنگ کی۔ تمام سسٹمز بہترین حالت میں پائے گئے۔`,
+    category: 'national',
+    city: 'نئی دہلی',
+    language: 'ur',
+    coverImage: 'https://images.unsplash.com/photo-1517976487502-5f71bb4028d6?w=1000&auto=format&fit=crop&q=80',
+    author: {
+      id: 'user_reporter_1',
+      name: 'سنیل کمار ورما',
+      role: 'staff_reporter'
+    },
+    isBreaking: true,
+    isTrending: true,
+    publishedAt: '2026-09-27T07:45:00Z',
+    viewsCount: 8200,
+    likesCount: 710,
+    commentsCount: 49,
+    sharesCount: 260,
+    tags: ['اسرو', 'گگن یان', 'خلائی سائنس', 'ہندوستان'],
+    readingTimeMinutes: 3,
+    status: 'published'
   }
 ];
 
@@ -423,7 +791,8 @@ export const INITIAL_EPAPER_EDITIONS: EPaperEdition[] = [
     id: 'epaper-2026-09-27-lucknow',
     date: '2026-09-27',
     editionCity: 'लखनऊ',
-    editionTitle: 'स्वर्णिम दस्तावेज़ - लखनऊ दैनिक मुख्य संस्करण',
+    editionTitle: 'स्वर्णिम दस्तावेज़ - लखनऊ दैनिक मुख्य संस्करण (हिन्दी)',
+    language: 'hi',
     pagesCount: 6,
     isActive: true,
     thumbnailUrl: 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=600&auto=format&fit=crop&q=80',
@@ -461,10 +830,95 @@ export const INITIAL_EPAPER_EDITIONS: EPaperEdition[] = [
     ]
   },
   {
+    id: 'epaper-2026-09-27-en-lucknow',
+    date: '2026-09-27',
+    editionCity: 'Lucknow',
+    editionTitle: 'Swarnim Dastavej - English National & Regional Edition',
+    language: 'en',
+    pagesCount: 6,
+    isActive: true,
+    thumbnailUrl: 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600&auto=format&fit=crop&q=80',
+    pages: [
+      {
+        pageNumber: 1,
+        title: 'Front Page - Mega Expressway Approved, Gaganyaan Module Splashdown Success',
+        imageUrl: 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=1200&auto=format&fit=crop&q=80'
+      },
+      {
+        pageNumber: 2,
+        title: 'National & State Digest - Infrastructure & Governance Decisions',
+        imageUrl: 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=1200&auto=format&fit=crop&q=80'
+      },
+      {
+        pageNumber: 3,
+        title: 'Awadh & City Chronicle - Lucknow, Sitapur & Ayodhya Spotlight',
+        imageUrl: 'https://images.unsplash.com/photo-1586339949916-3e9457bef6d3?w=1200&auto=format&fit=crop&q=80'
+      },
+      {
+        pageNumber: 4,
+        title: 'Editorial & Opinion - Swarnim Dastavej Perspectives',
+        imageUrl: 'https://images.unsplash.com/photo-1457369804613-52c61a468e7d?w=1200&auto=format&fit=crop&q=80'
+      },
+      {
+        pageNumber: 5,
+        title: 'Business, Markets & Technology - PM Kusum Solar Expansion',
+        imageUrl: 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=1200&auto=format&fit=crop&q=80'
+      },
+      {
+        pageNumber: 6,
+        title: 'Sports Arena - Border-Gavaskar Trophy Preparations at Green Park',
+        imageUrl: 'https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=1200&auto=format&fit=crop&q=80'
+      }
+    ]
+  },
+  {
+    id: 'epaper-2026-09-27-ur-lucknow',
+    date: '2026-09-27',
+    editionCity: 'لکھنؤ',
+    editionTitle: 'سورنم دستاویز - لکھنؤ و اودھ ایڈیشن (اردو)',
+    language: 'ur',
+    pagesCount: 6,
+    isActive: true,
+    thumbnailUrl: 'https://images.unsplash.com/photo-1586339949916-3e9457bef6d3?w=600&auto=format&fit=crop&q=80',
+    pages: [
+      {
+        pageNumber: 1,
+        title: 'صفحہ اول - لکھنؤ-سیتاپور ایکسپریس وے، گگن یان مشن کی شاندار کامیابی',
+        imageUrl: 'https://images.unsplash.com/photo-1586339949916-3e9457bef6d3?w=1200&auto=format&fit=crop&q=80'
+      },
+      {
+        pageNumber: 2,
+        title: 'قومی اور ریاستی خبریں - اتر پردیش ترقیاتی اقدامات',
+        imageUrl: 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=1200&auto=format&fit=crop&q=80'
+      },
+      {
+        pageNumber: 3,
+        title: 'شہر لکھنؤ اور خطہ اودھ کی سرگرمیاں',
+        imageUrl: 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=1200&auto=format&fit=crop&q=80'
+      },
+      {
+        pageNumber: 4,
+        title: 'اداریہ اور مضامین - سورنم بصیرت',
+        imageUrl: 'https://images.unsplash.com/photo-1457369804613-52c61a468e7d?w=1200&auto=format&fit=crop&q=80'
+      },
+      {
+        pageNumber: 5,
+        title: 'تجارت اور کھیل کود کی تازہ ترین اطلاعات',
+        imageUrl: 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=1200&auto=format&fit=crop&q=80'
+      },
+      {
+        pageNumber: 6,
+        title: 'عوامی اشتہارات اور اعلانات',
+        imageUrl: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?w=1200&auto=format&fit=crop&q=80'
+      }
+    ]
+  },
+  {
     id: 'epaper-2026-09-26-lucknow',
     date: '2026-09-26',
     editionCity: 'लखनऊ',
     editionTitle: 'स्वर्णिम दस्तावेज़ - लखनऊ दैनिक (26 सितम्बर)',
+    language: 'hi',
     pagesCount: 6,
     isActive: true,
     thumbnailUrl: 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=600&auto=format&fit=crop&q=80',
@@ -473,6 +927,23 @@ export const INITIAL_EPAPER_EDITIONS: EPaperEdition[] = [
         pageNumber: 1,
         title: 'मुख्य पृष्ठ',
         imageUrl: 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=1200&auto=format&fit=crop&q=80'
+      }
+    ]
+  },
+  {
+    id: 'epaper-2026-09-26-en-lucknow',
+    date: '2026-09-26',
+    editionCity: 'Lucknow',
+    editionTitle: 'Swarnim Dastavej - English Edition (26 September)',
+    language: 'en',
+    pagesCount: 6,
+    isActive: true,
+    thumbnailUrl: 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=600&auto=format&fit=crop&q=80',
+    pages: [
+      {
+        pageNumber: 1,
+        title: 'Main Edition - Lucknow Metro Phase-2 and Regional Updates',
+        imageUrl: 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=1200&auto=format&fit=crop&q=80'
       }
     ]
   }

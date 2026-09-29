@@ -99,6 +99,9 @@ class PlatformStore {
   // Articles
   getArticles(filter?: { category?: string; city?: string; search?: string; language?: string }) {
     let list = [...this.articles];
+    if (filter?.language && filter.language !== 'all') {
+      list = list.filter(a => (a.language || 'hi') === filter.language);
+    }
     if (filter?.category && filter.category !== 'all') {
       list = list.filter(a => a.category.toLowerCase() === filter.category?.toLowerCase());
     }
@@ -141,6 +144,7 @@ class PlatformStore {
       isBreaking: data.isBreaking || false,
       isTrending: data.isTrending || false,
       isSponsored: data.isSponsored || false,
+      showOnVideos: data.showOnVideos ?? data.category === 'videos',
       sponsoredBy: data.sponsoredBy,
       publishedAt: new Date().toISOString(),
       viewsCount: 1,
@@ -202,6 +206,31 @@ class PlatformStore {
 
   getSubmissionById(id: string) {
     return this.submissions.find(s => s.id === id);
+  }
+
+  reviseSubmission(id: string, data: Partial<CitizenSubmission>): CitizenSubmission | null {
+    const sub = this.submissions.find(s => s.id === id);
+    if (!sub) return null;
+    sub.headline = data.headline || sub.headline;
+    sub.subHeadline = data.subHeadline ?? sub.subHeadline;
+    sub.body = data.body || sub.body;
+    sub.category = data.category || sub.category;
+    sub.city = data.city || sub.city;
+    sub.language = data.language || sub.language;
+    if (data.media) sub.media = data.media;
+    if (data.geoTag) sub.geoTag = data.geoTag;
+    sub.hasRecordedVideo = data.hasRecordedVideo ?? sub.hasRecordedVideo;
+    sub.status = 'pending_review';
+    sub.editorComments = '';
+    sub.updatedAt = new Date().toISOString();
+    sub.revisionHistory = sub.revisionHistory || [];
+    sub.revisionHistory.push({
+      timestamp: sub.updatedAt,
+      action: 'RESUBMITTED',
+      performedBy: sub.submittedBy?.name || 'नागरिक पत्रकार',
+      note: 'संशोधन के बाद खबर दोबारा समीक्षा हेतु भेजी गई।'
+    });
+    return sub;
   }
 
   createSubmission(data: Partial<CitizenSubmission>): CitizenSubmission {
@@ -372,17 +401,28 @@ class PlatformStore {
   }
 
   // E-Paper
-  getEPaperEditions() {
-    return this.epaperEditions;
+  getEPaperEditions(filter?: { date?: string; city?: string; language?: string }) {
+    let list = [...this.epaperEditions];
+    if (filter?.date) {
+      list = list.filter(e => e.date === filter.date);
+    }
+    if (filter?.city && filter.city !== 'सभी') {
+      list = list.filter(e => e.editionCity.includes(filter.city!));
+    }
+    if (filter?.language && filter.language !== 'all') {
+      list = list.filter(e => (e.language || 'hi') === filter.language);
+    }
+    return list;
   }
 
   addEPaperEdition(edition: Partial<EPaperEdition>) {
     const newEd: EPaperEdition = {
-      id: `epaper-${Date.now()}`,
+      id: edition.id || `epaper-${Date.now()}`,
       date: edition.date || new Date().toISOString().split('T')[0],
       editionCity: edition.editionCity || 'लखनऊ',
       editionTitle: edition.editionTitle || 'स्वर्णिम दस्तावेज़ दैनिक',
-      pagesCount: edition.pages?.length || 1,
+      language: edition.language || 'hi',
+      pagesCount: edition.pages?.length || edition.pagesCount || 1,
       pages: edition.pages || [],
       thumbnailUrl: edition.thumbnailUrl || 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=600&auto=format&fit=crop&q=80',
       isActive: edition.isActive !== false,
@@ -554,9 +594,23 @@ function getPlatformStore(): PlatformStore {
   const existing = global.__platformStore;
   if (existing) {
     Object.setPrototypeOf(existing, PlatformStore.prototype);
-    const record = existing as unknown as { siteSettings?: SiteSettings };
+    const record = existing as unknown as { siteSettings?: SiteSettings; articles?: Article[]; epaperEditions?: EPaperEdition[] };
     if (!record.siteSettings) {
       record.siteSettings = { ...DEFAULT_SETTINGS };
+    }
+    if (record.articles) {
+      for (const art of INITIAL_ARTICLES) {
+        if (!record.articles.some((a: Article) => a.id === art.id)) {
+          record.articles.push(art);
+        }
+      }
+    }
+    if (record.epaperEditions) {
+      for (const ep of INITIAL_EPAPER_EDITIONS) {
+        if (!record.epaperEditions.some((e: EPaperEdition) => e.id === ep.id)) {
+          record.epaperEditions.push(ep);
+        }
+      }
     }
     return existing;
   }

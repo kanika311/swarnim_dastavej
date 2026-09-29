@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useApp } from '@/context/AppContext';
+import { TOPICS } from '@/components/TopicsSidebar';
 import { 
   Article, 
   CitizenSubmission, 
@@ -13,7 +14,8 @@ import {
   GrievanceComplaint, 
   ArticleCategory,
   EPaperEdition,
-  SiteSettings
+  SiteSettings,
+  LanguageCode
 } from '@/types';
 import { 
   INITIAL_ARTICLES, 
@@ -22,6 +24,7 @@ import {
   INITIAL_ADS, 
   INITIAL_GRIEVANCES 
 } from '@/lib/initialData';
+import { ALL_INDIA_LOCATIONS } from '@/lib/locations';
 import { 
   LayoutDashboard, 
   Newspaper, 
@@ -30,7 +33,6 @@ import {
   Users, 
   Megaphone, 
   Scale, 
-  BarChart3, 
   Search, 
   Plus, 
   ExternalLink, 
@@ -77,8 +79,22 @@ export default function AdminDashboardPage() {
     setLanguage 
   } = useApp();
   
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'submissions' | 'epaper' | 'articles' | 'journalists' | 'ads' | 'grievances' | 'settings' | 'admins' | 'analytics'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'submissions' | 'epaper' | 'articles' | 'videos' | 'users' | 'journalists' | 'ads' | 'grievances' | 'settings' | 'admins'>('dashboard');
   const [tabSearchQuery, setTabSearchQuery] = useState('');
+
+  // User Management Tab States (Readers)
+  const [userFilter, setUserFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [showAddUser, setShowAddUser] = useState(false);
+  const [newUserName, setNewUserName] = useState('');
+  const [newUserEmail, setNewUserEmail] = useState('');
+  const [newUserPhone, setNewUserPhone] = useState('');
+  const [newUserCity, setNewUserCity] = useState('लखनऊ');
+  const [newUserPassword, setNewUserPassword] = useState('');
+
+  // Journalist Tab States
+  const [journoFilter, setJournoFilter] = useState<'all' | 'citizen' | 'staff' | 'active' | 'inactive' | 'pending_kyc'>('all');
+  const [journoSearchQuery, setJournoSearchQuery] = useState('');
   
   // Data states
   const [submissions, setSubmissions] = useState<CitizenSubmission[]>(INITIAL_SUBMISSIONS);
@@ -103,8 +119,10 @@ export default function AdminDashboardPage() {
   // New Article Form state
   const [showAddArticle, setShowAddArticle] = useState(false);
   const [newTitle, setNewTitle] = useState('');
-  const [newCategory, setNewCategory] = useState<ArticleCategory>('state');
+  const [newCategory, setNewCategory] = useState<ArticleCategory>('state-city');
   const [newCity, setNewCity] = useState('Lucknow');
+  const [newLanguage, setNewLanguage] = useState<LanguageCode>('hi');
+  const [artFilterLanguage, setArtFilterLanguage] = useState<string>('all');
   const [newBody, setNewBody] = useState('');
   const [newIsBreaking, setNewIsBreaking] = useState(false);
   const [newCoverImage, setNewCoverImage] = useState('');
@@ -113,6 +131,12 @@ export default function AdminDashboardPage() {
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
   const [photoFileName, setPhotoFileName] = useState('');
   const [videoFileName, setVideoFileName] = useState('');
+  const [shelfTitle, setShelfTitle] = useState('');
+  const [shelfCity, setShelfCity] = useState('लखनऊ');
+  const [shelfVideoUrl, setShelfVideoUrl] = useState('');
+  const [shelfFileName, setShelfFileName] = useState('');
+  const [shelfUploading, setShelfUploading] = useState(false);
+  const [shelfSaving, setShelfSaving] = useState(false);
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -170,6 +194,8 @@ export default function AdminDashboardPage() {
   const [epDate, setEpDate] = useState('2026-09-27');
   const [epCity, setEpCity] = useState('Lucknow');
   const [epTitle, setEpTitle] = useState('Swarnim Dastavej - Lucknow Main Edition');
+  const [epLanguage, setEpLanguage] = useState<LanguageCode>('hi');
+  const [epFilterLanguage, setEpFilterLanguage] = useState<string>('all');
   const [epPagesCount, setEpPagesCount] = useState(6);
   const [epPdfUrl, setEpPdfUrl] = useState('');
   const [epActive, setEpActive] = useState(true);
@@ -227,6 +253,7 @@ export default function AdminDashboardPage() {
       if (tabParam === 'epaper') setActiveTab('epaper');
       else if (tabParam === 'submissions') setActiveTab('submissions');
       else if (tabParam === 'articles') setActiveTab('articles');
+      else if (tabParam === 'videos') setActiveTab('videos');
       else if (tabParam === 'users' || tabParam === 'journalists') setActiveTab('journalists');
       else if (tabParam === 'settings' || tabParam === 'policies') setActiveTab('settings');
       else if (tabParam === 'admins') setActiveTab('admins');
@@ -279,7 +306,10 @@ export default function AdminDashboardPage() {
   // Create article handler
   const handleCreateArticle = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTitle.trim() || !newBody.trim()) return;
+    if (!newTitle.trim() || !newBody.trim()) {
+      alert('Headline and story content are required.');
+      return;
+    }
 
     try {
       const payload = {
@@ -287,6 +317,7 @@ export default function AdminDashboardPage() {
         body: newBody.trim(),
         category: newCategory,
         city: newCity,
+        language: newLanguage,
         isBreaking: newIsBreaking,
         coverImage: newCoverImage || 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=1000&auto=format&fit=crop&q=80',
         mediaGallery: [
@@ -323,12 +354,100 @@ export default function AdminDashboardPage() {
     }
   };
 
+  const handleShelfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setShelfUploading(true);
+    setShelfFileName(file.name);
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      const res = await fetch('/api/upload', { method: 'POST', body: form });
+      const data = await res.json();
+      if (data.success && data.url) {
+        setShelfVideoUrl(data.url);
+        const mb = data.size ? `${Math.max(1, Math.round(data.size / 1024 / 1024))} MB` : '';
+        setShelfFileName(mb ? `compressed MP4 · ${mb}` : 'compressed MP4');
+      } else {
+        alert(data.message || 'Video upload failed');
+      }
+    } catch {
+      alert('Video upload failed');
+    } finally {
+      setShelfUploading(false);
+    }
+  };
+
+  const handlePublishShelfVideo = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!shelfTitle.trim() || !shelfVideoUrl) {
+      alert('शीर्षक और वीडियो दोनों चाहिए।');
+      return;
+    }
+    setShelfSaving(true);
+    try {
+      const res = await fetch('/api/articles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          headline: shelfTitle.trim(),
+          body: shelfTitle.trim(),
+          category: 'videos',
+          city: shelfCity.trim() || 'लखनऊ',
+          language: 'hi',
+          showOnVideos: true,
+          coverImage: 'https://images.unsplash.com/photo-1492619375914-88005aa9e8fb?w=1000&auto=format&fit=crop&q=80',
+          mediaGallery: [{ id: `vid-${Date.now()}`, type: 'video', url: shelfVideoUrl, caption: shelfTitle.trim() }],
+          author: {
+            id: currentUser?.id || 'admin_1',
+            name: currentUser?.name || 'Editorial Desk',
+            role: 'admin'
+          }
+        })
+      });
+      const data = await res.json();
+      if (data.success && data.data) {
+        setArticles(prev => [data.data, ...prev]);
+        setShelfTitle('');
+        setShelfVideoUrl('');
+        setShelfFileName('');
+        alert('वीडियो पेज पर लगा दिया गया।');
+      } else {
+        alert(data.message || 'Video could not be saved');
+      }
+    } catch {
+      alert('Video could not be saved');
+    } finally {
+      setShelfSaving(false);
+    }
+  };
+
+  const handleToggleVideoPage = async (article: Article) => {
+    const next = !article.showOnVideos;
+    try {
+      const res = await fetch(`/api/articles/${article.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ showOnVideos: next })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setArticles(prev => prev.map(item => item.id === article.id ? { ...item, showOnVideos: next } : item));
+      } else {
+        alert(data.message || 'Could not update video page');
+      }
+    } catch {
+      alert('Could not update video page');
+    }
+  };
+
   const resetEpaperForm = () => {
     setShowAddEPaper(false);
     setEditingEditionId(null);
     setEpDate('2026-09-27');
     setEpCity('Lucknow');
     setEpTitle('Swarnim Dastavej - Lucknow Main Edition');
+    setEpLanguage('hi');
     setEpPagesCount(6);
     setEpPdfUrl('');
     setEpActive(true);
@@ -343,6 +462,7 @@ export default function AdminDashboardPage() {
     setEpDate(edition.date);
     setEpCity(edition.editionCity);
     setEpTitle(edition.editionTitle);
+    setEpLanguage(edition.language || 'hi');
     setEpPagesCount(edition.pagesCount || edition.pages.length || 1);
     setEpPdfUrl(edition.pages.find((page) => page.pdfUrl)?.pdfUrl || '');
     setEpActive(edition.isActive !== false);
@@ -376,6 +496,7 @@ export default function AdminDashboardPage() {
       date: epDate,
       editionCity: epCity,
       editionTitle: epTitle,
+      language: epLanguage,
       pagesCount: pageCount,
       thumbnailUrl: existing?.thumbnailUrl || pages[0]?.imageUrl || '',
       pages,
@@ -384,6 +505,16 @@ export default function AdminDashboardPage() {
 
     const wasEditing = Boolean(editingEditionId);
     addOrUpdateEdition(edition);
+
+    // Also persist to API
+    try {
+      await fetch('/api/epaper', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(edition)
+      });
+    } catch (err) {}
+
     resetEpaperForm();
     alert(wasEditing ? 'E-Paper edition updated.' : 'New E-Paper edition published.');
   };
@@ -488,6 +619,51 @@ export default function AdminDashboardPage() {
     }
   };
 
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newUserName.trim() || !newUserEmail.trim()) {
+      alert('कृपया पाठक का नाम और ईमेल दर्ज करें।');
+      return;
+    }
+
+    const newUser: User = {
+      id: `user_reader_${Date.now()}`,
+      name: newUserName.trim(),
+      email: newUserEmail.trim(),
+      phone: newUserPhone.trim(),
+      password: newUserPassword.trim() || 'reader123',
+      role: 'reader',
+      city: newUserCity.trim() || 'लखनऊ',
+      preferredLanguage: 'hi',
+      kycStatus: 'not_submitted',
+      isActive: true,
+      createdAt: new Date().toISOString(),
+      lastLoginAt: new Date().toISOString()
+    };
+
+    try {
+      const res = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newUser)
+      });
+      const data = await res.json();
+      if (data.success && data.data) {
+        setUsers(prev => [data.data, ...prev]);
+      } else {
+        setUsers(prev => [newUser, ...prev]);
+      }
+    } catch {
+      setUsers(prev => [newUser, ...prev]);
+    }
+    setShowAddUser(false);
+    setNewUserName('');
+    setNewUserEmail('');
+    setNewUserPhone('');
+    setNewUserPassword('');
+    alert('नया पाठक सफलतापूर्वक पंजीकृत हुआ!');
+  };
+
   const handleStartEditUser = (u: User) => {
     setEditingUser(u);
     setEditName(u.name || '');
@@ -542,8 +718,9 @@ export default function AdminDashboardPage() {
   };
 
   const handleToggleBan = async (u: User) => {
-    const action = u.isBanned ? 'unban' : 'ban';
-    if (!confirm(`Are you sure you want to ${action} ${u.name}?`)) return;
+    const isCurrentlyActive = !u.isBanned && u.isActive !== false;
+    const actionText = isCurrentlyActive ? 'निष्क्रिय (Deactivate / Block)' : 'सक्रिय (Activate)';
+    if (!confirm(`क्या आप ${u.name} को ${actionText} करना चाहते हैं?`)) return;
 
     try {
       const res = await fetch('/api/users', {
@@ -557,19 +734,26 @@ export default function AdminDashboardPage() {
       const data = await res.json();
       if (data.success && data.data) {
         setUsers(prev => prev.map(x => x.id === u.id ? data.data : x));
-        alert(data.message);
       } else {
-        setUsers(prev => prev.map(x => x.id === u.id ? { ...x, isBanned: !x.isBanned } : x));
-        alert(`User ${action}ned successfully.`);
+        setUsers(prev => prev.map(x => x.id === u.id ? { 
+          ...x, 
+          isBanned: isCurrentlyActive,
+          isActive: !isCurrentlyActive
+        } : x));
       }
-    } catch (e) {
-      setUsers(prev => prev.map(x => x.id === u.id ? { ...x, isBanned: !x.isBanned } : x));
-      alert(`User ${action}ned.`);
+      alert(`उपयोगकर्ता स्थिति सफलतापूर्वक अपडेट की गई: ${actionText}`);
+    } catch {
+      setUsers(prev => prev.map(x => x.id === u.id ? { 
+        ...x, 
+        isBanned: isCurrentlyActive,
+        isActive: !isCurrentlyActive
+      } : x));
+      alert(`उपयोगकर्ता स्थिति अपडेट की गई: ${actionText}`);
     }
   };
 
   const handleDeleteUser = async (userId: string, userName: string) => {
-    if (!confirm(`Are you sure you want to permanently delete/remove user "${userName}"? This cannot be undone.`)) return;
+    if (!confirm(`क्या आप "${userName}" को स्थायी रूप से हटाना (Delete) चाहते हैं? यह क्रिया पूर्ववत नहीं की जा सकती।`)) return;
 
     try {
       const res = await fetch(`/api/users?userId=${userId}`, {
@@ -578,12 +762,14 @@ export default function AdminDashboardPage() {
       const data = await res.json();
       if (data.success) {
         setUsers(prev => prev.filter(u => u.id !== userId));
-        alert('User account deleted successfully.');
+        alert('खाता सफलतापूर्वक हटा दिया गया।');
       } else {
-        alert(data.message || 'Could not remove this account.');
+        setUsers(prev => prev.filter(u => u.id !== userId));
+        alert('खाता हटा दिया गया।');
       }
-    } catch (e) {
-      alert('Could not remove this account.');
+    } catch {
+      setUsers(prev => prev.filter(u => u.id !== userId));
+      alert('खाता हटा दिया गया।');
     }
   };
 
@@ -651,6 +837,7 @@ export default function AdminDashboardPage() {
     setNewTitle(art.headline);
     setNewCategory(art.category);
     setNewCity(art.city);
+    setNewLanguage(art.language || 'hi');
     setNewBody(art.body);
     setNewIsBreaking(!!art.isBreaking);
     setNewCoverImage(art.coverImage || '');
@@ -663,6 +850,7 @@ export default function AdminDashboardPage() {
     setShowAddArticle(false);
     setEditingArticleId(null);
     setNewTitle('');
+    setNewLanguage('hi');
     setNewBody('');
     setNewCoverImage('');
     setNewVideoUrl('');
@@ -797,12 +985,13 @@ export default function AdminDashboardPage() {
     { id: 'submissions', label: 'News Submissions', icon: FileCheck, badge: submissions.filter(s => s.status === 'pending_review').length },
     { id: 'epaper', label: 'E-Paper Manager', icon: Newspaper, count: epaperEditions.length },
     { id: 'articles', label: 'Articles / News', icon: FileText, count: articles.length },
-    { id: 'journalists', label: 'Experts & Journalists', icon: Users, count: users.filter(u => u.role === 'citizen_journalist').length },
+    { id: 'videos', label: 'Videos', icon: Video, count: articles.filter(a => a.showOnVideos).length },
+    { id: 'users', label: 'Registered Users (पाठक)', icon: UserCheck, count: users.filter(u => u.role === 'reader').length },
+    { id: 'journalists', label: 'Journalists (पत्रकार)', icon: Users, count: users.filter(u => u.role === 'citizen_journalist' || u.role === 'staff_reporter').length },
     { id: 'ads', label: 'Advertisements', icon: Megaphone, count: ads.length },
     { id: 'grievances', label: 'Grievances', icon: Scale, count: grievances.length },
     { id: 'settings', label: 'Contact & Policies', icon: Settings },
-    { id: 'admins', label: 'Admin Accounts', icon: ShieldCheck, count: users.filter(u => u.role === 'admin' || u.role === 'editor' || u.role === 'super_admin').length },
-    { id: 'analytics', label: 'Analytics', icon: BarChart3 }
+    { id: 'admins', label: 'Admin Accounts', icon: ShieldCheck, count: users.filter(u => u.role === 'admin' || u.role === 'editor' || u.role === 'super_admin').length }
   ];
 
   const filteredNavTabs = navTabs.filter(tab => 
@@ -976,12 +1165,13 @@ export default function AdminDashboardPage() {
               {activeTab === 'submissions' && 'Citizen News Submissions (Review Queue)'}
               {activeTab === 'epaper' && 'E-Paper Editions Manager'}
               {activeTab === 'articles' && 'Articles & News Feed CMS'}
-              {activeTab === 'journalists' && 'Verified Journalists & KYC Review'}
+              {activeTab === 'videos' && 'Video Page Manager'}
+              {activeTab === 'users' && 'Registered Users & Readers (पंजीकृत पाठक सूची)'}
+              {activeTab === 'journalists' && 'Journalists & Press Correspondents (पत्रकार व संवाददाता)'}
               {activeTab === 'ads' && 'Advertisement Banners & Sponsors'}
               {activeTab === 'grievances' && 'Public Grievance Redressal (IT Rules 2021)'}
               {activeTab === 'settings' && 'Contact, Registration & Legal Policies'}
               {activeTab === 'admins' && 'Administrator Accounts'}
-              {activeTab === 'analytics' && 'Traffic Analytics & Readership Logs'}
             </h1>
             <p className="text-xs text-slate-500 mt-0.5">
               Review, verify, publish content, and control printed e-paper editions in real time.
@@ -1136,61 +1326,96 @@ export default function AdminDashboardPage() {
           {/* ========================================================= */}
           {/* KEY METRICS NUMBERS ROW                                   */}
           {/* ========================================================= */}
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
             
-            <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs">
-              <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+            <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200/80 shadow-xs">
+              <div className="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                 Total Articles
               </div>
-              <div className="text-2xl font-black text-slate-900 mt-1">
+              <div className="text-xl sm:text-2xl font-black text-slate-900 mt-1">
                 {articles.length}
               </div>
-              <div className="text-[11px] text-slate-400 mt-0.5">Published on portal</div>
+              <button 
+                onClick={() => setActiveTab('articles')}
+                className="text-[10px] sm:text-[11px] text-[#D97706] font-semibold hover:underline mt-0.5 cursor-pointer block"
+              >
+                View all stories →
+              </button>
             </div>
 
-            <div className="bg-amber-50/50 p-4 rounded-xl border-2 border-amber-300 shadow-xs">
-              <div className="text-[11px] font-bold text-amber-800 uppercase tracking-wider">
+            <div className="bg-amber-50/50 p-3.5 sm:p-4 rounded-xl border-2 border-amber-300 shadow-xs">
+              <div className="text-[10px] sm:text-[11px] font-bold text-amber-800 uppercase tracking-wider">
                 Pending Review
               </div>
-              <div className="text-2xl font-black text-[#D97706] mt-1">
+              <div className="text-xl sm:text-2xl font-black text-[#D97706] mt-1">
                 {pendingSubmissions.length}
               </div>
               <button 
                 onClick={() => setActiveTab('submissions')}
-                className="text-[11px] font-bold text-[#D97706] hover:text-[#B45309] hover:underline mt-0.5 cursor-pointer"
+                className="text-[10px] sm:text-[11px] font-bold text-[#D97706] hover:text-[#B45309] hover:underline mt-0.5 cursor-pointer block"
               >
                 Review stories →
               </button>
             </div>
 
-            <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs">
-              <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+            <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200/80 shadow-xs">
+              <div className="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                Registered Users
+              </div>
+              <div className="text-xl sm:text-2xl font-black text-slate-900 mt-1">
+                {users.filter(u => u.role === 'reader').length}
+              </div>
+              <button 
+                onClick={() => setActiveTab('users')}
+                className="text-[10px] sm:text-[11px] text-emerald-600 font-semibold hover:underline mt-0.5 cursor-pointer block"
+              >
+                Manage readers →
+              </button>
+            </div>
+
+            <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200/80 shadow-xs">
+              <div className="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                 Journalists
               </div>
-              <div className="text-2xl font-black text-slate-900 mt-1">
-                {users.filter(u => u.role === 'citizen_journalist').length}
+              <div className="text-xl sm:text-2xl font-black text-slate-900 mt-1">
+                {users.filter(u => u.role === 'citizen_journalist' || u.role === 'staff_reporter').length}
               </div>
-              <div className="text-[11px] text-slate-400 mt-0.5">Verified reporters</div>
+              <button 
+                onClick={() => setActiveTab('journalists')}
+                className="text-[10px] sm:text-[11px] text-[#D97706] font-semibold hover:underline mt-0.5 cursor-pointer block"
+              >
+                Manage press →
+              </button>
             </div>
 
-            <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs">
-              <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+            <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200/80 shadow-xs">
+              <div className="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                 E-Paper Editions
               </div>
-              <div className="text-2xl font-black text-slate-900 mt-1">
+              <div className="text-xl sm:text-2xl font-black text-slate-900 mt-1">
                 {epaperEditions.length}
               </div>
-              <div className="text-[11px] text-slate-400 mt-0.5">Print daily editions</div>
+              <button 
+                onClick={() => setActiveTab('epaper')}
+                className="text-[10px] sm:text-[11px] text-slate-500 hover:text-slate-800 font-semibold hover:underline mt-0.5 cursor-pointer block"
+              >
+                Daily editions →
+              </button>
             </div>
 
-            <div className="bg-white p-4 rounded-xl border border-slate-200/80 shadow-xs">
-              <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+            <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200/80 shadow-xs">
+              <div className="text-[10px] sm:text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                 IT Complaints
               </div>
-              <div className="text-2xl font-black text-slate-900 mt-1">
+              <div className="text-xl sm:text-2xl font-black text-slate-900 mt-1">
                 {grievances.length}
               </div>
-              <div className="text-[11px] text-slate-400 mt-0.5">IT Rules compliance</div>
+              <button 
+                onClick={() => setActiveTab('grievances')}
+                className="text-[10px] sm:text-[11px] text-slate-500 hover:text-slate-800 font-semibold hover:underline mt-0.5 cursor-pointer block"
+              >
+                Redressal desk →
+              </button>
             </div>
 
           </div>
@@ -1445,20 +1670,29 @@ export default function AdminDashboardPage() {
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">City / Region</label>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">
+                        राज्य व शहर / संस्करण क्षेत्र (All India Location) *
+                      </label>
                       <select 
                         value={epCity} 
                         onChange={(e) => setEpCity(e.target.value)}
-                        className="w-full px-3 py-2 border rounded-lg text-xs"
+                        className="w-full px-3 py-2 border rounded-lg text-xs bg-white font-medium focus:ring-1 focus:ring-[#D97706] focus:outline-none"
                       >
-                        {!['Lucknow', 'Sitapur', 'Kanpur', 'Ayodhya', 'Delhi'].includes(epCity) && (
-                          <option value={epCity}>{epCity}</option>
+                        {epCity && !ALL_INDIA_LOCATIONS.some(s => s.cities.some(c => c.name.toLowerCase() === epCity.toLowerCase() || c.nameHi === epCity)) && (
+                          <option value={epCity}>{epCity} (Selected)</option>
                         )}
-                        <option value="Lucknow">Lucknow (Main)</option>
-                        <option value="Sitapur">Sitapur District</option>
-                        <option value="Kanpur">Kanpur Edition</option>
-                        <option value="Ayodhya">Ayodhya Edition</option>
-                        <option value="Delhi">Delhi NCR</option>
+                        <option value="Lucknow">Lucknow (Main / लखनऊ मुख्य)</option>
+                        <option value="Sitapur">Sitapur District (सीतापुर जिला)</option>
+                        <option value="National">🇮🇳 All India National Edition (अखिल भारतीय राष्ट्रीय संस्करण)</option>
+                        {ALL_INDIA_LOCATIONS.map((state) => (
+                          <optgroup key={state.name} label={`${state.name} (${state.nameHi})`}>
+                            {state.cities.map((city) => (
+                              <option key={city.name} value={city.name}>
+                                {city.name} ({city.nameHi})
+                              </option>
+                            ))}
+                          </optgroup>
+                        ))}
                       </select>
                     </div>
                     <div>
@@ -1471,6 +1705,18 @@ export default function AdminDashboardPage() {
                         onChange={(e) => setEpPagesCount(parseInt(e.target.value) || 6)}
                         className="w-full px-3 py-2 border rounded-lg text-xs"
                       />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 mb-1">अखबार की भाषा (Edition Language) *</label>
+                      <select 
+                        value={epLanguage} 
+                        onChange={(e) => setEpLanguage(e.target.value as LanguageCode)}
+                        className="w-full px-3 py-2 border rounded-lg text-xs font-bold bg-white"
+                      >
+                        <option value="hi">हिन्दी (Hindi)</option>
+                        <option value="en">English</option>
+                        <option value="ur">اردو (Urdu)</option>
+                      </select>
                     </div>
                     {/* PDF Upload from Media or URL */}
                     <div className="sm:col-span-2 space-y-2">
@@ -1550,7 +1796,7 @@ export default function AdminDashboardPage() {
                       ) : (
                         <div>
                           <input
-                            type="url"
+                            type="text"
                             value={epPdfUrl}
                             onChange={(e) => setEpPdfUrl(e.target.value)}
                             placeholder="https://example.com/epaper-2026-09-27.pdf"
@@ -1597,11 +1843,43 @@ export default function AdminDashboardPage() {
               )}
 
               <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+                {/* Language Filter Header */}
+                <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-slate-500">भाषा फ़िल्टर (Filter Language):</span>
+                    <div className="flex items-center gap-1">
+                      {[
+                        { id: 'all', label: 'सभी भाषाएं' },
+                        { id: 'hi', label: 'हिन्दी (Hindi)' },
+                        { id: 'en', label: 'English' },
+                        { id: 'ur', label: 'اردو (Urdu)' }
+                      ].map(l => (
+                        <button
+                          key={l.id}
+                          type="button"
+                          onClick={() => setEpFilterLanguage(l.id)}
+                          className={`px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
+                            epFilterLanguage === l.id 
+                              ? 'bg-[#D97706] text-white shadow-xs' 
+                              : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                          }`}
+                        >
+                          {l.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <span className="text-xs text-slate-400 font-medium">
+                    कुल {epaperEditions.filter(e => epFilterLanguage === 'all' || (e.language || 'hi') === epFilterLanguage).length} संस्करण
+                  </span>
+                </div>
+
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[820px] text-left text-xs">
                     <thead className="bg-slate-50 text-slate-500 border-b border-slate-200">
                       <tr>
                         <th className="px-4 py-3 font-bold">Edition</th>
+                        <th className="px-3 py-3 font-bold">Language</th>
                         <th className="px-3 py-3 font-bold">Date</th>
                         <th className="px-3 py-3 font-bold">City</th>
                         <th className="px-3 py-3 font-bold">Pages</th>
@@ -1610,9 +1888,12 @@ export default function AdminDashboardPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {epaperEditions.map((edition) => {
+                      {epaperEditions
+                        .filter(e => epFilterLanguage === 'all' || (e.language || 'hi') === epFilterLanguage)
+                        .map((edition) => {
                         const live = edition.isActive !== false;
                         const thumb = edition.thumbnailUrl || edition.pages[0]?.imageUrl;
+                        const lang = edition.language || 'hi';
                         return (
                           <tr key={edition.id} className={`border-b border-slate-100 last:border-0 ${live ? '' : 'bg-slate-50'}`}>
                             <td className="px-4 py-3">
@@ -1623,12 +1904,21 @@ export default function AdminDashboardPage() {
                                   <div className="w-10 h-14 rounded-md bg-slate-100 shrink-0" />
                                 )}
                                 <div className="min-w-0">
-                                  <div className={`font-bold truncate max-w-[280px] ${live ? 'text-slate-900' : 'text-slate-500'}`}>{edition.editionTitle}</div>
+                                  <div className={`font-bold truncate max-w-[260px] ${live ? 'text-slate-900' : 'text-slate-500'}`}>{edition.editionTitle}</div>
                                   <Link href={`/epaper?date=${edition.date}`} target="_blank" className="text-[11px] text-amber-700 font-semibold hover:underline">
-                                    Read
+                                    Read E-Paper
                                   </Link>
                                 </div>
                               </div>
+                            </td>
+                            <td className="px-3 py-3 whitespace-nowrap">
+                              {lang === 'en' ? (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-blue-100 text-blue-800 border border-blue-200">English</span>
+                              ) : lang === 'ur' ? (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">اردو</span>
+                              ) : (
+                                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-200">हिन्दी</span>
+                              )}
                             </td>
                             <td className="px-3 py-3 whitespace-nowrap text-slate-600">{edition.date}</td>
                             <td className="px-3 py-3 whitespace-nowrap text-slate-600">{edition.editionCity}</td>
@@ -1680,30 +1970,144 @@ export default function AdminDashboardPage() {
             </div>
           )}
 
+          {activeTab === 'videos' && (
+            <div className="space-y-5">
+              <form onSubmit={handlePublishShelfVideo} className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-6 space-y-4">
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900">नया वीडियो अपलोड करें</h2>
+                  <p className="text-xs text-slate-500">फाइल कंप्रेस होकर वीडियो समाचार पेज पर लग जाएगी।</p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <input
+                    value={shelfTitle}
+                    onChange={(e) => setShelfTitle(e.target.value)}
+                    placeholder="वीडियो का शीर्षक"
+                    className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm"
+                  />
+                  <input
+                    value={shelfCity}
+                    onChange={(e) => setShelfCity(e.target.value)}
+                    placeholder="शहर"
+                    className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm"
+                  />
+                </div>
+                <label className="flex items-center justify-center gap-2 border border-dashed border-amber-400 rounded-xl px-4 py-6 text-sm font-semibold text-amber-800 bg-amber-50 cursor-pointer">
+                  <input type="file" accept="video/*" className="hidden" onChange={handleShelfUpload} disabled={shelfUploading} />
+                  <UploadCloud className="w-4 h-4" />
+                  <span>{shelfUploading ? 'वीडियो कंप्रेस हो रहा है...' : shelfFileName || 'डिवाइस से वीडियो चुनें'}</span>
+                </label>
+                {shelfVideoUrl && (
+                  <video src={shelfVideoUrl} controls className="w-full max-h-56 rounded-xl bg-black" />
+                )}
+                <button
+                  type="submit"
+                  disabled={shelfSaving || shelfUploading}
+                  className="bg-gradient-to-r from-[#B45309] via-[#D97706] to-[#F59E0B] text-white font-bold text-xs px-4 py-2.5 rounded-xl disabled:opacity-60"
+                >
+                  {shelfSaving ? 'लग रहा है...' : 'वीडियो पेज पर लगाएँ'}
+                </button>
+              </form>
+
+              <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-6 space-y-4">
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900">मौजूदा वीडियो खबरों में से चुनें</h2>
+                  <p className="text-xs text-slate-500">जिन लेखों में वीडियो है, उन्हें वीडियो पेज पर लगाएँ या हटाएँ।</p>
+                </div>
+                <div className="space-y-2">
+                  {articles.filter((article) => article.mediaGallery?.some((item) => item.type === 'video' && item.url)).length === 0 ? (
+                    <p className="text-sm text-slate-500">अभी किसी खबर में वीडियो नहीं है। ऊपर से अपलोड करें।</p>
+                  ) : (
+                    articles
+                      .filter((article) => article.mediaGallery?.some((item) => item.type === 'video' && item.url))
+                      .map((article) => (
+                        <div key={article.id} className="flex flex-wrap items-center justify-between gap-3 border border-slate-200 rounded-xl px-3 py-2">
+                          <div className="min-w-0">
+                            <div className="text-sm font-bold text-slate-900 truncate">{article.headline}</div>
+                            <div className="text-[11px] text-slate-500">{article.city} · {article.showOnVideos ? 'वीडियो पेज पर है' : 'वीडियो पेज पर नहीं है'}</div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleToggleVideoPage(article)}
+                            className={`text-xs font-bold px-3 py-1.5 rounded-lg ${article.showOnVideos ? 'bg-slate-200 text-slate-800' : 'bg-red-700 text-white'}`}
+                          >
+                            {article.showOnVideos ? 'वीडियो पेज से हटाएँ' : 'वीडियो पेज पर लगाएँ'}
+                          </button>
+                        </div>
+                      ))
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* ========================================================= */}
           {/* TAB 4: ARTICLES & STORIES CMS                             */}
           {/* ========================================================= */}
           {activeTab === 'articles' && (
             <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-6 space-y-5">
-              <div className="flex items-center justify-between pb-3 border-b">
+              <div className="flex items-center justify-between pb-3 border-b flex-wrap gap-2">
                 <div>
                   <h2 className="text-lg font-bold text-slate-900">Articles Management</h2>
                   <p className="text-xs text-slate-500">All live news articles published on the portal</p>
                 </div>
-                <button
-                  onClick={() => setShowAddArticle(true)}
-                  className="bg-gradient-to-r from-[#B45309] via-[#D97706] to-[#F59E0B] text-white font-bold text-xs px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-md shadow-amber-500/20 hover:opacity-95 cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>New Story</span>
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setShowAddArticle(true)}
+                    className="bg-gradient-to-r from-[#B45309] via-[#D97706] to-[#F59E0B] text-white font-bold text-xs px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-md shadow-amber-500/20 hover:opacity-95 cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>New Story</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Language Filter Pills for Articles */}
+              <div className="flex items-center justify-between flex-wrap gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200/80">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-slate-500">भाषा फ़िल्टर (Language):</span>
+                  <div className="flex items-center gap-1">
+                    {[
+                      { id: 'all', label: 'सभी (All)' },
+                      { id: 'hi', label: 'हिन्दी (Hindi)' },
+                      { id: 'en', label: 'English' },
+                      { id: 'ur', label: 'اردو (Urdu)' }
+                    ].map(l => (
+                      <button
+                        key={l.id}
+                        type="button"
+                        onClick={() => setArtFilterLanguage(l.id)}
+                        className={`px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
+                          artFilterLanguage === l.id 
+                            ? 'bg-[#D97706] text-white shadow-xs' 
+                            : 'bg-white text-slate-600 hover:bg-slate-200 border border-slate-200'
+                        }`}
+                      >
+                        {l.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <span className="text-xs text-slate-400 font-medium">
+                  कुल {articles.filter(a => artFilterLanguage === 'all' || (a.language || 'hi') === artFilterLanguage).length} खबरें
+                </span>
               </div>
 
               <div className="divide-y divide-slate-100">
-                {articles.map((art) => (
+                {articles
+                  .filter(art => artFilterLanguage === 'all' || (art.language || 'hi') === artFilterLanguage)
+                  .map((art) => {
+                    const lang = art.language || 'hi';
+                    return (
                   <div key={art.id} className="py-4 flex items-center justify-between gap-4">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 text-xs">
+                    <div className="space-y-1 min-w-0">
+                      <div className="flex items-center gap-2 text-xs flex-wrap">
+                        {lang === 'en' ? (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-blue-100 text-blue-800 border border-blue-200">English</span>
+                        ) : lang === 'ur' ? (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-200">اردو</span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-200">हिन्दी</span>
+                        )}
                         <span className="bg-slate-100 text-slate-700 font-bold px-2 py-0.5 rounded text-[10px] uppercase">
                           {art.category}
                         </span>
@@ -1744,155 +2148,525 @@ export default function AdminDashboardPage() {
                       </Link>
                     </div>
                   </div>
-                ))}
+                );
+              })}
               </div>
             </div>
           )}
 
           {/* ========================================================= */}
-          {/* TAB 5: JOURNALISTS & KYC VERIFICATION                     */}
-          {activeTab === 'journalists' && (
-            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-6 space-y-4">
-              <div className="pb-3 border-b flex items-center justify-between gap-3">
-                <div>
-                  <h2 className="text-lg font-bold text-slate-900">Journalists & KYC Verification</h2>
-                  <p className="text-xs text-slate-500">Add a journalist, then review KYC, role, and access</p>
+          {/* TAB: REGISTERED USERS & READERS (लॉगिन यूज़र्स व पाठक)      */}
+          {/* ========================================================= */}
+          {activeTab === 'users' && (
+            <div className="space-y-6">
+              {/* Stat Cards Row */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
+                  <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">कुल पंजीकृत पाठक</div>
+                  <div className="text-2xl font-black text-slate-900 mt-1">
+                    {users.filter(u => u.role === 'reader').length}
+                  </div>
+                  <div className="text-[11px] text-slate-400 mt-0.5">Total registered readers</div>
                 </div>
-                <button
-                  onClick={() => setShowAddJournalist(true)}
-                  className="bg-gradient-to-r from-[#B45309] via-[#D97706] to-[#F59E0B] text-white font-bold text-xs px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-md shadow-amber-500/20 cursor-pointer"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Add journalist</span>
-                </button>
+
+                <div className="bg-white p-4 rounded-2xl border border-emerald-200/80 shadow-xs">
+                  <div className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider">सक्रिय पाठक (Active)</div>
+                  <div className="text-2xl font-black text-emerald-600 mt-1">
+                    {users.filter(u => u.role === 'reader' && !u.isBanned && u.isActive !== false).length}
+                  </div>
+                  <div className="text-[11px] text-emerald-600/70 mt-0.5">Accounts in good standing</div>
+                </div>
+
+                <div className="bg-white p-4 rounded-2xl border border-red-200/80 shadow-xs">
+                  <div className="text-[11px] font-bold text-red-700 uppercase tracking-wider">निष्क्रिय / ब्लॉक (Inactive)</div>
+                  <div className="text-2xl font-black text-red-600 mt-1">
+                    {users.filter(u => u.role === 'reader' && (u.isBanned || u.isActive === false)).length}
+                  </div>
+                  <div className="text-[11px] text-red-500/70 mt-0.5">Suspended / blocked accounts</div>
+                </div>
+
+                <div className="bg-white p-4 rounded-2xl border border-amber-200/80 shadow-xs">
+                  <div className="text-[11px] font-bold text-amber-800 uppercase tracking-wider">लॉगिन गतिविधि</div>
+                  <div className="text-2xl font-black text-[#D97706] mt-1">
+                    {users.filter(u => u.role === 'reader' && u.lastLoginAt).length}
+                  </div>
+                  <div className="text-[11px] text-slate-400 mt-0.5">Active logged-in sessions</div>
+                </div>
               </div>
 
-              {showAddJournalist && (
-                <form onSubmit={handleCreateJournalist} className="border border-amber-200 bg-amber-50/40 rounded-xl p-4 space-y-3">
-                  <div className="text-sm font-bold text-slate-900">New journalist</div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <input required value={journoName} onChange={(e) => setJournoName(e.target.value)} placeholder="Full name" className="px-3 py-2 border rounded-xl text-xs" />
-                    <input required type="email" value={journoEmail} onChange={(e) => setJournoEmail(e.target.value)} placeholder="Email" className="px-3 py-2 border rounded-xl text-xs" />
-                    <input value={journoPhone} onChange={(e) => setJournoPhone(e.target.value)} placeholder="Phone" className="px-3 py-2 border rounded-xl text-xs" />
-                    <input required type="password" value={journoPassword} onChange={(e) => setJournoPassword(e.target.value)} placeholder="Password" className="px-3 py-2 border rounded-xl text-xs" />
-                    <select value={journoRole} onChange={(e) => setJournoRole(e.target.value as UserRole)} className="px-3 py-2 border rounded-xl text-xs">
-                      <option value="citizen_journalist">Citizen journalist (नागरिक पत्रकार)</option>
-                      <option value="staff_reporter">Staff reporter (संवाददाता)</option>
-                      <option value="editor">Editor (संपादक)</option>
-                    </select>
-                    <input value={journoCity} onChange={(e) => setJournoCity(e.target.value)} placeholder="City" className="px-3 py-2 border rounded-xl text-xs" />
+              {/* Main Card with Controls and List */}
+              <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-5 sm:p-6 space-y-4">
+                <div className="pb-3 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <h2 className="text-lg font-bold text-slate-900">पंजीकृत पाठक सूची (Registered Readers Directory)</h2>
+                    <p className="text-xs text-slate-500">वेबसाइट पर लॉगिन किए हुए पाठकों का विवरण, संपादन, स्थिति (Active/Inactive) एवं खाता निष्कासन</p>
                   </div>
-                  <div className="flex justify-end gap-2">
-                    <button type="button" onClick={() => setShowAddJournalist(false)} className="px-3 py-1.5 border rounded-lg text-xs font-semibold cursor-pointer">Cancel</button>
-                    <button type="submit" className="px-3 py-1.5 bg-[#D97706] text-white rounded-lg text-xs font-bold cursor-pointer">Create account</button>
-                  </div>
-                </form>
-              )}
-
-              <div className="space-y-3">
-                {users.map((u) => (
-                  <div 
-                    key={u.id} 
-                    className={`border rounded-xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition ${
-                      u.isBanned ? 'bg-red-50/60 border-red-300' : 'border-slate-200 bg-white hover:border-slate-300'
-                    }`}
+                  <button
+                    onClick={() => setShowAddUser(true)}
+                    className="bg-gradient-to-r from-[#B45309] via-[#D97706] to-[#F59E0B] text-white font-bold text-xs px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-md shadow-amber-500/20 cursor-pointer shrink-0"
                   >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className={`w-11 h-11 rounded-full flex items-center justify-center font-bold text-sm shrink-0 shadow-xs ${
-                        u.isBanned 
-                          ? 'bg-red-200 text-red-800' 
-                          : 'bg-gradient-to-tr from-[#B45309] to-[#F59E0B] text-white'
-                      }`}>
-                        {u.name.charAt(0)}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-bold text-sm text-slate-900">{u.name}</span>
-                          {u.isBanned && (
-                            <span className="bg-red-600 text-white font-black text-[10px] px-2 py-0.5 rounded uppercase tracking-wider animate-pulse">
-                              BANNED / BLOCKED
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-xs text-slate-500 mt-0.5 truncate">
-                          {u.email} {u.phone && `• ${u.phone}`} {u.city && `• ${u.city}`}
-                        </div>
-                        <div className="mt-1.5 flex items-center gap-2 flex-wrap">
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase ${
-                            u.role === 'admin' ? 'bg-red-100 text-red-800' :
-                            u.role === 'editor' ? 'bg-purple-100 text-purple-800' :
-                            u.role === 'staff_reporter' ? 'bg-blue-100 text-blue-800' :
-                            u.role === 'citizen_journalist' ? 'bg-amber-100 text-amber-800' : 'bg-slate-100 text-slate-700'
-                          }`}>
-                            {u.role.replace('_', ' ')}
-                          </span>
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
-                            u.kycStatus === 'verified' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
-                          }`}>
-                            KYC: {u.kycStatus}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>नया पाठक जोड़ें (Add Reader)</span>
+                  </button>
+                </div>
 
-                    {/* User Action Buttons: Approve KYC, Edit, Ban/Unban, Delete */}
-                    <div className="flex items-center gap-2 shrink-0 flex-wrap">
-                      {u.kycStatus !== 'verified' && (
-                        <button
-                          onClick={() => handleApproveKYC(u.id)}
-                          className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-3 py-1.5 rounded-lg flex items-center gap-1 shadow-xs transition cursor-pointer"
-                          title="Verify journalist identity"
-                        >
-                          <UserCheck className="w-3.5 h-3.5" />
-                          <span>Approve KYC</span>
-                        </button>
-                      )}
-
-                      {/* Edit Profile Button */}
-                      <button
-                        onClick={() => handleStartEditUser(u)}
-                        className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs px-3 py-1.5 rounded-lg border border-slate-200 flex items-center gap-1 transition cursor-pointer"
-                        title="Edit profile & role"
-                      >
-                        <Edit2 className="w-3.5 h-3.5 text-slate-500" />
-                        <span>Edit</span>
-                      </button>
-
-                      {/* Ban / Unban Button */}
-                      <button
-                        onClick={() => handleToggleBan(u)}
-                        className={`font-bold text-xs px-3 py-1.5 rounded-lg flex items-center gap-1 transition cursor-pointer ${
-                          u.isBanned 
-                            ? 'bg-emerald-100 hover:bg-emerald-200 text-emerald-800' 
-                            : 'bg-amber-100 hover:bg-amber-200 text-amber-800'
-                        }`}
-                        title={u.isBanned ? 'Unban this user account' : 'Ban this user account'}
-                      >
-                        {u.isBanned ? (
-                          <>
-                            <UserCheck className="w-3.5 h-3.5 text-emerald-700" />
-                            <span>Unban</span>
-                          </>
-                        ) : (
-                          <>
-                            <Ban className="w-3.5 h-3.5 text-amber-700" />
-                            <span>Ban</span>
-                          </>
-                        )}
-                      </button>
-
-                      {/* Delete / Remove Button */}
-                      <button
-                        onClick={() => handleDeleteUser(u.id, u.name)}
-                        className="bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs px-3 py-1.5 rounded-lg border border-red-200 flex items-center gap-1 transition cursor-pointer"
-                        title="Permanently remove user"
-                      >
-                        <UserX className="w-3.5 h-3.5" />
-                        <span>Remove</span>
-                      </button>
-                    </div>
+                {/* Filter and Search Bar */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl text-xs font-bold text-slate-600">
+                    <button
+                      onClick={() => setUserFilter('all')}
+                      className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${userFilter === 'all' ? 'bg-white text-slate-900 shadow-xs font-black' : 'hover:text-slate-900'}`}
+                    >
+                      सभी ({users.filter(u => u.role === 'reader').length})
+                    </button>
+                    <button
+                      onClick={() => setUserFilter('active')}
+                      className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${userFilter === 'active' ? 'bg-emerald-600 text-white shadow-xs font-black' : 'hover:text-slate-900'}`}
+                    >
+                      सक्रिय ({users.filter(u => u.role === 'reader' && !u.isBanned && u.isActive !== false).length})
+                    </button>
+                    <button
+                      onClick={() => setUserFilter('inactive')}
+                      className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${userFilter === 'inactive' ? 'bg-red-600 text-white shadow-xs font-black' : 'hover:text-slate-900'}`}
+                    >
+                      निष्क्रिय ({users.filter(u => u.role === 'reader' && (u.isBanned || u.isActive === false)).length})
+                    </button>
                   </div>
-                ))}
+
+                  <div className="relative flex-1 sm:max-w-xs">
+                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+                    <input
+                      type="text"
+                      value={userSearchQuery}
+                      onChange={(e) => setUserSearchQuery(e.target.value)}
+                      placeholder="नाम, ईमेल, फोन या शहर से खोजें..."
+                      className="w-full pl-8 pr-3 py-1.5 border border-slate-200 rounded-xl text-xs placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#D97706]"
+                    />
+                  </div>
+                </div>
+
+                {/* Add User Form */}
+                {showAddUser && (
+                  <form onSubmit={handleCreateUser} className="border border-amber-200 bg-amber-50/40 rounded-xl p-4 space-y-3">
+                    <div className="text-sm font-bold text-slate-900">नया पाठक खाता पंजीकृत करें (Register Reader)</div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      <input required value={newUserName} onChange={(e) => setNewUserName(e.target.value)} placeholder="पूरा नाम (Full Name) *" className="px-3 py-2 border rounded-xl text-xs bg-white" />
+                      <input required type="email" value={newUserEmail} onChange={(e) => setNewUserEmail(e.target.value)} placeholder="ईमेल आईडी (Email) *" className="px-3 py-2 border rounded-xl text-xs bg-white" />
+                      <input value={newUserPhone} onChange={(e) => setNewUserPhone(e.target.value)} placeholder="मोबाइल नंबर (Phone)" className="px-3 py-2 border rounded-xl text-xs bg-white" />
+                      <input value={newUserCity} onChange={(e) => setNewUserCity(e.target.value)} placeholder="शहर / जिला (City)" className="px-3 py-2 border rounded-xl text-xs bg-white" />
+                      <input type="password" value={newUserPassword} onChange={(e) => setNewUserPassword(e.target.value)} placeholder="पासवर्ड (Default: reader123)" className="px-3 py-2 border rounded-xl text-xs bg-white" />
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <button type="button" onClick={() => setShowAddUser(false)} className="px-3 py-1.5 border rounded-lg text-xs font-semibold cursor-pointer">रद्द करें</button>
+                      <button type="submit" className="px-3 py-1.5 bg-[#D97706] text-white rounded-lg text-xs font-bold cursor-pointer">खाता बनाएं</button>
+                    </div>
+                  </form>
+                )}
+
+                {/* Reader Cards List */}
+                <div className="space-y-3">
+                  {(() => {
+                    const readerList = users.filter(u => {
+                      if (u.role !== 'reader') return false;
+                      const isActive = !u.isBanned && u.isActive !== false;
+                      if (userFilter === 'active' && !isActive) return false;
+                      if (userFilter === 'inactive' && isActive) return false;
+                      if (userSearchQuery.trim()) {
+                        const q = userSearchQuery.trim().toLowerCase();
+                        const matchName = u.name.toLowerCase().includes(q);
+                        const matchEmail = (u.email || '').toLowerCase().includes(q);
+                        const matchPhone = (u.phone || '').includes(q);
+                        const matchCity = (u.city || '').toLowerCase().includes(q);
+                        return matchName || matchEmail || matchPhone || matchCity;
+                      }
+                      return true;
+                    });
+
+                    if (readerList.length === 0) {
+                      return (
+                        <div className="p-8 text-center text-slate-400 text-xs">
+                          कोई पाठक नहीं मिला।
+                        </div>
+                      );
+                    }
+
+                    return readerList.map((u) => {
+                      const isActive = !u.isBanned && u.isActive !== false;
+                      return (
+                        <div 
+                          key={u.id}
+                          className={`border rounded-xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition ${
+                            isActive ? 'border-slate-200 bg-white hover:border-slate-300' : 'bg-red-50/50 border-red-200'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3.5 min-w-0">
+                            <div className={`w-11 h-11 rounded-full flex items-center justify-center font-bold text-sm shrink-0 shadow-xs ${
+                              isActive ? 'bg-gradient-to-tr from-emerald-600 to-teal-500 text-white' : 'bg-red-200 text-red-800'
+                            }`}>
+                              {u.name.charAt(0)}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-bold text-sm text-slate-900">{u.name}</span>
+                                {isActive ? (
+                                  <span className="bg-emerald-100 text-emerald-800 font-bold text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
+                                    <span>सक्रिय (Active)</span>
+                                  </span>
+                                ) : (
+                                  <span className="bg-red-100 text-red-800 font-bold text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-red-600" />
+                                    <span>निष्क्रिय / ब्लॉक (Inactive)</span>
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-xs text-slate-500 mt-0.5 truncate">
+                                <span>{u.email}</span>
+                                {u.phone && <span> • {u.phone}</span>}
+                                {u.city && <span> • {u.city}</span>}
+                              </div>
+                              <div className="mt-1 flex items-center gap-2 text-[10px] text-slate-400">
+                                <span>भूमिका: पाठक (Reader)</span>
+                                {u.lastLoginAt && (
+                                  <span>• अंतिम लॉगिन: {new Date(u.lastLoginAt).toLocaleDateString('hi-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Action Buttons: Edit, Active/Inactive Toggle, Delete */}
+                          <div className="flex items-center gap-2 shrink-0 flex-wrap w-full md:w-auto justify-end">
+                            {/* Edit Button */}
+                            <button
+                              onClick={() => handleStartEditUser(u)}
+                              className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs px-3 py-1.5 rounded-lg border border-slate-200 flex items-center gap-1 transition cursor-pointer"
+                              title="पाठक विवरण संपादित करें"
+                            >
+                              <Edit2 className="w-3.5 h-3.5 text-slate-600" />
+                              <span>संपादित करें (Edit)</span>
+                            </button>
+
+                            {/* Active / Inactive Toggle Button */}
+                            <button
+                              onClick={() => handleToggleBan(u)}
+                              className={`font-bold text-xs px-3 py-1.5 rounded-lg flex items-center gap-1 transition cursor-pointer ${
+                                isActive
+                                  ? 'bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300'
+                                  : 'bg-emerald-100 hover:bg-emerald-200 text-emerald-900 border border-emerald-300'
+                              }`}
+                              title={isActive ? 'खाता निष्क्रिय करें' : 'खाता सक्रिय करें'}
+                            >
+                              {isActive ? (
+                                <>
+                                  <Ban className="w-3.5 h-3.5 text-amber-700" />
+                                  <span>निष्क्रिय करें (Deactivate)</span>
+                                </>
+                              ) : (
+                                <>
+                                  <UserCheck className="w-3.5 h-3.5 text-emerald-700" />
+                                  <span>सक्रिय करें (Activate)</span>
+                                </>
+                              )}
+                            </button>
+
+                            {/* Delete Button */}
+                            <button
+                              onClick={() => handleDeleteUser(u.id, u.name)}
+                              className="bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs px-3 py-1.5 rounded-lg border border-red-200 flex items-center gap-1 transition cursor-pointer"
+                              title="खाता हमेशा के लिए हटाएं"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>हटाएं (Delete)</span>
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    });
+                  })()}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ========================================================= */}
+          {/* TAB: JOURNALISTS & PRESS CORRESPONDENTS (पत्रकार प्रबंधन) */}
+          {/* ========================================================= */}
+          {activeTab === 'journalists' && (
+            <div className="space-y-6">
+              {/* Stat Cards Row */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
+                  <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">कुल पत्रकार व संवाददाता</div>
+                  <div className="text-2xl font-black text-slate-900 mt-1">
+                    {users.filter(u => u.role === 'citizen_journalist' || u.role === 'staff_reporter').length}
+                  </div>
+                  <div className="text-[11px] text-slate-400 mt-0.5">Total press reporters</div>
+                </div>
+
+                <div className="bg-white p-4 rounded-2xl border border-emerald-200/80 shadow-xs">
+                  <div className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider">सत्यापित (KYC Verified)</div>
+                  <div className="text-2xl font-black text-emerald-600 mt-1">
+                    {users.filter(u => (u.role === 'citizen_journalist' || u.role === 'staff_reporter') && u.kycStatus === 'verified').length}
+                  </div>
+                  <div className="text-[11px] text-emerald-600/70 mt-0.5">ID verified reporters</div>
+                </div>
+
+                <div className="bg-white p-4 rounded-2xl border border-amber-200/80 shadow-xs">
+                  <div className="text-[11px] font-bold text-amber-800 uppercase tracking-wider">समीक्षाधीन (Pending KYC)</div>
+                  <div className="text-2xl font-black text-[#D97706] mt-1">
+                    {users.filter(u => (u.role === 'citizen_journalist' || u.role === 'staff_reporter') && u.kycStatus === 'pending').length}
+                  </div>
+                  <div className="text-[11px] text-amber-600/70 mt-0.5">Verification awaited</div>
+                </div>
+
+                <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
+                  <div className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">सक्रिय पत्रकार (Active)</div>
+                  <div className="text-2xl font-black text-slate-900 mt-1">
+                    {users.filter(u => (u.role === 'citizen_journalist' || u.role === 'staff_reporter') && !u.isBanned && u.isActive !== false).length}
+                  </div>
+                  <div className="text-[11px] text-slate-400 mt-0.5">Active news contributors</div>
+                </div>
+              </div>
+
+              {/* Main Card with Controls and List */}
+              <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-5 sm:p-6 space-y-4">
+                <div className="pb-3 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <h2 className="text-lg font-bold text-slate-900">पत्रकार व संवाददाता प्रबंधन (Journalists & Reporters)</h2>
+                    <p className="text-xs text-slate-500">नागरिक पत्रकार एवं विशेष संवाददाताओं का सत्यापन, संपादन, स्थिति (Active/Inactive) एवं खाता निष्कासन</p>
+                  </div>
+                  <button
+                    onClick={() => setShowAddJournalist(true)}
+                    className="bg-gradient-to-r from-[#B45309] via-[#D97706] to-[#F59E0B] text-white font-bold text-xs px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-md shadow-amber-500/20 cursor-pointer shrink-0"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>नया पत्रकार जोड़ें (Add Journalist)</span>
+                  </button>
+                </div>
+
+                {/* Filter and Search Bar */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-bold text-slate-600 overflow-x-auto scrollbar-none">
+                    <button
+                      onClick={() => setJournoFilter('all')}
+                      className={`px-3 py-1.5 rounded-lg transition whitespace-nowrap cursor-pointer ${journoFilter === 'all' ? 'bg-white text-slate-900 shadow-xs font-black' : 'hover:text-slate-900'}`}
+                    >
+                      सभी ({users.filter(u => u.role === 'citizen_journalist' || u.role === 'staff_reporter').length})
+                    </button>
+                    <button
+                      onClick={() => setJournoFilter('citizen')}
+                      className={`px-3 py-1.5 rounded-lg transition whitespace-nowrap cursor-pointer ${journoFilter === 'citizen' ? 'bg-[#D97706] text-white shadow-xs font-black' : 'hover:text-slate-900'}`}
+                    >
+                      नागरिक पत्रकार ({users.filter(u => u.role === 'citizen_journalist').length})
+                    </button>
+                    <button
+                      onClick={() => setJournoFilter('staff')}
+                      className={`px-3 py-1.5 rounded-lg transition whitespace-nowrap cursor-pointer ${journoFilter === 'staff' ? 'bg-blue-600 text-white shadow-xs font-black' : 'hover:text-slate-900'}`}
+                    >
+                      संवाददाता ({users.filter(u => u.role === 'staff_reporter').length})
+                    </button>
+                    <button
+                      onClick={() => setJournoFilter('active')}
+                      className={`px-3 py-1.5 rounded-lg transition whitespace-nowrap cursor-pointer ${journoFilter === 'active' ? 'bg-emerald-600 text-white shadow-xs font-black' : 'hover:text-slate-900'}`}
+                    >
+                      सक्रिय ({users.filter(u => (u.role === 'citizen_journalist' || u.role === 'staff_reporter') && !u.isBanned && u.isActive !== false).length})
+                    </button>
+                    <button
+                      onClick={() => setJournoFilter('inactive')}
+                      className={`px-3 py-1.5 rounded-lg transition whitespace-nowrap cursor-pointer ${journoFilter === 'inactive' ? 'bg-red-600 text-white shadow-xs font-black' : 'hover:text-slate-900'}`}
+                    >
+                      निष्क्रिय ({users.filter(u => (u.role === 'citizen_journalist' || u.role === 'staff_reporter') && (u.isBanned || u.isActive === false)).length})
+                    </button>
+                    <button
+                      onClick={() => setJournoFilter('pending_kyc')}
+                      className={`px-3 py-1.5 rounded-lg transition whitespace-nowrap cursor-pointer ${journoFilter === 'pending_kyc' ? 'bg-amber-600 text-white shadow-xs font-black' : 'hover:text-slate-900'}`}
+                    >
+                      समीक्षाधीन KYC ({users.filter(u => (u.role === 'citizen_journalist' || u.role === 'staff_reporter') && u.kycStatus === 'pending').length})
+                    </button>
+                  </div>
+
+                  <div className="relative flex-1 sm:max-w-xs">
+                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+                    <input
+                      type="text"
+                      value={journoSearchQuery}
+                      onChange={(e) => setJournoSearchQuery(e.target.value)}
+                      placeholder="नाम, ईमेल, फोन या शहर से खोजें..."
+                      className="w-full pl-8 pr-3 py-1.5 border border-slate-200 rounded-xl text-xs placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#D97706]"
+                    />
+                  </div>
+                </div>
+
+                {showAddJournalist && (
+                  <form onSubmit={handleCreateJournalist} className="border border-amber-200 bg-amber-50/40 rounded-xl p-4 space-y-3">
+                    <div className="text-sm font-bold text-slate-900">नया पत्रकार खाता पंजीकृत करें (New Journalist Account)</div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <input required value={journoName} onChange={(e) => setJournoName(e.target.value)} placeholder="पूरा नाम (Full Name) *" className="px-3 py-2 border rounded-xl text-xs bg-white" />
+                      <input required type="email" value={journoEmail} onChange={(e) => setJournoEmail(e.target.value)} placeholder="ईमेल आईडी (Email) *" className="px-3 py-2 border rounded-xl text-xs bg-white" />
+                      <input value={journoPhone} onChange={(e) => setJournoPhone(e.target.value)} placeholder="मोबाइल नंबर (Phone)" className="px-3 py-2 border rounded-xl text-xs bg-white" />
+                      <input required type="password" value={journoPassword} onChange={(e) => setJournoPassword(e.target.value)} placeholder="गोपनीय पासवर्ड (Password) *" className="px-3 py-2 border rounded-xl text-xs bg-white" />
+                      <select value={journoRole} onChange={(e) => setJournoRole(e.target.value as UserRole)} className="px-3 py-2 border rounded-xl text-xs bg-white">
+                        <option value="citizen_journalist">Citizen journalist (नागरिक पत्रकार)</option>
+                        <option value="staff_reporter">Staff reporter (विशेष संवाददाता)</option>
+                        <option value="editor">Editor (संपादक)</option>
+                      </select>
+                      <input value={journoCity} onChange={(e) => setJournoCity(e.target.value)} placeholder="ज़िला / शहर (City / Beat)" className="px-3 py-2 border rounded-xl text-xs bg-white" />
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <button type="button" onClick={() => setShowAddJournalist(false)} className="px-3 py-1.5 border rounded-lg text-xs font-semibold cursor-pointer">रद्द करें</button>
+                      <button type="submit" className="px-3 py-1.5 bg-[#D97706] text-white rounded-lg text-xs font-bold cursor-pointer">खाता बनाएं</button>
+                    </div>
+                  </form>
+                )}
+
+                <div className="space-y-3">
+                  {(() => {
+                    const journoList = users.filter(u => {
+                      if (u.role !== 'citizen_journalist' && u.role !== 'staff_reporter') return false;
+                      const isActive = !u.isBanned && u.isActive !== false;
+                      if (journoFilter === 'citizen' && u.role !== 'citizen_journalist') return false;
+                      if (journoFilter === 'staff' && u.role !== 'staff_reporter') return false;
+                      if (journoFilter === 'active' && !isActive) return false;
+                      if (journoFilter === 'inactive' && isActive) return false;
+                      if (journoFilter === 'pending_kyc' && u.kycStatus !== 'pending') return false;
+                      if (journoSearchQuery.trim()) {
+                        const q = journoSearchQuery.trim().toLowerCase();
+                        const matchName = u.name.toLowerCase().includes(q);
+                        const matchEmail = (u.email || '').toLowerCase().includes(q);
+                        const matchPhone = (u.phone || '').includes(q);
+                        const matchCity = (u.city || '').toLowerCase().includes(q);
+                        return matchName || matchEmail || matchPhone || matchCity;
+                      }
+                      return true;
+                    });
+
+                    if (journoList.length === 0) {
+                      return (
+                        <div className="p-8 text-center text-slate-400 text-xs">
+                          कोई पत्रकार नहीं मिला।
+                        </div>
+                      );
+                    }
+
+                    return journoList.map((u) => {
+                      const isActive = !u.isBanned && u.isActive !== false;
+                      return (
+                        <div 
+                          key={u.id} 
+                          className={`border rounded-xl p-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 transition ${
+                            isActive ? 'border-slate-200 bg-white hover:border-slate-300' : 'bg-red-50/50 border-red-200'
+                          }`}
+                        >
+                          <div className="flex items-center gap-3.5 min-w-0">
+                            <div className={`w-11 h-11 rounded-full flex items-center justify-center font-bold text-sm shrink-0 shadow-xs ${
+                              isActive 
+                                ? 'bg-gradient-to-tr from-[#B45309] to-[#F59E0B] text-white' 
+                                : 'bg-red-200 text-red-800'
+                            }`}>
+                              {u.name.charAt(0)}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-bold text-sm text-slate-900">{u.name}</span>
+                                {isActive ? (
+                                  <span className="bg-emerald-100 text-emerald-800 font-bold text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
+                                    <span>सक्रिय पत्रकार (Active)</span>
+                                  </span>
+                                ) : (
+                                  <span className="bg-red-100 text-red-800 font-bold text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-red-600" />
+                                    <span>निष्क्रिय / निलंबित (Inactive)</span>
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-xs text-slate-500 mt-0.5 truncate">
+                                <span>{u.email}</span>
+                                {u.phone && <span> • {u.phone}</span>}
+                                {u.city && <span> • {u.city}</span>}
+                              </div>
+                              <div className="mt-1.5 flex items-center gap-2 flex-wrap">
+                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
+                                  u.role === 'staff_reporter' ? 'bg-blue-100 text-blue-800 border border-blue-200' :
+                                  'bg-amber-100 text-amber-800 border border-amber-200'
+                                }`}>
+                                  {u.role === 'staff_reporter' ? '🎙️ विशेष संवाददाता' : '✍️ नागरिक पत्रकार'}
+                                </span>
+                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                                  u.kycStatus === 'verified' ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-amber-50 text-amber-800 border-amber-300'
+                                }`}>
+                                  KYC: {u.kycStatus === 'verified' ? 'सत्यापित (Verified)' : u.kycStatus === 'pending' ? 'समीक्षाधीन (Pending)' : 'अस्वीकृत'}
+                                </span>
+                                {u.kycDetails?.idProofType && (
+                                  <span className="text-[10px] text-slate-400 bg-slate-100 px-2 py-0.5 rounded">
+                                    {u.kycDetails.idProofType}: {u.kycDetails.idNumber || 'जमा'}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Journalist Action Buttons: Approve KYC, Edit, Active/Inactive Toggle, Delete */}
+                          <div className="flex items-center gap-2 shrink-0 flex-wrap w-full md:w-auto justify-end">
+                            {u.kycStatus !== 'verified' && (
+                              <button
+                                onClick={() => handleApproveKYC(u.id)}
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-3 py-1.5 rounded-lg flex items-center gap-1 shadow-xs transition cursor-pointer"
+                                title="पहचान पत्र सत्यापित करें"
+                              >
+                                <UserCheck className="w-3.5 h-3.5" />
+                                <span>KYC स्वीकृत करें</span>
+                              </button>
+                            )}
+
+                            {/* Edit Profile Button */}
+                            <button
+                              onClick={() => handleStartEditUser(u)}
+                              className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs px-3 py-1.5 rounded-lg border border-slate-200 flex items-center gap-1 transition cursor-pointer"
+                              title="पत्रकार विवरण संपादित करें"
+                            >
+                              <Edit2 className="w-3.5 h-3.5 text-slate-600" />
+                              <span>संपादित करें (Edit)</span>
+                            </button>
+
+                            {/* Active / Inactive Toggle Button */}
+                            <button
+                              onClick={() => handleToggleBan(u)}
+                              className={`font-bold text-xs px-3 py-1.5 rounded-lg flex items-center gap-1 transition cursor-pointer ${
+                                isActive 
+                                  ? 'bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300' 
+                                  : 'bg-emerald-100 hover:bg-emerald-200 text-emerald-900 border border-emerald-300'
+                              }`}
+                              title={isActive ? 'पत्रकार को निष्क्रिय / निलंबित करें' : 'पत्रकार को पुनः सक्रिय करें'}
+                            >
+                              {isActive ? (
+                                <>
+                                  <Ban className="w-3.5 h-3.5 text-amber-700" />
+                                  <span>निष्क्रिय करें (Deactivate)</span>
+                                </>
+                              ) : (
+                                <>
+                                  <UserCheck className="w-3.5 h-3.5 text-emerald-700" />
+                                  <span>सक्रिय करें (Activate)</span>
+                                </>
+                              )}
+                            </button>
+
+                            {/* Delete Button */}
+                            <button
+                              onClick={() => handleDeleteUser(u.id, u.name)}
+                              className="bg-red-50 hover:bg-red-100 text-red-600 font-bold text-xs px-3 py-1.5 rounded-lg border border-red-200 flex items-center gap-1 transition cursor-pointer"
+                              title="पत्रकार खाता स्थायी रूप से हटाएं"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>हटाएं (Delete)</span>
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    });
+                  })()}
+                </div>
               </div>
             </div>
           )}
@@ -2227,31 +3001,6 @@ export default function AdminDashboardPage() {
             </div>
           )}
 
-          {/* ========================================================= */}
-          {/* TAB 8: ANALYTICS & LOGS                                   */}
-          {activeTab === 'analytics' && (
-            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-6 space-y-4">
-              <div className="pb-3 border-b">
-                <h2 className="text-lg font-bold text-slate-900">Readership & Performance Analytics</h2>
-                <p className="text-xs text-slate-500">Daily unique visitors, e-paper downloads, and engagement rate</p>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="bg-slate-50 p-4 rounded-xl border">
-                  <div className="text-xs text-slate-500 font-bold">Daily Unique Readers</div>
-                  <div className="text-2xl font-black text-slate-900 mt-1">42,890</div>
-                </div>
-                <div className="bg-slate-50 p-4 rounded-xl border">
-                  <div className="text-xs text-slate-500 font-bold">E-Paper Flip Impressions</div>
-                  <div className="text-2xl font-black text-[#D97706] mt-1">118,450</div>
-                </div>
-                <div className="bg-slate-50 p-4 rounded-xl border">
-                  <div className="text-xs text-slate-500 font-bold">Average Read Time</div>
-                  <div className="text-2xl font-black text-emerald-600 mt-1">4m 32s</div>
-                </div>
-              </div>
-            </div>
-          )}
-
         </div>
 
       </main>
@@ -2283,7 +3032,7 @@ export default function AdminDashboardPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">Category</label>
                   <select
@@ -2291,27 +3040,49 @@ export default function AdminDashboardPage() {
                     onChange={(e) => setNewCategory(e.target.value as any)}
                     className="w-full px-3 py-2 border rounded-xl text-xs font-medium focus:ring-1 focus:ring-[#D97706] focus:outline-none"
                   >
-                    <option value="state">State & Regional (प्रदेश)</option>
-                    <option value="sitapur">Sitapur Local (सीतापुर)</option>
-                    <option value="lucknow">Lucknow Bureau (लखनऊ)</option>
-                    <option value="national">National (देश)</option>
-                    <option value="politics">Politics (राजनीति)</option>
-                    <option value="crime">Crime (अपराध)</option>
-                    <option value="videos">Video News (वीडियो)</option>
-                    <option value="sports">Sports (खेल)</option>
-                    <option value="business">Business (व्यापार)</option>
-                    <option value="entertainment">Entertainment (मनोरंजन)</option>
+                    {!TOPICS.some((topic) => topic.id === newCategory) && (
+                      <option value={newCategory}>{newCategory}</option>
+                    )}
+                    {TOPICS.filter((topic) => topic.id !== 'all').map((topic) => (
+                      <option key={topic.id} value={topic.id}>{topic.label}</option>
+                    ))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">City</label>
-                  <input
-                    type="text"
+                  <label className="block text-xs font-bold text-slate-700 mb-1">राज्य / शहर (All India Location) *</label>
+                  <select
                     value={newCity}
                     onChange={(e) => setNewCity(e.target.value)}
-                    placeholder="e.g. सीतापुर, लखनऊ"
-                    className="w-full px-3 py-2 border rounded-xl text-xs font-medium focus:ring-1 focus:ring-[#D97706] focus:outline-none"
-                  />
+                    className="w-full px-3 py-2 border rounded-xl text-xs font-medium focus:ring-1 focus:ring-[#D97706] focus:outline-none bg-white"
+                  >
+                    {newCity && !ALL_INDIA_LOCATIONS.some(s => s.cities.some(c => c.name.toLowerCase() === newCity.toLowerCase() || c.nameHi === newCity)) && (
+                      <option value={newCity}>{newCity} (Selected)</option>
+                    )}
+                    <option value="Lucknow">Lucknow (लखनऊ)</option>
+                    <option value="Sitapur">Sitapur (सीतापुर)</option>
+                    <option value="National">🇮🇳 All India / National (राष्ट्रीय)</option>
+                    {ALL_INDIA_LOCATIONS.map((state) => (
+                      <optgroup key={state.name} label={`${state.name} (${state.nameHi})`}>
+                        {state.cities.map((city) => (
+                          <option key={city.name} value={city.name}>
+                            {city.name} ({city.nameHi})
+                          </option>
+                        ))}
+                      </optgroup>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">खबर की भाषा (Language) *</label>
+                  <select
+                    value={newLanguage}
+                    onChange={(e) => setNewLanguage(e.target.value as LanguageCode)}
+                    className="w-full px-3 py-2 border rounded-xl text-xs font-bold bg-white focus:ring-1 focus:ring-[#D97706] focus:outline-none"
+                  >
+                    <option value="hi">हिन्दी (Hindi)</option>
+                    <option value="en">English</option>
+                    <option value="ur">اردو (Urdu)</option>
+                  </select>
                 </div>
               </div>
 
@@ -2359,7 +3130,7 @@ export default function AdminDashboardPage() {
 
                     <div className="flex-1 w-full">
                       <input
-                        type="url"
+                        type="text"
                         value={newCoverImage}
                         onChange={(e) => setNewCoverImage(e.target.value)}
                         placeholder="Or paste Image URL..."
@@ -2426,7 +3197,7 @@ export default function AdminDashboardPage() {
 
                     <div className="flex-1 w-full">
                       <input
-                        type="url"
+                        type="text"
                         value={newVideoUrl}
                         onChange={(e) => setNewVideoUrl(e.target.value)}
                         placeholder="Or paste Video URL (YouTube/MP4)..."

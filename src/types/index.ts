@@ -7,6 +7,7 @@ export type SubmissionStatus = 'draft' | 'pending_review' | 'sent_back' | 'appro
 export type ArticleCategory = 
   | 'national' 
   | 'state' 
+  | 'state-city'
   | 'lucknow' 
   | 'sitapur' 
   | 'politics' 
@@ -16,7 +17,16 @@ export type ArticleCategory =
   | 'crime' 
   | 'editorial' 
   | 'lifestyle'
-  | 'videos';
+  | 'videos'
+  | 'tejaswini'
+  | 'investigation'
+  | 'cricket'
+  | 'special'
+  | 'original'
+  | 'jobs'
+  | 'farmers'
+  | 'citizen'
+  | 'grievance';
 
 export interface User {
   id: string;
@@ -36,6 +46,9 @@ export interface User {
     district: string;
   };
   isBanned?: boolean;
+  isActive?: boolean;
+  createdAt?: string;
+  lastLoginAt?: string;
 }
 
 export interface MediaItem {
@@ -68,6 +81,7 @@ export interface Article {
   isBreaking?: boolean;
   isTrending?: boolean;
   isSponsored?: boolean;
+  showOnVideos?: boolean;
   sponsoredBy?: string;
   publishedAt: string;
   viewsCount: number;
@@ -151,6 +165,7 @@ export interface EPaperEdition {
   date: string;
   editionCity: string;
   editionTitle: string;
+  language?: LanguageCode;
   pagesCount: number;
   pages: EPaperPage[];
   thumbnailUrl: string;

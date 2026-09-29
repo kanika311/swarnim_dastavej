@@ -4,6 +4,7 @@ export interface IEPaperEdition extends Document {
   id: string;
   date: string; // YYYY-MM-DD
   editionCity: string;
+  language?: string;
   totalPageCount: number;
   pdfUrl?: string;
   thumbnailUrl: string;
@@ -22,6 +23,7 @@ const EPaperEditionSchema = new Schema<IEPaperEdition>(
     id: { type: String, required: true, unique: true, index: true },
     date: { type: String, required: true, index: true },
     editionCity: { type: String, required: true, index: true },
+    language: { type: String, default: 'hi', index: true },
     totalPageCount: { type: Number, default: 6 },
     pdfUrl: String,
     thumbnailUrl: { type: String, required: true },
