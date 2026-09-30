@@ -35,7 +35,7 @@ export interface IArticle extends Document {
   sharesCount: number;
   tags: string[];
   readingTimeMinutes: number;
-  status: 'draft' | 'pending_review' | 'published' | 'archived';
+  status: 'draft' | 'pending_review' | 'published' | 'archived' | 'inactive';
   createdAt: Date;
   updatedAt: Date;
 }
@@ -80,7 +80,7 @@ const ArticleSchema = new Schema<IArticle>(
     readingTimeMinutes: { type: Number, default: 2 },
     status: {
       type: String,
-      enum: ['draft', 'pending_review', 'published', 'archived'],
+      enum: ['draft', 'pending_review', 'published', 'archived', 'inactive'],
       default: 'published',
       index: true
     }

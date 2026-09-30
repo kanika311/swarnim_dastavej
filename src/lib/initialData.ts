@@ -1,4 +1,4 @@
-import { Article, CitizenSubmission, EPaperEdition, Poll, AdBanner, ClassifiedItem, GrievanceComplaint, User } from '@/types';
+import { Article, CitizenSubmission, EPaperEdition, Poll, AdBanner, ClassifiedItem, GrievanceComplaint, User, EPaperPricingPlan } from '@/types';
 
 export const INITIAL_USERS: User[] = [
   {
@@ -1051,5 +1051,72 @@ export const INITIAL_GRIEVANCES: GrievanceComplaint[] = [
     complaintDetails: 'सीतापुर व्यापार मंडल की बैठक से संबंधित पूर्व प्रकाशित एक समाचार में व्यक्त किए गए कथन पर आपत्ति है।',
     status: 'under_review',
     submittedAt: '2026-09-26T16:00:00Z'
+  }
+];
+
+export const INITIAL_PRICING_PLANS: EPaperPricingPlan[] = [
+  {
+    id: 'plan_single',
+    title: 'दैनिक एकल अंक (1 Day Pass)',
+    titleEn: 'Single Edition (1 Day Pass)',
+    price: 1,
+    duration: 'single_edition',
+    durationLabel: '1 दिन / आज का सम्पूर्ण ई-पेपर',
+    durationLabelEn: '1 Day / Today\'s Edition',
+    description: 'मात्र ₹1 में आज का पूरा ई-पेपर (सभी पृष्ठ 1 से 6) तुरंत अनलॉक करें।',
+    descriptionEn: 'Unlock today\'s full newspaper (all pages 1-6) for just ₹1.',
+    features: [
+      'आज का संपूर्ण ई-पेपर अनलॉक',
+      'पृष्ठ 2 से 6 तक तुरंत वाचन',
+      'अल्ट्रा हाई रेजोल्यूशन ज़ूम',
+      'बिना किसी विज्ञापन अवरोध के'
+    ],
+    isPopular: true,
+    isActive: true,
+    order: 1,
+    createdAt: '2026-09-01T00:00:00Z'
+  },
+  {
+    id: 'plan_monthly',
+    title: 'मासिक सदस्यता (Monthly Unlimited)',
+    titleEn: 'Monthly Unlimited Plan',
+    price: 29,
+    duration: 'monthly',
+    durationLabel: '1 माह (30 दिन)',
+    durationLabelEn: '1 Month (30 Days)',
+    description: '30 दिनों तक लखनऊ, सीतापुर एवं सभी क्षेत्रीय दैनिक ई-पेपर का असीमित वाचन।',
+    descriptionEn: 'Unlimited daily reading for 30 days across Lucknow, Sitapur & all editions.',
+    features: [
+      '30 दिन असीमित ई-पेपर एक्सेस',
+      'सभी जिलों के संस्करण',
+      'पुराने अंक (30 दिन आर्काइव)',
+      'मोबाइल व कंप्यूटर दोनों पर'
+    ],
+    isPopular: false,
+    isActive: true,
+    order: 2,
+    createdAt: '2026-09-01T00:00:00Z'
+  },
+  {
+    id: 'plan_yearly',
+    title: 'वार्षिक सुपर सेवर (Yearly Super Plan)',
+    titleEn: 'Yearly Super Saver Plan',
+    price: 340,
+    duration: 'yearly',
+    durationLabel: '1 वर्ष (365 दिन)',
+    durationLabelEn: '1 Year (365 Days)',
+    description: 'पूरे 365 दिन स्वर्णिम दस्तावेज़ का सम्पूर्ण ई-पेपर और डिजिटल विशेषांक। भारी बचत!',
+    descriptionEn: 'Full 365 days unlimited e-paper, special editions & daily PDF downloads.',
+    features: [
+      '365 दिन असीमित ई-पेपर एक्सेस',
+      'दैनिक PDF संस्करण डाउनलोड',
+      'सभी विशेष और सप्लीमेंट अंक',
+      'प्राथमिकता पाठक हेल्पलाइन',
+      'बचत: ₹600+ की वार्षिक छूट'
+    ],
+    isPopular: false,
+    isActive: true,
+    order: 3,
+    createdAt: '2026-09-01T00:00:00Z'
   }
 ];

@@ -1,8 +1,8 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User, UserRole, LanguageCode, EPaperEdition } from '@/types';
-import { INITIAL_USERS, INITIAL_EPAPER_EDITIONS } from '@/lib/initialData';
+import { User, UserRole, LanguageCode, EPaperEdition, EPaperPricingPlan } from '@/types';
+import { INITIAL_USERS, INITIAL_EPAPER_EDITIONS, INITIAL_PRICING_PLANS } from '@/lib/initialData';
 import { getTranslation, Language } from '@/lib/translations';
 
 interface AppContextType {
@@ -12,6 +12,7 @@ interface AppContextType {
   login: (identifier: string, password?: string) => Promise<boolean>;
   logout: () => void;
   registerUser: (userData: Partial<User>) => User;
+  updateCurrentUser: (updates: Partial<User>) => void;
   switchRole: (role: UserRole) => void;
 
   // Translation helper
@@ -43,9 +44,21 @@ interface AppContextType {
   addOrUpdateEdition: (edition: EPaperEdition) => void;
   deleteEdition: (id: string) => void;
 
-  // View Mode: 'epaper' (Today's Newspaper - Default) | 'news' (3-Panel Live Feed)
+  // E-Paper Pricing Plans & Unlocking
+  pricingPlans: EPaperPricingPlan[];
+  addOrUpdatePricingPlan: (plan: EPaperPricingPlan) => void;
+  deletePricingPlan: (id: string) => void;
+  unlockedEpaperKeys: string[];
+  unlockEPaper: (key: string, planTitle?: string) => void;
+  isEPaperUnlocked: (editionId?: string, date?: string) => boolean;
+
+  // View Mode: 'epaper' | 'news' (Default: 'news' for Live News First)
   homeViewMode: 'epaper' | 'news';
   setHomeViewMode: (mode: 'epaper' | 'news') => void;
+
+  // Dynamic Site Last Updated Date & Time
+  lastUpdatedTime: string;
+  recordUpdate: (date?: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -77,8 +90,51 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // E-Paper editions state (with localStorage caching)
   const [epaperEditions, setEpaperEditions] = useState<EPaperEdition[]>(INITIAL_EPAPER_EDITIONS);
 
-  // Default view mode: 'epaper' (Today's newspaper opens first as requested!)
-  const [homeViewMode, setHomeViewMode] = useState<'epaper' | 'news'>('epaper');
+  // Default view mode: 'news' (Live News First on Homepage as requested!)
+  const [homeViewMode, setHomeViewMode] = useState<'epaper' | 'news'>('news');
+
+  // E-Paper Pricing Plans state (with localStorage caching & API sync)
+  const [pricingPlans, setPricingPlans] = useState<EPaperPricingPlan[]>(INITIAL_PRICING_PLANS);
+
+  // Unlocked E-Paper keys: e.g. ['all'] for monthly/yearly or ['2026-09-30', 'epaper-123'] for single editions
+  const [unlockedEpaperKeys, setUnlockedEpaperKeys] = useState<string[]>([]);
+
+  // Dynamic Site Last Updated Date & Time
+  const [lastUpdatedTime, setLastUpdatedTime] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('swarnim_last_update') || new Date().toISOString();
+    }
+    return new Date().toISOString();
+  });
+
+  const recordUpdate = (date?: string) => {
+    const now = date || new Date().toISOString();
+    setLastUpdatedTime(now);
+    try {
+      localStorage.setItem('swarnim_last_update', now);
+      window.dispatchEvent(new CustomEvent('swarnim_site_updated', { detail: now }));
+    } catch {}
+  };
+
+  useEffect(() => {
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === 'swarnim_last_update' && e.newValue) {
+        setLastUpdatedTime(e.newValue);
+      }
+    };
+    const handleCustom = (e: Event) => {
+      const customEvent = e as CustomEvent<string>;
+      if (customEvent.detail) {
+        setLastUpdatedTime(customEvent.detail);
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    window.addEventListener('swarnim_site_updated', handleCustom);
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('swarnim_site_updated', handleCustom);
+    };
+  }, []);
 
   // Initialize from localStorage on mount
   useEffect(() => {
@@ -101,16 +157,78 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         }
       }
 
-      // Load epaper editions
+      // Load epaper editions from local storage then sync with server
       const savedEditions = localStorage.getItem('swarnim_epaper_editions');
       if (savedEditions) {
         const parsed = JSON.parse(savedEditions);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          // Merge initial editions (e.g. English, Urdu) if missing from old cache
           const existingIds = new Set(parsed.map((e: EPaperEdition) => e.id));
           const missing = INITIAL_EPAPER_EDITIONS.filter(e => !existingIds.has(e.id));
-          const updated = [...parsed, ...missing];
+          const updated = [...parsed, ...missing].sort((a, b) => b.date.localeCompare(a.date));
           setEpaperEditions(updated);
+        }
+      }
+
+      // Sync latest E-Paper editions from MongoDB / API
+      fetch('/api/epaper')
+        .then(res => res.json())
+        .then(d => {
+          if (d.success && Array.isArray(d.data) && d.data.length > 0) {
+            const serverList: EPaperEdition[] = d.data.map((ed: any) => ({
+              id: ed.id,
+              date: ed.date,
+              editionCity: ed.editionCity,
+              editionTitle: ed.editionTitle || ed.title || `${ed.editionCity} Daily Edition`,
+              language: ed.language || 'hi',
+              pagesCount: ed.totalPageCount || ed.pagesCount || ed.pages?.length || 6,
+              thumbnailUrl: ed.thumbnailUrl,
+              pdfUrl: ed.pdfUrl || ed.pages?.[0]?.pdfPageUrl || ed.pages?.[0]?.pdfUrl,
+              isActive: ed.isActive !== false,
+              pages: ed.pages?.map((p: any) => ({
+                pageNumber: p.pageNumber,
+                title: p.title,
+                imageUrl: p.imageUrl,
+                pdfUrl: p.pdfUrl || p.pdfPageUrl || ed.pdfUrl
+              })) || []
+            }));
+
+            setEpaperEditions(prev => {
+              const serverIds = new Set(serverList.map(e => e.id));
+              const localOnly = prev.filter(e => !serverIds.has(e.id));
+              const merged = [...serverList, ...localOnly].sort((a, b) => b.date.localeCompare(a.date));
+              try {
+                localStorage.setItem('swarnim_epaper_editions', JSON.stringify(merged));
+              } catch (e) {}
+              return merged;
+            });
+          }
+        })
+        .catch(() => {});
+
+      // Load pricing plans from localStorage or API
+      const savedPricing = localStorage.getItem('swarnim_pricing_plans');
+      if (savedPricing) {
+        const parsed = JSON.parse(savedPricing);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setPricingPlans(parsed);
+        }
+      } else {
+        fetch('/api/pricing?all=true')
+          .then(res => res.json())
+          .then(d => {
+            if (d.success && Array.isArray(d.data) && d.data.length > 0) {
+              setPricingPlans(d.data);
+            }
+          })
+          .catch(() => {});
+      }
+
+      // Load unlocked epapers
+      const savedUnlocked = localStorage.getItem('swarnim_unlocked_epapers');
+      if (savedUnlocked) {
+        const parsed = JSON.parse(savedUnlocked);
+        if (Array.isArray(parsed)) {
+          setUnlockedEpaperKeys(parsed);
         }
       }
 
@@ -252,6 +370,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updateCurrentUser = (updates: Partial<User>) => {
+    if (!currentUser) return;
+    const updated = { ...currentUser, ...updates };
+    setCurrentUser(updated);
+    setUsersList(prev => prev.map(u => u.id === updated.id ? updated : u));
+    try {
+      localStorage.setItem('swarnim_current_user', JSON.stringify(updated));
+      localStorage.setItem('swarnim_users_list', JSON.stringify(usersList.map(u => u.id === updated.id ? updated : u)));
+    } catch (e) {}
+  };
+
   useEffect(() => {
     try {
       const saved = localStorage.getItem('swarnim_theme');
@@ -306,6 +435,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       } else {
         updated = [edition, ...prev];
       }
+      updated.sort((a, b) => b.date.localeCompare(a.date));
       try {
         localStorage.setItem('swarnim_epaper_editions', JSON.stringify(updated));
       } catch (e) {}
@@ -323,6 +453,79 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  const addOrUpdatePricingPlan = (plan: EPaperPricingPlan) => {
+    setPricingPlans(prev => {
+      const idx = prev.findIndex(p => p.id === plan.id);
+      let updated: EPaperPricingPlan[];
+      if (idx >= 0) {
+        updated = [...prev];
+        updated[idx] = plan;
+      } else {
+        updated = [...prev, plan];
+      }
+      try {
+        localStorage.setItem('swarnim_pricing_plans', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+
+    try {
+      fetch('/api/pricing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(plan)
+      }).catch(() => {});
+    } catch {}
+  };
+
+  const deletePricingPlan = (id: string) => {
+    setPricingPlans(prev => {
+      const updated = prev.filter(p => p.id !== id);
+      try {
+        localStorage.setItem('swarnim_pricing_plans', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+
+    try {
+      fetch(`/api/pricing?id=${encodeURIComponent(id)}`, { method: 'DELETE' }).catch(() => {});
+    } catch {}
+  };
+
+  const unlockEPaper = (key: string, planTitle?: string) => {
+    setUnlockedEpaperKeys(prev => {
+      const next = prev.includes(key) ? prev : [...prev, key];
+      try {
+        localStorage.setItem('swarnim_unlocked_epapers', JSON.stringify(next));
+      } catch (e) {}
+      return next;
+    });
+
+    addNotification(
+      language === 'en'
+        ? `E-Paper successfully unlocked! (${planTitle || 'Payment Successful'})`
+        : `ई-पेपर सफलतापूर्वक अनलॉक हुआ! (${planTitle || 'सफल भुगतान'})`
+    );
+  };
+
+  const isEPaperUnlocked = (editionId?: string, date?: string): boolean => {
+    // Staff/admin roles always have full free access
+    if (
+      currentUser?.role === 'admin' ||
+      currentUser?.role === 'super_admin' ||
+      currentUser?.role === 'editor' ||
+      currentUser?.role === 'staff_reporter'
+    ) {
+      return true;
+    }
+
+    if (unlockedEpaperKeys.includes('all')) return true;
+    if (editionId && unlockedEpaperKeys.includes(editionId)) return true;
+    if (date && unlockedEpaperKeys.includes(date)) return true;
+
+    return false;
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -332,6 +535,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         login,
         logout,
         registerUser,
+        updateCurrentUser,
         switchRole,
         t,
         isAuthModalOpen,
@@ -354,8 +558,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         epaperEditions,
         addOrUpdateEdition,
         deleteEdition,
+        pricingPlans,
+        addOrUpdatePricingPlan,
+        deletePricingPlan,
+        unlockedEpaperKeys,
+        unlockEPaper,
+        isEPaperUnlocked,
         homeViewMode,
-        setHomeViewMode
+        setHomeViewMode,
+        lastUpdatedTime,
+        recordUpdate
       }}
     >
       <div className={`${isDarkMode ? 'dark bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'} min-h-screen transition-colors duration-200`}>

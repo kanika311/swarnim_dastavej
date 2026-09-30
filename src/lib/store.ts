@@ -322,6 +322,36 @@ class PlatformStore {
     return sub;
   }
 
+  updateSubmission(id: string, updates: Partial<CitizenSubmission>): CitizenSubmission | null {
+    const sub = this.getSubmissionById(id);
+    if (!sub) return null;
+    const { id: _id, ...rest } = updates;
+    Object.assign(sub, rest);
+    sub.updatedAt = new Date().toISOString();
+    return sub;
+  }
+
+  deleteSubmission(id: string): boolean {
+    const idx = this.submissions.findIndex(s => s.id === id);
+    if (idx === -1) return false;
+    this.submissions.splice(idx, 1);
+    return true;
+  }
+
+  toggleSubmissionActive(id: string): CitizenSubmission | null {
+    const sub = this.getSubmissionById(id);
+    if (!sub) return null;
+    const timestamp = new Date().toISOString();
+    sub.updatedAt = timestamp;
+    if (sub.status === 'approved') {
+      sub.status = 'inactive';
+      sub.editorComments = sub.editorComments || 'संपादक द्वारा निष्क्रिय (Inactive) किया गया';
+    } else {
+      sub.status = 'approved';
+    }
+    return sub;
+  }
+
   // Users
   getUsers() {
     return this.users;

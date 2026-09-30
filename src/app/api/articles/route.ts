@@ -9,6 +9,8 @@ export async function GET(request: Request) {
   const city = searchParams.get('city') || undefined;
   const search = searchParams.get('q') || undefined;
   const language = searchParams.get('lang') || undefined;
+  const statusParam = searchParams.get('status') || undefined;
+  const allParam = searchParams.get('all') === 'true';
 
   const storeArticles = platformStore.getArticles({ category, city, search, language });
   let dbArticles: typeof storeArticles = [];
@@ -16,7 +18,12 @@ export async function GET(request: Request) {
   try {
     const conn = await connectToDatabase();
     if (conn) {
-      const query: Record<string, unknown> = { status: 'published' };
+      const query: Record<string, unknown> = {};
+      if (!allParam && statusParam !== 'all') {
+        query.status = statusParam || 'published';
+      } else if (statusParam && statusParam !== 'all') {
+        query.status = statusParam;
+      }
       if (category && category !== 'all') query.category = category;
       if (city && city !== 'सभी शहर' && city !== 'सभी') query.city = city;
       if (language) query.language = language;

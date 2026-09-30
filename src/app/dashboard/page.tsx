@@ -1,0 +1,1760 @@
+'use client';
+
+import React, { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
+import { useRouter, useSearchParams } from 'next/navigation';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
+import { useApp } from '@/context/AppContext';
+import { CitizenSubmission, ArticleCategory, MediaItem } from '@/types';
+import { ALL_INDIA_LOCATIONS } from '@/lib/locations';
+import { CommunityPost } from '@/app/api/community-posts/route';
+import { 
+  PenSquare, 
+  Send, 
+  Image as ImageIcon, 
+  ThumbsUp, 
+  MessageSquare, 
+  Share2, 
+  CheckCircle, 
+  Clock, 
+  AlertCircle, 
+  MapPin, 
+  ShieldCheck, 
+  User, 
+  FileText, 
+  LogOut, 
+  ChevronRight, 
+  Upload, 
+  X,
+  Newspaper,
+  BookOpen,
+  Check,
+  ExternalLink,
+  MessageCircle,
+  Sparkles,
+  PhoneCall,
+  Video,
+  Camera,
+  Link2
+} from 'lucide-react';
+
+function JournalistDashboardContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialTab = searchParams.get('tab') || 'feed';
+
+  const { currentUser, logout, openAuthModal, addNotification, language, updateCurrentUser } = useApp();
+
+  const [activeTab, setActiveTab] = useState<'feed' | 'submit' | 'my_reports' | 'profile'>(
+    initialTab === 'submit' ? 'submit' : initialTab === 'my_reports' ? 'my_reports' : initialTab === 'profile' ? 'profile' : 'feed'
+  );
+
+  // Social Community Posts State
+  const [posts, setPosts] = useState<CommunityPost[]>([]);
+  const [postContent, setPostContent] = useState('');
+  const [postImage, setPostImage] = useState<string | null>(null);
+  const [postVideo, setPostVideo] = useState<string | null>(null);
+  const [isPosting, setIsPosting] = useState(false);
+  const [isUploadingPostImg, setIsUploadingPostImg] = useState(false);
+  const [isUploadingPostVideo, setIsUploadingPostVideo] = useState(false);
+  const [isUploadingProfile, setIsUploadingProfile] = useState(false);
+  const [openCommentsPostId, setOpenCommentsPostId] = useState<string | null>(null);
+  const [commentInputs, setCommentInputs] = useState<Record<string, string>>({});
+  const postFileInputRef = useRef<HTMLInputElement>(null);
+  const postVideoInputRef = useRef<HTMLInputElement>(null);
+  const profileFileInputRef = useRef<HTMLInputElement>(null);
+
+  // News Submission Form State
+  const [headline, setHeadline] = useState('');
+  const [subHeadline, setSubHeadline] = useState('');
+  const [category, setCategory] = useState<ArticleCategory>('state-city');
+  const [selectedState, setSelectedState] = useState<string>('Uttar Pradesh');
+  const [city, setCity] = useState(currentUser?.city || 'सीतापुर');
+  const [locationName, setLocationName] = useState('');
+  const [bodyText, setBodyText] = useState('');
+  const [photos, setPhotos] = useState<MediaItem[]>([]);
+  const [isSubmittingNews, setIsSubmittingNews] = useState(false);
+  const [uploadingNewsImg, setUploadingNewsImg] = useState(false);
+  const [uploadingNewsVideo, setUploadingNewsVideo] = useState(false);
+  const [showNewsVideoUrlInput, setShowNewsVideoUrlInput] = useState(false);
+  const [newsVideoUrlInput, setNewsVideoUrlInput] = useState('');
+  const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
+  const [editingSubmissionId, setEditingSubmissionId] = useState<string | null>(null);
+  const newsFileInputRef = useRef<HTMLInputElement>(null);
+  const newsVideoInputRef = useRef<HTMLInputElement>(null);
+
+  // User Reports State
+  const [mySubmissions, setMySubmissions] = useState<CitizenSubmission[]>([]);
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending_review' | 'approved' | 'sent_back'>('all');
+  const [isLoadingReports, setIsLoadingReports] = useState(false);
+
+  // Sync tab with URL if needed
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam === 'submit') setActiveTab('submit');
+    else if (tabParam === 'my_reports') setActiveTab('my_reports');
+    else if (tabParam === 'profile') setActiveTab('profile');
+  }, [searchParams]);
+
+  // Load Community Posts
+  useEffect(() => {
+    fetch('/api/community-posts')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.data)) {
+          setPosts(data.data);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  // Load User Reports
+  useEffect(() => {
+    if (!currentUser) return;
+    setIsLoadingReports(true);
+    fetch('/api/submissions')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && Array.isArray(data.data)) {
+          const userSubs = (data.data as CitizenSubmission[]).filter(
+            (sub) =>
+              (sub.submittedBy?.id && sub.submittedBy.id === currentUser.id) ||
+              (currentUser.name && sub.submittedBy?.name?.includes(currentUser.name))
+          );
+          setMySubmissions(userSubs);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setIsLoadingReports(false));
+  }, [currentUser]);
+
+  // Handle Post Creation
+  const handleCreatePost = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!postContent.trim()) return;
+
+    if (!currentUser) {
+      openAuthModal('login');
+      return;
+    }
+
+    setIsPosting(true);
+    try {
+      const res = await fetch('/api/community-posts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'create',
+          content: postContent,
+          imageUrl: postImage || undefined,
+          videoUrl: postVideo || undefined,
+          author: {
+            id: currentUser.id,
+            name: currentUser.name,
+            role: currentUser.role === 'citizen_journalist' ? 'नागरिक पत्रकार' : 'पत्रकार',
+            city: currentUser.city || 'सीतापुर',
+            avatarUrl: currentUser.avatarUrl
+          }
+        })
+      });
+      const data = await res.json();
+      if (data.success && data.data) {
+        setPosts((prev) => [data.data, ...prev]);
+        setPostContent('');
+        setPostImage(null);
+        setPostVideo(null);
+        addNotification('आपकी कम्युनिटी पोस्ट सफलतापूर्वक प्रकाशित हो गई!');
+      }
+    } catch {
+      addNotification('पोस्ट करने में त्रुटि हुई।');
+    } finally {
+      setIsPosting(false);
+    }
+  };
+
+  // Handle Like Toggle
+  const handleToggleLike = async (postId: string) => {
+    if (!currentUser) {
+      openAuthModal('login');
+      return;
+    }
+
+    const currentPost = posts.find((p) => p.id === postId);
+    if (!currentPost) return;
+
+    const alreadyLiked = currentPost.likes.includes(currentUser.id);
+    const updatedLikes = alreadyLiked
+      ? currentPost.likes.filter((id) => id !== currentUser.id)
+      : [...currentPost.likes, currentUser.id];
+
+    // Optimistic UI update
+    setPosts((prev) =>
+      prev.map((p) => (p.id === postId ? { ...p, likes: updatedLikes } : p))
+    );
+
+    try {
+      await fetch('/api/community-posts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'like', postId, userId: currentUser.id })
+      });
+    } catch {
+      // Revert if error
+    }
+  };
+
+  // Handle Add Comment
+  const handleAddComment = async (postId: string) => {
+    const text = commentInputs[postId]?.trim();
+    if (!text) return;
+
+    if (!currentUser) {
+      openAuthModal('login');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/community-posts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'comment',
+          postId,
+          authorName: currentUser.name,
+          authorRole: currentUser.role === 'citizen_journalist' ? 'नागरिक पत्रकार' : 'पाठक',
+          text
+        })
+      });
+      const data = await res.json();
+      if (data.success && data.data) {
+        setPosts((prev) => prev.map((p) => (p.id === postId ? data.data : p)));
+        setCommentInputs((prev) => ({ ...prev, [postId]: '' }));
+      }
+    } catch {
+      addNotification('टिप्पणी दर्ज करने में त्रुटि हुई।');
+    }
+  };
+
+  // Handle Share Post
+  const handleSharePost = (post: CommunityPost) => {
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      navigator.share({
+        title: `स्वर्णिम दस्तावेज़ पर ${post.author.name} की पोस्ट`,
+        text: post.content,
+        url: window.location.href
+      }).catch(() => {});
+    } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(`${post.author.name}: ${post.content}\n${window.location.href}`);
+      addNotification('पोस्ट लिंक कॉपी कर लिया गया!');
+    }
+  };
+
+  // Handle Upload Image for Post
+  const handlePostImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingPostImg(true);
+    const fd = new FormData();
+    fd.append('file', file);
+    try {
+      const res = await fetch('/api/upload', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (data.success && data.url) {
+        setPostImage(data.url);
+      } else {
+        addNotification('फोटो अपलोड विफल रही।');
+      }
+    } catch {
+      addNotification('फोटो अपलोड त्रुटि।');
+    } finally {
+      setIsUploadingPostImg(false);
+      if (postFileInputRef.current) postFileInputRef.current.value = '';
+    }
+  };
+
+  // Handle Upload Video for Post
+  const handlePostVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Check size limit: e.g. 50MB
+    if (file.size > 50 * 1024 * 1024) {
+      addNotification('वीडियो का साइज़ 50MB से कम होना चाहिए।');
+      return;
+    }
+
+    setIsUploadingPostVideo(true);
+    const fd = new FormData();
+    fd.append('file', file);
+    try {
+      const res = await fetch('/api/upload', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (data.success && data.url) {
+        setPostVideo(data.url);
+        addNotification('वीडियो सफलतापूर्वक जोड़ा गया!');
+      } else {
+        addNotification('वीडियो अपलोड विफल रही।');
+      }
+    } catch {
+      addNotification('वीडियो अपलोड त्रुटि।');
+    } finally {
+      setIsUploadingPostVideo(false);
+      if (postVideoInputRef.current) postVideoInputRef.current.value = '';
+    }
+  };
+
+  // Handle Upload Profile Photo
+  const handleProfilePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingProfile(true);
+    const fd = new FormData();
+    fd.append('file', file);
+    try {
+      const res = await fetch('/api/upload', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (data.success && data.url) {
+        updateCurrentUser({ avatarUrl: data.url });
+        addNotification('प्रोफ़ाइल फोटो सफलतापूर्वक अपडेट हो गई!');
+      } else {
+        addNotification('फोटो अपलोड नहीं हो सकी।');
+      }
+    } catch {
+      addNotification('फोटो अपलोड में त्रुटि हुई।');
+    } finally {
+      setIsUploadingProfile(false);
+      if (profileFileInputRef.current) profileFileInputRef.current.value = '';
+    }
+  };
+
+  // Handle Upload Image for News Submission
+  const handleNewsImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingNewsImg(true);
+    const fd = new FormData();
+    fd.append('file', file);
+    try {
+      const res = await fetch('/api/upload', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (data.success && data.url) {
+        const item: MediaItem = {
+          id: `media-${Date.now()}`,
+          type: 'image',
+          url: data.url,
+          caption: ''
+        };
+        setPhotos((prev) => [...prev, item]);
+      } else {
+        addNotification('तस्वीर अपलोड नहीं हो सकी।');
+      }
+    } catch {
+      addNotification('अपलोड में त्रुटि हुई।');
+    } finally {
+      setUploadingNewsImg(false);
+      if (newsFileInputRef.current) newsFileInputRef.current.value = '';
+    }
+  };
+
+  // Handle Upload Video for News Submission
+  const handleNewsVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingNewsVideo(true);
+    const fd = new FormData();
+    fd.append('file', file);
+    try {
+      const res = await fetch('/api/upload', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (data.success && data.url) {
+        const item: MediaItem = {
+          id: `media-vid-${Date.now()}`,
+          type: 'video',
+          url: data.url,
+          caption: 'Ground Video Report'
+        };
+        setPhotos((prev) => [...prev, item]);
+        addNotification('वीडियो सफलतापूर्वक जोड़ा गया!');
+      } else {
+        addNotification(data.message || 'वीडियो अपलोड नहीं हो सका।');
+      }
+    } catch {
+      addNotification('वीडियो अपलोड में त्रुटि हुई।');
+    } finally {
+      setUploadingNewsVideo(false);
+      if (newsVideoInputRef.current) newsVideoInputRef.current.value = '';
+    }
+  };
+
+  // Handle Add Video via URL / Link
+  const handleAddVideoUrl = () => {
+    if (!newsVideoUrlInput.trim()) return;
+    const item: MediaItem = {
+      id: `media-vid-${Date.now()}`,
+      type: 'video',
+      url: newsVideoUrlInput.trim(),
+      caption: 'Ground Video Report'
+    };
+    setPhotos((prev) => [...prev, item]);
+    setNewsVideoUrlInput('');
+    setShowNewsVideoUrlInput(false);
+    addNotification('वीडियो लिंक सफलतापूर्वक जोड़ा गया!');
+  };
+
+  // Handle News Submission Form Submit
+  const handleNewsFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!headline.trim() || !bodyText.trim()) {
+      addNotification('कृपया शीर्षक और खबर का विवरण अवश्य भरें।');
+      return;
+    }
+
+    if (!currentUser) {
+      openAuthModal('login');
+      return;
+    }
+
+    setIsSubmittingNews(true);
+    setSubmitSuccess(null);
+
+    const submissionPayload: Partial<CitizenSubmission> = {
+      headline: headline.trim(),
+      subHeadline: subHeadline.trim() || undefined,
+      category,
+      city: city.trim() || 'सीतापुर',
+      language: 'hi',
+      body: bodyText.trim(),
+      media: photos,
+      hasRecordedVideo: photos.some(p => p.type === 'video'),
+      geoTag: {
+        locationName: locationName.trim() || city
+      },
+      submittedBy: {
+        id: currentUser.id,
+        name: currentUser.name,
+        role: currentUser.role,
+        district: city,
+        phone: currentUser.phone
+      }
+    };
+
+    try {
+      let res;
+      if (editingSubmissionId) {
+        res = await fetch('/api/submissions', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: editingSubmissionId, ...submissionPayload, status: 'pending_review' })
+        });
+      } else {
+        res = await fetch('/api/submissions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(submissionPayload)
+        });
+      }
+
+      const data = await res.json();
+      if (data.success && data.data) {
+        setSubmitSuccess(data.message || 'खबर संपादकीय समीक्षा हेतु भेज दी गई है!');
+        addNotification('आपकी रिपोर्ट संपादकीय समीक्षा हेतु दर्ज कर ली गई है!');
+        // Update user reports list
+        setMySubmissions((prev) => [data.data, ...prev.filter((item) => item.id !== data.data.id)]);
+        // Reset form
+        setHeadline('');
+        setSubHeadline('');
+        setBodyText('');
+        setLocationName('');
+        setPhotos([]);
+        setEditingSubmissionId(null);
+      } else {
+        addNotification(data.message || 'खबर भेजने में समस्या हुई।');
+      }
+    } catch {
+      addNotification('सर्वर से संपर्क नहीं हो सका।');
+    } finally {
+      setIsSubmittingNews(false);
+    }
+  };
+
+  // Start editing a sent-back report
+  const startEditingReport = (sub: CitizenSubmission) => {
+    setEditingSubmissionId(sub.id);
+    setHeadline(sub.headline);
+    setSubHeadline(sub.subHeadline || '');
+    setCategory(sub.category as ArticleCategory);
+    setCity(sub.city);
+    setLocationName(sub.geoTag?.locationName || '');
+    setBodyText(sub.body);
+    setPhotos(sub.media || []);
+    setActiveTab('submit');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const filteredReports = mySubmissions.filter((sub) => {
+    if (statusFilter === 'all') return true;
+    return sub.status === statusFilter;
+  });
+
+  return (
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col">
+      <Header />
+
+      {/* DASHBOARD TOP BANNER */}
+      <div className="bg-gradient-to-r from-amber-600 via-red-600 to-amber-700 text-white py-4 shadow-inner">
+        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-black font-serif tracking-tight flex items-center gap-2">
+              <PenSquare className="w-5 h-5 text-amber-200" />
+              <span>
+                {language === 'en' ? 'Citizen Journalist Dashboard' : language === 'ur' ? 'شہری صحافی ڈیش بورڈ' : 'नागरिक पत्रकार डैशबोर्ड'}
+              </span>
+            </h1>
+            <p className="text-xs text-amber-100 mt-0.5">
+              {language === 'en' 
+                ? 'Submit ground reports, share updates in community & track publishing status.'
+                : language === 'ur'
+                ? 'اپنی گراؤنڈ رپورٹس درج کریں، کمیونٹی میں اپ ڈیٹس شیئر کریں اور اشاعت کی صورتحال دیکھیں۔'
+                : 'अपनी ज़मीनी रिपोर्ट दर्ज करें, कम्युनिटी में ताज़ा विचार साझा करें एवं प्रकाशन स्थिति देखें।'}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/20 text-xs font-bold border border-white/20">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              {language === 'en' ? 'Live Journalist Portal' : language === 'ur' ? 'لائیو صحافی پورٹل' : 'लाइव पत्रकार पोर्टल'}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* MAIN CONTAINER (3-PANEL LAYOUT: STICKY LEFT, SCROLLABLE CENTER, STICKY RIGHT) */}
+      <div className="max-w-[1540px] mx-auto px-3 sm:px-4 py-6 w-full flex-1">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+          
+          {/* ================= 1. LEFT PANEL (STICKY USER & NAVIGATION) ================= */}
+          <div className="lg:col-span-3 space-y-4 lg:sticky lg:top-20 self-start max-h-[calc(100vh-5.5rem)] overflow-y-auto scrollbar-none">
+            
+            {/* User Profile Card (Reference: Yogsathi Style) */}
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="relative group/avatar shrink-0">
+                  <div className="w-14 h-14 rounded-full overflow-hidden bg-amber-500 text-slate-950 font-black text-xl flex items-center justify-center shadow-md border-2 border-amber-300">
+                    {currentUser?.avatarUrl ? (
+                      <img src={currentUser.avatarUrl} alt={currentUser.name} className="w-full h-full object-cover" />
+                    ) : (
+                      currentUser ? currentUser.name.charAt(0).toUpperCase() : 'J'
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    disabled={isUploadingProfile}
+                    onClick={() => profileFileInputRef.current?.click()}
+                    className="absolute -bottom-1 -right-1 p-1 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-full shadow border-2 border-white dark:border-slate-900 transition cursor-pointer"
+                    title={language === 'en' ? 'Change Photo' : 'फ़ोटो बदलें'}
+                  >
+                    <Camera className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h2 className="font-extrabold text-base text-slate-900 dark:text-white truncate">
+                    {currentUser ? currentUser.name : (language === 'en' ? 'Citizen Journalist' : language === 'ur' ? 'شہری صحافی' : 'नागरिक पत्रकार')}
+                  </h2>
+                  <p className="text-xs text-slate-500 truncate">
+                    {currentUser?.email || currentUser?.phone || (language === 'en' ? 'Journalist Account' : 'पत्रकार खाता')}
+                  </p>
+                  <div className="mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300">
+                    <ShieldCheck className="w-3 h-3 text-red-600" />
+                    <span>{language === 'en' ? 'Verified Journalist' : language === 'ur' ? 'تصدیق شدہ صحافی' : 'सत्यापित पत्रकार'}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Stats Grid */}
+              <div className="grid grid-cols-2 gap-2 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs">
+                <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-700/60">
+                  <span className="text-[10px] text-slate-400 block font-medium">
+                    {language === 'en' ? 'District' : language === 'ur' ? 'ضلع' : 'ज़िला'}
+                  </span>
+                  <span className="font-bold text-slate-800 dark:text-slate-100 truncate block">
+                    {currentUser?.city || 'सीतापुर'}
+                  </span>
+                </div>
+                <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-700/60">
+                  <span className="text-[10px] text-slate-400 block font-medium">
+                    {language === 'en' ? 'Total Reports' : language === 'ur' ? 'کل رپورٹس' : 'कुल रिपोर्ट्स'}
+                  </span>
+                  <span className="font-bold text-red-700 dark:text-red-400 block">
+                    {mySubmissions.length} {language === 'en' ? 'Reports' : 'खबरें'}
+                  </span>
+                </div>
+                <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-700/60">
+                  <span className="text-[10px] text-slate-400 block font-medium">
+                    {language === 'en' ? 'Published' : language === 'ur' ? 'شائع شدہ' : 'स्वीकृत/प्रकाशित'}
+                  </span>
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400 block">
+                    {mySubmissions.filter((s) => s.status === 'approved').length}
+                  </span>
+                </div>
+                <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-700/60">
+                  <span className="text-[10px] text-slate-400 block font-medium">
+                    {language === 'en' ? 'Score' : language === 'ur' ? 'اسکور' : 'क्रेडिट स्कोर'}
+                  </span>
+                  <span className="font-bold text-amber-600 dark:text-amber-400 block">
+                    150 {language === 'en' ? 'pts' : 'अंक'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Navigation Panel (Like Yogsathi Reference) */}
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-2.5 space-y-1">
+              <span className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 block">
+                {language === 'en' ? 'Journalist Menu' : language === 'ur' ? 'صحافی مینو' : 'पत्रकार पैनल'}
+              </span>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('feed')}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition cursor-pointer ${
+                  activeTab === 'feed'
+                    ? 'bg-amber-500 text-slate-950 shadow-sm'
+                    : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <MessageSquare className="w-4 h-4 text-amber-700 shrink-0" />
+                  <span className="whitespace-nowrap truncate">
+                    {language === 'en' ? 'Community Feed' : language === 'ur' ? 'کمیونٹی فیڈ' : 'कम्युनिटी फ़ीड'}
+                  </span>
+                </div>
+                <ChevronRight className="w-4 h-4 opacity-70 shrink-0 ml-1" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('submit')}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition cursor-pointer ${
+                  activeTab === 'submit'
+                    ? 'bg-red-700 text-white shadow-sm'
+                    : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <PenSquare className="w-4 h-4 text-red-500 shrink-0" />
+                  <span className="whitespace-nowrap truncate">
+                    {language === 'en' ? 'Submit Report' : language === 'ur' ? 'رپورٹ درج کریں' : 'रिपोर्ट दर्ज करें'}
+                  </span>
+                </div>
+                <ChevronRight className="w-4 h-4 opacity-70 shrink-0 ml-1" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('my_reports')}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition cursor-pointer ${
+                  activeTab === 'my_reports'
+                    ? 'bg-amber-500 text-slate-950 shadow-sm'
+                    : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <FileText className="w-4 h-4 text-amber-700 shrink-0" />
+                  <span className="whitespace-nowrap truncate">
+                    {language === 'en' ? 'My Reports' : language === 'ur' ? 'میری رپورٹس' : 'मेरी खबरें व स्थिति'}
+                  </span>
+                </div>
+                <span className="text-xs px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold shrink-0 ml-1">
+                  {mySubmissions.length}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('profile')}
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition cursor-pointer ${
+                  activeTab === 'profile'
+                    ? 'bg-amber-500 text-slate-950 shadow-sm'
+                    : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                }`}
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <User className="w-4 h-4 text-amber-700 shrink-0" />
+                  <span className="whitespace-nowrap truncate">
+                    {language === 'en' ? 'My Profile' : language === 'ur' ? 'میری پروفائل' : 'मेरी प्रोफ़ाइल'}
+                  </span>
+                </div>
+                <ChevronRight className="w-4 h-4 opacity-70 shrink-0 ml-1" />
+              </button>
+
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-1">
+                <Link
+                  href="/epaper"
+                  className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Newspaper className="w-4 h-4 text-red-600 shrink-0" />
+                    <span className="whitespace-nowrap truncate">
+                      {language === 'en' ? 'Daily E-Paper' : language === 'ur' ? 'روزنامہ ای پیپر' : 'दैनिक ई-पेपर'}
+                    </span>
+                  </div>
+                  <ChevronRight className="w-3.5 h-3.5 opacity-50 shrink-0 ml-1" />
+                </Link>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    logout();
+                    router.push('/');
+                  }}
+                  className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 transition cursor-pointer"
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <LogOut className="w-4 h-4 shrink-0" />
+                    <span className="whitespace-nowrap truncate">
+                      {language === 'en' ? 'Logout' : language === 'ur' ? 'لاگ آؤٹ' : 'लॉगआउट'}
+                    </span>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+          {/* ================= 2. CENTER PANEL (SCROLLABLE FEED & FORM) ================= */}
+          <div className="lg:col-span-6 space-y-6 min-w-0">
+
+            {/* TAB 1: SOCIAL COMMUNITY FEED (Post, Like, Comment, Share) */}
+            {activeTab === 'feed' && (
+              <div className="space-y-5">
+                
+                {/* CREATE POST BOX (Like Yogsathi Reference) */}
+                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 sm:p-5 space-y-3">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-full overflow-hidden bg-amber-500 text-slate-950 font-black flex items-center justify-center text-sm shrink-0 border border-amber-300">
+                      {currentUser?.avatarUrl ? (
+                        <img src={currentUser.avatarUrl} alt={currentUser.name} className="w-full h-full object-cover" />
+                      ) : (
+                        currentUser ? currentUser.name.charAt(0).toUpperCase() : 'J'
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <textarea
+                        value={postContent}
+                        onChange={(e) => setPostContent(e.target.value)}
+                        placeholder={
+                          language === 'en'
+                            ? `What's on your mind or news update, ${currentUser?.name || 'Partner'}?`
+                            : language === 'ur'
+                            ? `آپ کے ذہن میں کیا خیالات یا تازہ اپ ڈیٹ ہیں، ${currentUser?.name || 'ساتھی'}؟`
+                            : `आपके मन में क्या विचार या ताज़ा अपडेट है, ${currentUser?.name || 'साथी'}?`
+                        }
+                        rows={3}
+                        className="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 resize-none"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Photo Preview if uploaded */}
+                  {postImage && (
+                    <div className="relative rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 max-h-64">
+                      <img src={postImage} alt="Post Attachment" className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => setPostImage(null)}
+                        className="absolute top-2 right-2 p-1 rounded-full bg-black/60 text-white hover:bg-black/80 transition"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Video Preview if uploaded */}
+                  {postVideo && (
+                    <div className="relative rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-black max-h-64">
+                      <video src={postVideo} controls className="w-full max-h-64 object-contain" />
+                      <button
+                        type="button"
+                        onClick={() => setPostVideo(null)}
+                        className="absolute top-2 right-2 p-1 rounded-full bg-black/60 text-white hover:bg-black/80 transition"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Actions Bar */}
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <div className="flex items-center gap-2">
+                      {/* Photo Upload */}
+                      <input
+                        type="file"
+                        ref={postFileInputRef}
+                        accept="image/*"
+                        onChange={handlePostImageUpload}
+                        className="hidden"
+                      />
+                      <button
+                        type="button"
+                        disabled={isUploadingPostImg}
+                        onClick={() => postFileInputRef.current?.click()}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                      >
+                        <ImageIcon className="w-4 h-4 text-emerald-600" />
+                        <span>{isUploadingPostImg ? (language === 'en' ? 'Uploading...' : 'अपलोड...') : (language === 'en' ? 'Add Photo' : language === 'ur' ? 'تصویر شامل کریں' : 'फोटो जोड़ें')}</span>
+                      </button>
+
+                      {/* Video Upload */}
+                      <input
+                        type="file"
+                        ref={postVideoInputRef}
+                        accept="video/*"
+                        onChange={handlePostVideoUpload}
+                        className="hidden"
+                      />
+                      <button
+                        type="button"
+                        disabled={isUploadingPostVideo}
+                        onClick={() => postVideoInputRef.current?.click()}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                      >
+                        <Video className="w-4 h-4 text-red-600" />
+                        <span>{isUploadingPostVideo ? (language === 'en' ? 'Uploading...' : 'अपलोड...') : (language === 'en' ? 'Add Video' : language === 'ur' ? 'ویڈیو شامل کریں' : 'वीडियो जोड़ें')}</span>
+                      </button>
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={isPosting || (!postContent.trim() && !postImage && !postVideo)}
+                      onClick={handleCreatePost}
+                      className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-slate-950 font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow-sm transition cursor-pointer"
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                      <span>{isPosting ? (language === 'en' ? 'Posting...' : 'पोस्ट हो रहा है...') : (language === 'en' ? 'Post' : language === 'ur' ? 'پوسٹ کریں' : 'पोस्ट करें')}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* POSTS FEED STREAM */}
+                <div className="space-y-4">
+                  {posts.length === 0 ? (
+                    <div className="bg-white dark:bg-slate-900 p-8 rounded-2xl border text-center text-slate-400 text-sm">
+                      {language === 'en' ? 'No community posts yet. Be the first to share an update!' : language === 'ur' ? 'ابھی تک کوئی کمیونٹی پوسٹ نہیں ہے۔' : 'अभी तक कोई कम्युनिटी पोस्ट नहीं है। सबसे पहले आप विचार साझा करें!'}
+                    </div>
+                  ) : (
+                    posts.map((post) => {
+                      const isLiked = currentUser ? post.likes.includes(currentUser.id) : false;
+                      const isCommentsOpen = openCommentsPostId === post.id;
+
+                      return (
+                        <div
+                          key={post.id}
+                          className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 sm:p-5 space-y-3"
+                        >
+                          {/* Post Header */}
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold flex items-center justify-center text-sm shrink-0">
+                              {post.author.avatarUrl ? (
+                                <img src={post.author.avatarUrl} alt={post.author.name} className="w-full h-full object-cover" />
+                              ) : (
+                                post.author.name.charAt(0)
+                              )}
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-extrabold text-sm text-slate-900 dark:text-white">
+                                  {post.author.name}
+                                </span>
+                                <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 font-bold border border-amber-200 dark:border-amber-800">
+                                  {post.author.role}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 text-[11px] text-slate-400">
+                                <span>{post.author.city}</span>
+                                <span>•</span>
+                                <span>{post.createdAt}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Post Content */}
+                          <p className="text-sm text-slate-800 dark:text-slate-100 whitespace-pre-line leading-relaxed">
+                            {post.content}
+                          </p>
+
+                          {/* Post Image */}
+                          {post.imageUrl && (
+                            <div className="rounded-xl overflow-hidden border border-slate-100 dark:border-slate-800 max-h-96">
+                              <img
+                                src={post.imageUrl}
+                                alt="Post media"
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          )}
+
+                          {/* Post Video */}
+                          {post.videoUrl && (
+                            <div className="rounded-xl overflow-hidden border border-slate-100 dark:border-slate-800 bg-black max-h-96">
+                              <video
+                                src={post.videoUrl}
+                                controls
+                                playsInline
+                                className="w-full max-h-96 object-contain"
+                              />
+                            </div>
+                          )}
+
+                          {/* Action Buttons: Like, Comment, Share */}
+                          <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                            <button
+                              type="button"
+                              onClick={() => handleToggleLike(post.id)}
+                              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer ${
+                                isLiked ? 'text-red-600 dark:text-red-400 font-bold' : ''
+                              }`}
+                            >
+                              <ThumbsUp className={`w-4 h-4 ${isLiked ? 'fill-red-600 text-red-600' : ''}`} />
+                              <span>{post.likes.length} {language === 'en' ? 'Like' : language === 'ur' ? 'پسند' : 'पसंद'}</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setOpenCommentsPostId(isCommentsOpen ? null : post.id)
+                              }
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                            >
+                              <MessageSquare className="w-4 h-4 text-amber-600" />
+                              <span>{post.comments.length} {language === 'en' ? 'Comment' : language === 'ur' ? 'تبصرے' : 'टिप्पणी'}</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleSharePost(post)}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                            >
+                              <Share2 className="w-4 h-4 text-blue-600" />
+                              <span>{language === 'en' ? 'Share' : language === 'ur' ? 'شیئر' : 'साझा करें'}</span>
+                            </button>
+                          </div>
+
+                          {/* Comments Box */}
+                          {isCommentsOpen && (
+                            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-3">
+                              {post.comments.length > 0 && (
+                                <div className="space-y-2">
+                                  {post.comments.map((c) => (
+                                    <div
+                                      key={c.id}
+                                      className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60 text-xs"
+                                    >
+                                      <div className="flex items-center justify-between">
+                                        <span className="font-bold text-slate-800 dark:text-slate-200">
+                                          {c.authorName}
+                                        </span>
+                                        <span className="text-[10px] text-slate-400">{c.createdAt}</span>
+                                      </div>
+                                      <p className="mt-1 text-slate-700 dark:text-slate-300">{c.text}</p>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+
+                              {/* Comment Input */}
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="text"
+                                  value={commentInputs[post.id] || ''}
+                                  onChange={(e) =>
+                                    setCommentInputs((prev) => ({ ...prev, [post.id]: e.target.value }))
+                                  }
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleAddComment(post.id);
+                                  }}
+                                  placeholder={language === 'en' ? 'Write a comment...' : language === 'ur' ? 'اپنی رائے لکھیں...' : 'अपनी टिप्पणी लिखें...'}
+                                  className="flex-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-amber-500"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => handleAddComment(post.id)}
+                                  className="px-3 py-2 bg-red-700 hover:bg-red-800 text-white font-bold text-xs rounded-xl shadow-xs"
+                                >
+                                  {language === 'en' ? 'Send' : language === 'ur' ? 'بھیجیں' : 'भेजें'}
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+
+              </div>
+            )}
+
+            {/* TAB 2: REPORT DARJ KARO (Create & Publish News Article) */}
+            {activeTab === 'submit' && (
+              <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 sm:p-6 space-y-5">
+                <div className="pb-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                  <div>
+                    <h2 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                      <PenSquare className="w-5 h-5 text-red-600" />
+                      <span>
+                        {editingSubmissionId 
+                          ? (language === 'en' ? 'Edit News Report' : language === 'ur' ? 'خبر میں ترمیم کریں' : 'खबर में संशोधन करें') 
+                          : (language === 'en' ? 'Submit Ground Report / News' : language === 'ur' ? 'نئی خبر درج کریں' : 'नई खबर / रिपोर्ट दर्ज करें')}
+                      </span>
+                    </h2>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      {language === 'en' 
+                        ? 'Your report will be reviewed by editorial desk before publishing on portal and e-paper.' 
+                        : language === 'ur'
+                        ? 'آپ کی رپورٹ ایڈیٹوریل جائزے کے بعد پورٹل اور ای پیپر پر شائع ہوگی۔'
+                        : 'आपकी खबर संपादकीय समीक्षा के पश्चात मुख्य वेब संस्करण और ई-पेपर में प्रकाशित की जाएगी।'}
+                    </p>
+                  </div>
+                  {editingSubmissionId && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingSubmissionId(null);
+                        setHeadline('');
+                        setBodyText('');
+                      }}
+                      className="text-xs text-slate-500 hover:underline"
+                    >
+                      {language === 'en' ? 'Cancel' : 'रद्द करें'}
+                    </button>
+                  )}
+                </div>
+
+                {submitSuccess && (
+                  <div className="p-3.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>{submitSuccess}</span>
+                  </div>
+                )}
+
+                <form onSubmit={handleNewsFormSubmit} className="space-y-4">
+                  {/* Headline */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      {language === 'en' ? 'Main Headline' : language === 'ur' ? 'اہم سرخی' : 'खबर का मुख्य शीर्षक'} <span className="text-red-600">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={headline}
+                      onChange={(e) => setHeadline(e.target.value)}
+                      placeholder={language === 'en' ? 'E.g.: New medical center inaugurated in district with 50 beds...' : 'उदा: सीतापुर में नए अस्पताल का लोकार्पण, 50 बेड की सुविधा शुरू...'}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    />
+                  </div>
+
+                  {/* Subheadline */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      {language === 'en' ? 'Sub-headline / Summary (Optional)' : language === 'ur' ? 'ذیلی سرخی (اختیاری)' : 'उप-शीर्षक (वैकल्पिक)'}
+                    </label>
+                    <input
+                      type="text"
+                      value={subHeadline}
+                      onChange={(e) => setSubHeadline(e.target.value)}
+                      placeholder={language === 'en' ? 'Brief summary or key takeaway...' : 'संक्षिप्त विवरण या मुख्य बिंदु...'}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    />
+                  </div>
+
+                  {/* Category & City Selection */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                        {language === 'en' ? 'Category' : language === 'ur' ? 'زمرہ' : 'खबर की श्रेणी'}
+                      </label>
+                      <select
+                        value={category}
+                        onChange={(e) => setCategory(e.target.value as ArticleCategory)}
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      >
+                        <option value="state-city">{language === 'en' ? 'State / City' : 'राज्य / शहर विशेष'}</option>
+                        <option value="sitapur">{language === 'en' ? 'Sitapur News' : 'सीतापुर हलचल'}</option>
+                        <option value="lucknow">{language === 'en' ? 'Lucknow News' : 'लखनऊ राजधानी'}</option>
+                        <option value="politics">{language === 'en' ? 'Politics' : 'राजनीति'}</option>
+                        <option value="national">{language === 'en' ? 'National' : 'राष्ट्रीय'}</option>
+                        <option value="business">{language === 'en' ? 'Business' : 'कारोबार'}</option>
+                        <option value="sports">{language === 'en' ? 'Sports' : 'खेल जगत'}</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                        {language === 'en' ? 'City / Location' : language === 'ur' ? 'شہر / مقام' : 'स्थान / शहर'}
+                      </label>
+                      <input
+                        type="text"
+                        value={city}
+                        onChange={(e) => setCity(e.target.value)}
+                        placeholder="उदा: सीतापुर, लखनऊ, दिल्ली..."
+                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Exact Location Name */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      {language === 'en' ? 'Incident Spot / Landmark' : language === 'ur' ? 'مقام / لینڈ مارک' : 'घटना स्थल का नाम (Spot / Landmark)'}
+                    </label>
+                    <input
+                      type="text"
+                      value={locationName}
+                      onChange={(e) => setLocationName(e.target.value)}
+                      placeholder={language === 'en' ? 'E.g.: Collectorate Square, Main Market, Naimisharanya...' : 'उदा: कलेक्ट्रेट चौराहा, मुख्य बाजार, नैमिषारण्य...'}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    />
+                  </div>
+
+                  {/* Body Text */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      {language === 'en' ? 'Full Story Details' : language === 'ur' ? 'خبر کی مکمل تفصیل' : 'खबर का संपूर्ण विवरण (Full Story Body)'} <span className="text-red-600">*</span>
+                    </label>
+                    <textarea
+                      required
+                      rows={6}
+                      value={bodyText}
+                      onChange={(e) => setBodyText(e.target.value)}
+                      placeholder={language === 'en' ? 'Write full details: incident, time, exact location, eyewitness statements...' : 'घटना, समय, स्थान, प्रत्यक्षदर्शियों के बयान एवं सम्पूर्ण जानकारी विस्तार से लिखें...'}
+                      className="w-full p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500 resize-y"
+                    />
+                  </div>
+
+                  {/* Photos & Videos Upload */}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                      {language === 'en' ? 'Add Photos & Videos (News Media)' : language === 'ur' ? 'تصاویر اور ویڈیوز شامل کریں' : 'तस्वीरें व वीडियो जोड़ें (News Photos & Video)'}
+                    </label>
+                    
+                    {/* Hidden File Inputs */}
+                    <input
+                      type="file"
+                      ref={newsFileInputRef}
+                      accept="image/*"
+                      onChange={handleNewsImageUpload}
+                      className="hidden"
+                    />
+                    <input
+                      type="file"
+                      ref={newsVideoInputRef}
+                      accept="video/*"
+                      onChange={handleNewsVideoUpload}
+                      className="hidden"
+                    />
+
+                    <div className="flex flex-wrap items-center gap-3">
+                      {/* Upload Photo Button */}
+                      <button
+                        type="button"
+                        disabled={uploadingNewsImg}
+                        onClick={() => newsFileInputRef.current?.click()}
+                        className="px-4 py-2 rounded-xl border-2 border-dashed border-amber-400 dark:border-amber-700 bg-amber-50/50 dark:bg-amber-950/20 text-xs font-bold text-amber-800 dark:text-amber-300 hover:bg-amber-100 flex items-center gap-2 transition cursor-pointer disabled:opacity-50"
+                      >
+                        <Upload className="w-4 h-4 text-amber-600" />
+                        <span>
+                          {uploadingNewsImg 
+                            ? (language === 'en' ? 'Uploading Photo...' : 'फोटो अपलोड हो रहा है...') 
+                            : (language === 'en' ? 'Upload Photo (+Photo)' : 'तस्वीर जोड़ें (+Photo)')}
+                        </span>
+                      </button>
+
+                      {/* Upload Video Button */}
+                      <button
+                        type="button"
+                        disabled={uploadingNewsVideo}
+                        onClick={() => newsVideoInputRef.current?.click()}
+                        className="px-4 py-2 rounded-xl border-2 border-dashed border-red-400 dark:border-red-700 bg-red-50/50 dark:bg-red-950/20 text-xs font-bold text-red-800 dark:text-red-300 hover:bg-red-100 flex items-center gap-2 transition cursor-pointer disabled:opacity-50"
+                      >
+                        <Video className="w-4 h-4 text-red-600" />
+                        <span>
+                          {uploadingNewsVideo 
+                            ? (language === 'en' ? 'Uploading Video...' : 'वीडियो अपलोड हो रहा है...') 
+                            : (language === 'en' ? 'Upload Video (+Video)' : 'वीडियो जोड़ें (+Video)')}
+                        </span>
+                      </button>
+
+                      {/* Video Link Button */}
+                      <button
+                        type="button"
+                        onClick={() => setShowNewsVideoUrlInput(!showNewsVideoUrlInput)}
+                        className="px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 flex items-center gap-1.5 transition cursor-pointer"
+                      >
+                        <Link2 className="w-3.5 h-3.5 text-blue-600" />
+                        <span>{language === 'en' ? 'Video Link (+URL)' : 'वीडियो लिंक (+Link)'}</span>
+                      </button>
+                    </div>
+
+                    {/* Expandable Video URL Input */}
+                    {showNewsVideoUrlInput && (
+                      <div className="mt-2.5 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-center gap-2">
+                        <input
+                          type="url"
+                          value={newsVideoUrlInput}
+                          onChange={(e) => setNewsVideoUrlInput(e.target.value)}
+                          placeholder={language === 'en' ? 'Paste YouTube / MP4 video link here...' : 'यहाँ YouTube या वीडियो URL लिंक पेस्ट करें...'}
+                          className="flex-1 w-full px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-amber-500"
+                        />
+                        <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                          <button
+                            type="button"
+                            onClick={handleAddVideoUrl}
+                            className="px-3 py-1.5 rounded-lg bg-red-600 text-white text-xs font-bold hover:bg-red-700 transition cursor-pointer"
+                          >
+                            {language === 'en' ? 'Add' : 'जोड़ें'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowNewsVideoUrlInput(false);
+                              setNewsVideoUrlInput('');
+                            }}
+                            className="px-2.5 py-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-semibold hover:bg-slate-300 transition cursor-pointer"
+                          >
+                            {language === 'en' ? 'Cancel' : 'रद्द'}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Media Items Preview (Images & Videos) */}
+                    {photos.length > 0 && (
+                      <div className="flex flex-wrap items-center gap-3 mt-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+                        {photos.map((item, idx) => (
+                          <div key={item.id} className="relative w-20 h-20 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-900 shadow-2xs group">
+                            {item.type === 'video' ? (
+                              <div className="w-full h-full relative">
+                                <video src={item.url} className="w-full h-full object-cover" />
+                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center pointer-events-none">
+                                  <Video className="w-5 h-5 text-white" />
+                                </div>
+                                <span className="absolute bottom-1 left-1 bg-red-600 text-white text-[8px] font-black px-1 py-0.2 rounded uppercase">
+                                  Video
+                                </span>
+                              </div>
+                            ) : (
+                              <img src={item.url} alt="Uploaded" className="w-full h-full object-cover" />
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => setPhotos((prev) => prev.filter((_, i) => i !== idx))}
+                              className="absolute top-1 right-1 p-0.5 rounded-full bg-red-600 hover:bg-red-700 text-white shadow-xs cursor-pointer transition"
+                              title="हटाएं (Remove)"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Submit Button */}
+                  <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-end">
+                    <button
+                      type="submit"
+                      disabled={isSubmittingNews}
+                      className="px-6 py-2.5 bg-red-700 hover:bg-red-800 text-white font-bold text-sm rounded-xl shadow-md transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                    >
+                      <Send className="w-4 h-4" />
+                      <span>{isSubmittingNews ? (language === 'en' ? 'Submitting...' : 'भेजा जा रहा है...') : (language === 'en' ? 'Submit for Editorial Review & Publishing' : language === 'ur' ? 'ادارتی جائزے اور اشاعت کے لیے بھیجیں' : 'संपादकीय समीक्षा एवं प्रकाशन हेतु भेजें')}</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {/* TAB 3: MY REPORTS & SUBMISSIONS STATUS */}
+            {activeTab === 'my_reports' && (
+              <div className="space-y-4">
+                
+                {/* Filter Chips */}
+                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-3 flex items-center gap-2 overflow-x-auto scrollbar-none text-xs">
+                  <span className="font-bold text-slate-500 mr-1 shrink-0">
+                    {language === 'en' ? 'Status Filter:' : language === 'ur' ? 'حیثیت فلٹر:' : 'स्थिति फ़िल्टर:'}
+                  </span>
+                  
+                  <button
+                    type="button"
+                    onClick={() => setStatusFilter('all')}
+                    className={`px-3 py-1.5 rounded-xl font-bold transition cursor-pointer shrink-0 ${
+                      statusFilter === 'all'
+                        ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
+                        : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                    }`}
+                  >
+                    {language === 'en' ? 'All' : language === 'ur' ? 'تمام' : 'सभी'} ({mySubmissions.length})
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setStatusFilter('approved')}
+                    className={`px-3 py-1.5 rounded-xl font-bold transition cursor-pointer shrink-0 ${
+                      statusFilter === 'approved'
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-slate-100 dark:bg-slate-800 text-emerald-700 dark:text-emerald-400'
+                    }`}
+                  >
+                    {language === 'en' ? 'Approved / Published' : language === 'ur' ? 'منظور شدہ' : 'स्वीकृत / प्रकाशित'} ({mySubmissions.filter((s) => s.status === 'approved').length})
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setStatusFilter('pending_review')}
+                    className={`px-3 py-1.5 rounded-xl font-bold transition cursor-pointer shrink-0 ${
+                      statusFilter === 'pending_review'
+                        ? 'bg-amber-600 text-white'
+                        : 'bg-slate-100 dark:bg-slate-800 text-amber-700 dark:text-amber-400'
+                    }`}
+                  >
+                    {language === 'en' ? 'Under Review' : language === 'ur' ? 'زیر جائزہ' : 'समीक्षाधीन'} ({mySubmissions.filter((s) => s.status === 'pending_review').length})
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setStatusFilter('sent_back')}
+                    className={`px-3 py-1.5 rounded-xl font-bold transition cursor-pointer shrink-0 ${
+                      statusFilter === 'sent_back'
+                        ? 'bg-red-600 text-white'
+                        : 'bg-slate-100 dark:bg-slate-800 text-red-700 dark:text-red-400'
+                    }`}
+                  >
+                    {language === 'en' ? 'Revision Needed' : language === 'ur' ? 'ترمیم درکار' : 'संशोधन अपेक्षित'} ({mySubmissions.filter((s) => s.status === 'sent_back').length})
+                  </button>
+                </div>
+
+                {/* Submissions List */}
+                <div className="space-y-3">
+                  {isLoadingReports ? (
+                    <div className="bg-white dark:bg-slate-900 p-8 rounded-2xl border text-center text-slate-400 text-sm">
+                      {language === 'en' ? 'Loading your reports...' : language === 'ur' ? 'آپ کی رپورٹیں لوڈ ہو رہی ہیں...' : 'आपकी खबरें लोड हो रही हैं...'}
+                    </div>
+                  ) : filteredReports.length === 0 ? (
+                    <div className="bg-white dark:bg-slate-900 p-8 rounded-2xl border text-center text-slate-400 text-sm space-y-3">
+                      <p>{language === 'en' ? 'No reports found under this filter.' : 'इस फ़िल्टर में कोई खबर नहीं है।'}</p>
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab('submit')}
+                        className="px-4 py-2 rounded-xl bg-red-700 text-white font-bold text-xs"
+                      >
+                        {language === 'en' ? 'Submit New Report' : 'नई खबर दर्ज करें'}
+                      </button>
+                    </div>
+                  ) : (
+                    filteredReports.map((sub) => {
+                      const isSentBack = sub.status === 'sent_back';
+                      const isApproved = sub.status === 'approved';
+
+                      return (
+                        <div
+                          key={sub.id}
+                          className={`bg-white dark:bg-slate-900 rounded-2xl shadow-sm border p-4 sm:p-5 space-y-3 transition ${
+                            isSentBack
+                              ? 'border-red-300 dark:border-red-900/80 bg-red-50/20'
+                              : 'border-slate-200 dark:border-slate-800'
+                          }`}
+                        >
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                                  isApproved
+                                    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                                    : isSentBack
+                                    ? 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300'
+                                    : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
+                                }`}
+                              >
+                                {isApproved
+                                  ? (language === 'en' ? '✓ Approved / Published' : '✓ स्वीकृत / प्रकाशित')
+                                  : isSentBack
+                                  ? (language === 'en' ? '⚠ Revision Needed (Sent Back)' : '⚠ संशोधन अपेक्षित (Sent Back)')
+                                  : (language === 'en' ? '⏳ Under Editorial Review' : '⏳ संपादकीय समीक्षाधीन')}
+                              </span>
+                              <span className="text-[11px] text-slate-400">{sub.city}</span>
+                            </div>
+
+                            <span className="text-[11px] text-slate-400">
+                              {language === 'en' ? 'Submitted: ' : 'प्रस्तुत: '}
+                              {sub.submittedAt ? new Date(sub.submittedAt).toLocaleDateString(language === 'en' ? 'en-US' : 'hi-IN') : (language === 'en' ? 'Recently' : 'हाल ही में')}
+                            </span>
+                          </div>
+
+                          <h3 className="text-base font-extrabold text-slate-900 dark:text-white">
+                            {sub.headline}
+                          </h3>
+
+                          {sub.subHeadline && (
+                            <p className="text-xs text-slate-500">{sub.subHeadline}</p>
+                          )}
+
+                          <p className="text-xs text-slate-700 dark:text-slate-300 line-clamp-2">
+                            {sub.body}
+                          </p>
+
+                          {/* Media thumbnails preview if available */}
+                          {sub.media && sub.media.length > 0 && (
+                            <div className="flex flex-wrap items-center gap-2 pt-1">
+                              {sub.media.map((m, idx) => (
+                                <div key={idx} className="relative w-14 h-14 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-900 shrink-0">
+                                  {m.type === 'video' ? (
+                                    <div className="w-full h-full relative">
+                                      <video src={m.url} className="w-full h-full object-cover" />
+                                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                                        <Video className="w-4 h-4 text-white" />
+                                      </div>
+                                      <span className="absolute bottom-0.5 left-0.5 bg-red-600 text-[7px] text-white font-black px-1 rounded">
+                                        VIDEO
+                                      </span>
+                                    </div>
+                                  ) : (
+                                    <img src={m.url} alt="Attached Media" className="w-full h-full object-cover" />
+                                  )}
+                                </div>
+                              ))}
+                              {sub.hasRecordedVideo && (
+                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-900">
+                                  <Video className="w-3 h-3 text-red-600" />
+                                  <span>{language === 'en' ? 'Ground Video Included' : 'वीडियो रिपोर्ट संलग्न'}</span>
+                                </span>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Editor feedback callout if sent back */}
+                          {isSentBack && (
+                            <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-xs text-amber-900 dark:text-amber-200 flex items-start gap-2">
+                              <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                              <div className="flex-1">
+                                <span className="font-bold block">
+                                  {language === 'en' ? 'Editor Feedback:' : 'संपादक की टिप्पणी (Editor Feedback):'}
+                                </span>
+                                <span>{sub.editorComments || (language === 'en' ? 'Please add more details and resubmit.' : 'कृपया अधिक विवरण जोड़कर दोबारा भेजें।')}</span>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => startEditingReport(sub)}
+                                className="px-3 py-1.5 rounded-lg bg-red-700 text-white font-bold text-xs shrink-0 cursor-pointer shadow-xs hover:bg-red-800"
+                              >
+                                {language === 'en' ? 'Edit & Resubmit' : 'सुधारें (Edit)'}
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+
+              </div>
+            )}
+
+            {/* TAB 4: MY PROFILE */}
+            {activeTab === 'profile' && (
+              <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 sm:p-6 space-y-5">
+                <div className="pb-3 border-b border-slate-100 dark:border-slate-800">
+                  <h2 className="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+                    <User className="w-5 h-5 text-amber-600" />
+                    <span>{language === 'en' ? 'Journalist Profile & Identity' : 'पत्रकार प्रोफ़ाइल एवं परिचय'}</span>
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    {language === 'en' ? 'Your citizen journalist identity on Swarnim Dastavej network.' : 'स्वर्णिम दस्तावेज़ डिजिटल नेटवर्क पर आपकी नागरिक पत्रकार पहचान।'}
+                  </p>
+                </div>
+
+                {/* Profile Photo Uploader Section */}
+                <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 via-orange-500/5 to-transparent border border-amber-200 dark:border-amber-900/60 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="relative shrink-0">
+                      <div className="w-20 h-20 rounded-full overflow-hidden bg-amber-500 text-slate-950 font-black text-3xl flex items-center justify-center shadow-lg border-4 border-white dark:border-slate-800">
+                        {currentUser?.avatarUrl ? (
+                          <img src={currentUser.avatarUrl} alt={currentUser.name} className="w-full h-full object-cover" />
+                        ) : (
+                          currentUser ? currentUser.name.charAt(0).toUpperCase() : 'J'
+                        )}
+                      </div>
+                      {isUploadingProfile && (
+                        <div className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center text-white text-[10px] font-bold">
+                          अपलोडिंग...
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="font-extrabold text-base text-slate-900 dark:text-white">
+                        {currentUser?.name || 'नागरिक पत्रकार'}
+                      </h3>
+                      <p className="text-xs text-slate-500">
+                        {language === 'en' ? 'Upload or update your profile picture from media' : 'मीडिया या गैलरी से अपनी प्रोफ़ाइल तस्वीर अपलोड करें'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="file"
+                      ref={profileFileInputRef}
+                      accept="image/*"
+                      onChange={handleProfilePhotoUpload}
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      disabled={isUploadingProfile}
+                      onClick={() => profileFileInputRef.current?.click()}
+                      className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-slate-950 font-bold text-xs flex items-center gap-2 shadow-xs transition cursor-pointer"
+                    >
+                      <Camera className="w-4 h-4" />
+                      <span>{isUploadingProfile ? 'अपलोड हो रहा है...' : (language === 'en' ? 'Change Photo from Media' : 'मीडिया से फ़ोटो बदलें')}</span>
+                    </button>
+                    {currentUser?.avatarUrl && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          updateCurrentUser({ avatarUrl: undefined });
+                          addNotification('प्रोफ़ाइल फोटो हटा दी गई');
+                        }}
+                        className="px-3 py-2.5 rounded-xl text-xs font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 border border-red-200 dark:border-red-900/60 transition cursor-pointer"
+                      >
+                        {language === 'en' ? 'Remove' : 'हटाएं'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                  <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700">
+                    <span className="text-[10px] text-slate-400 block font-medium">
+                      {language === 'en' ? 'Journalist Name:' : language === 'ur' ? 'صحافی کا نام:' : 'पत्रकार का नाम:'}
+                    </span>
+                    <span className="font-bold text-sm text-slate-900 dark:text-white block mt-0.5">
+                      {currentUser?.name}
+                    </span>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700">
+                    <span className="text-[10px] text-slate-400 block font-medium">
+                      {language === 'en' ? 'Email Address:' : language === 'ur' ? 'ای میل ایڈریس:' : 'ईमेल आईडी:'}
+                    </span>
+                    <span className="font-bold text-sm text-slate-900 dark:text-white block mt-0.5">
+                      {currentUser?.email || (language === 'en' ? 'Not registered' : 'दर्ज नहीं')}
+                    </span>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700">
+                    <span className="text-[10px] text-slate-400 block font-medium">
+                      {language === 'en' ? 'Mobile Number:' : language === 'ur' ? 'موبائل نمبر:' : 'मोबाइल नंबर:'}
+                    </span>
+                    <span className="font-bold text-sm text-slate-900 dark:text-white block mt-0.5">
+                      {currentUser?.phone || '+91 95196 231111'}
+                    </span>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700">
+                    <span className="text-[10px] text-slate-400 block font-medium">
+                      {language === 'en' ? 'Assigned District:' : language === 'ur' ? 'ضلع / علاقہ:' : 'अधिकार क्षेत्र / ज़िला:'}
+                    </span>
+                    <span className="font-bold text-sm text-slate-900 dark:text-white block mt-0.5">
+                      {currentUser?.city || (language === 'en' ? 'Sitapur (UP)' : 'सीतापुर (उत्तर प्रदेश)')}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Identity Verification Card */}
+                <div className="p-4 rounded-xl bg-gradient-to-r from-amber-500/10 to-red-500/10 border border-amber-300 dark:border-amber-800 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600 flex items-center justify-center shrink-0">
+                      <ShieldCheck className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white">
+                        {language === 'en' 
+                          ? 'Citizen Journalist Digital ID Card (Verified)' 
+                          : language === 'ur' 
+                          ? 'شہری صحافی ڈیجیٹل شناختی کارڈ (تصدیق شدہ)' 
+                          : 'नागरिक पत्रकार डिजिटल पहचान पत्र (Verified ID)'}
+                      </h4>
+                      <p className="text-[11px] text-slate-500">
+                        {language === 'en'
+                          ? 'Accredited by Swarnim Dastavej Editorial Board.'
+                          : language === 'ur'
+                          ? 'سورنم دستاویز ایڈیٹوریل بورڈ سے تسلیم شدہ۔'
+                          : 'स्वर्णिम दस्तावेज़ संपादकीय मंडल द्वारा मान्यता प्राप्त।'}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="px-3 py-1 rounded-full bg-emerald-600 text-white text-[11px] font-bold shrink-0">
+                    {language === 'en' ? 'Active' : language === 'ur' ? 'فعال' : 'सक्रिय'}
+                  </span>
+                </div>
+              </div>
+            )}
+
+          </div>
+
+          {/* ================= 3. RIGHT PANEL (STICKY SPONSORED & HELPDESK) ================= */}
+          <div className="lg:col-span-3 space-y-4 lg:sticky lg:top-20 self-start max-h-[calc(100vh-5.5rem)] overflow-y-auto scrollbar-none">
+
+            {/* Main Sponsored Ad Card (Reference: Yogsathi Travel/Bhutan Ad) */}
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden group">
+              <div className="relative h-44 w-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+                <img
+                  src="https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=800&auto=format&fit=crop&q=80"
+                  alt="Travel Bhutan & Himalayan Experience"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                <span className="absolute top-2.5 left-2.5 bg-black/75 backdrop-blur-xs text-white text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full tracking-wider">
+                  {language === 'en' ? 'Sponsored' : language === 'ur' ? 'سپانسر شدہ' : 'प्रायोजित (Sponsored)'}
+                </span>
+                <span className="absolute bottom-2.5 right-2.5 bg-amber-500 text-slate-950 text-[10px] font-black px-2 py-0.5 rounded-md shadow-xs">
+                  Book Now • 25% Off
+                </span>
+              </div>
+
+              <div className="p-4 space-y-3">
+                <div>
+                  <h3 className="font-extrabold text-sm text-slate-900 dark:text-white leading-snug">
+                    Experience The Magic Of Bhutan
+                  </h3>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 leading-relaxed">
+                    From serene monasteries to sacred peaks. Luxury stays, flights, guided tours & visa assistance included.
+                  </p>
+                </div>
+
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2">
+                  <a
+                    href="https://wa.me/919519623111?text=Hi%2C%20I%20want%20to%20enquire%20about%20the%20travel%20packages"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 py-2 px-3 bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs rounded-xl text-center shadow-xs transition cursor-pointer"
+                  >
+                    Enquire Now
+                  </a>
+                  <a
+                    href="https://wa.me/919519623111"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl shadow-xs transition shrink-0"
+                    title="WhatsApp Enquiry"
+                    aria-label="WhatsApp Enquiry"
+                  >
+                    <MessageCircle className="w-4 h-4 fill-white" />
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* Trending Local Ground Topics */}
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 space-y-2.5">
+              <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+                <span className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  <span>{language === 'en' ? 'Trending Ground Topics' : language === 'ur' ? 'ٹرینڈنگ موضوعات' : 'ट्रेंडिंग ग्राउंड मुद्दे'}</span>
+                </span>
+                <span className="text-[10px] text-amber-600 font-bold bg-amber-50 dark:bg-amber-950 px-1.5 py-0.5 rounded">
+                  LIVE
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-1.5 text-[11px]">
+                {['#सीतापुर_जलभराव', '#लखनऊ_एक्सप्रेसवे', '#किसान_एमएसपी', '#स्वास्थ्य_मिशन', '#स्मार्ट_सिटी'].map((tag) => (
+                  <span
+                    key={tag}
+                    className="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium hover:text-amber-600 cursor-pointer transition"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Editorial Desk Guidelines */}
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 space-y-2.5">
+              <div className="text-xs font-bold text-slate-900 dark:text-white pb-2 border-b border-slate-100 dark:border-slate-800 flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                <span>{language === 'en' ? 'Editorial Code of Conduct' : language === 'ur' ? 'ایڈیٹوریل ضابطہ اخلاق' : 'संपादकीय आचार संहिता'}</span>
+              </div>
+              <ul className="text-[11px] text-slate-600 dark:text-slate-400 space-y-2 leading-relaxed">
+                <li className="flex items-start gap-1.5">
+                  <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                  <span>
+                    {language === 'en' 
+                      ? 'Always mention authentic evidence and exact ground location.' 
+                      : language === 'ur' 
+                      ? 'ہر رپورٹ میں ثبوت اور صحیح مقام کا ذکر کریں۔' 
+                      : 'प्रत्येक रिपोर्ट में प्रत्यक्ष साक्ष्य और सटीक स्थान का उल्लेख करें।'}
+                  </span>
+                </li>
+                <li className="flex items-start gap-1.5">
+                  <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                  <span>
+                    {language === 'en' 
+                      ? 'Reports go live on portal upon editorial approval.' 
+                      : language === 'ur' 
+                      ? 'ادارتی ٹیم کی منظوری کے بعد خبر فوری لائیو ہوگی۔' 
+                      : 'संपादकीय टीम द्वारा स्वीकृत होते ही खबर पोर्टल पर लाइव होगी।'}
+                  </span>
+                </li>
+              </ul>
+            </div>
+
+            {/* 24x7 Journalist Desk */}
+            <div className="bg-gradient-to-r from-red-600 to-amber-600 text-white rounded-2xl p-4 shadow-sm space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-black uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-full">
+                  {language === 'en' ? '24x7 Desk' : language === 'ur' ? '24x7 ڈیسک' : '24x7 डेस्क'}
+                </span>
+                <PhoneCall className="w-4 h-4 text-amber-200" />
+              </div>
+              <div className="font-extrabold text-sm">
+                {language === 'en' ? 'Editorial Helpline Support' : language === 'ur' ? 'ایڈیٹر ہیلپ لائن سپورٹ' : 'संपादक हेल्पलाइन सहायता'}
+              </div>
+              <p className="text-[11px] text-amber-100 leading-snug">
+                {language === 'en'
+                  ? 'For urgent reports or technical support, call:'
+                  : language === 'ur'
+                  ? 'ہنگامی رپورٹ یا تکنیکی مدد کے لیے رابطہ کریں:'
+                  : 'आपातकालीन ग्राउंड रिपोर्ट या तकनीकी समस्या हेतु कॉल करें:'}
+              </p>
+              <a
+                href="tel:9519623111"
+                className="inline-block font-mono font-bold text-xs bg-white text-slate-900 px-3 py-1.5 rounded-lg shadow-xs mt-1 hover:bg-amber-50 transition"
+              >
+                +91 95196 23111
+              </a>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+
+      <Footer />
+    </div>
+  );
+}
+
+export default function JournalistDashboard() {
+  return (
+    <React.Suspense fallback={
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center text-xs text-slate-500 font-bold">
+        लोड हो रहा है...
+      </div>
+    }>
+      <JournalistDashboardContent />
+    </React.Suspense>
+  );
+}

@@ -26,7 +26,7 @@ export interface ICitizenSubmission extends Document {
     locationName: string;
     coordinates?: string;
   };
-  status: 'draft' | 'pending_review' | 'sent_back' | 'approved' | 'rejected';
+  status: 'draft' | 'pending_review' | 'sent_back' | 'approved' | 'rejected' | 'inactive';
   editorComments?: string;
   reviewedBy?: string;
   reviewedAt?: string;
@@ -66,7 +66,7 @@ const CitizenSubmissionSchema = new Schema<ICitizenSubmission>(
     },
     status: {
       type: String,
-      enum: ['draft', 'pending_review', 'sent_back', 'approved', 'rejected'],
+      enum: ['draft', 'pending_review', 'sent_back', 'approved', 'rejected', 'inactive'],
       default: 'pending_review',
       index: true
     },

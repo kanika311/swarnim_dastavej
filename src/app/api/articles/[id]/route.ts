@@ -39,10 +39,10 @@ export async function PUT(
     let updated = platformStore.updateArticle(id, body);
     try {
       const conn = await connectToDatabase();
-      if (conn && typeof body.showOnVideos === 'boolean') {
+      if (conn) {
         const doc = await ArticleModel.findOneAndUpdate(
           { id },
-          { $set: { showOnVideos: body.showOnVideos } },
+          { $set: body },
           { new: true }
         ).lean().exec();
         if (doc) updated = doc as NonNullable<typeof updated>;

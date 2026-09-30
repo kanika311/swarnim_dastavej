@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import BreakingTicker from '@/components/BreakingTicker';
@@ -364,21 +365,20 @@ export default function SubmitNewsPage() {
           ) : (
           <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-8 border border-slate-200 dark:border-slate-700 shadow-sm">
             
-            {currentUser?.role === 'reader' && (
+            {currentUser && (
               <div className="mb-6 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 p-3.5 rounded-xl text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-4 h-4 text-amber-600 shrink-0" />
                   <span>
-                    आप <strong>{currentUser.name}</strong> (पाठक) के रूप में लॉगिन हैं। खबर दर्ज करते ही आपकी रिपोर्ट नागरिक पत्रकार डेस्क पर सबमिट हो जाएगी।
+                    आप <strong>{currentUser.name}</strong> के रूप में लॉगिन हैं। आपकी रिपोर्ट सीधे संपादकीय डेस्क को जाएगी।
                   </span>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => switchRole('citizen_journalist')}
-                  className="bg-red-700 hover:bg-red-800 text-white font-bold px-3 py-1.5 rounded-lg text-xs shrink-0 cursor-pointer shadow-xs transition"
+                <Link
+                  href="/dashboard"
+                  className="bg-amber-600 hover:bg-amber-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs shrink-0 shadow-xs transition text-center"
                 >
-                  ✍️ पत्रकार मोड सक्रिय करें
-                </button>
+                  पत्रकार डैशबोर्ड खोलें →
+                </Link>
               </div>
             )}
 

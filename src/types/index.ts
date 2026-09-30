@@ -2,7 +2,7 @@ export type UserRole = 'reader' | 'citizen_journalist' | 'staff_reporter' | 'edi
 
 export type LanguageCode = 'hi' | 'en' | 'ur';
 
-export type SubmissionStatus = 'draft' | 'pending_review' | 'sent_back' | 'approved' | 'rejected';
+export type SubmissionStatus = 'draft' | 'pending_review' | 'sent_back' | 'approved' | 'rejected' | 'inactive';
 
 export type ArticleCategory = 
   | 'national' 
@@ -90,7 +90,7 @@ export interface Article {
   sharesCount: number;
   tags: string[];
   readingTimeMinutes: number;
-  status: 'published' | 'draft' | 'archived';
+  status: 'published' | 'draft' | 'archived' | 'inactive';
 }
 
 export interface CitizenSubmission {
@@ -169,6 +169,7 @@ export interface EPaperEdition {
   pagesCount: number;
   pages: EPaperPage[];
   thumbnailUrl: string;
+  pdfUrl?: string;
   isActive?: boolean;
 }
 
@@ -228,3 +229,20 @@ export interface SiteSettings {
   updatedAt: string;
 }
 
+export interface EPaperPricingPlan {
+  id: string;
+  title: string;
+  titleEn?: string;
+  price: number; // e.g. 1, 29, 340
+  duration: 'single_edition' | 'monthly' | 'yearly';
+  durationLabel: string; // e.g. '1 दिन (आज का पूरा अखबार)', '30 दिन', '1 वर्ष (365 दिन)'
+  durationLabelEn?: string;
+  description: string;
+  descriptionEn?: string;
+  features: string[];
+  isPopular?: boolean;
+  isActive: boolean;
+  order?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}

@@ -19,7 +19,15 @@ export async function GET(request: Request) {
 
       const dbEditions = await EPaperEditionModel.find(query).sort({ date: -1 }).lean().exec();
       if (dbEditions && dbEditions.length > 0) {
-        return NextResponse.json({ success: true, count: dbEditions.length, source: 'mongodb', data: dbEditions });
+        const normalized = dbEditions.map((ed: any) => ({
+          ...ed,
+          pdfUrl: ed.pdfUrl || ed.pages?.[0]?.pdfPageUrl || ed.pages?.[0]?.pdfUrl,
+          pages: ed.pages?.map((p: any) => ({
+            ...p,
+            pdfUrl: p.pdfUrl || p.pdfPageUrl || ed.pdfUrl
+          }))
+        }));
+        return NextResponse.json({ success: true, count: normalized.length, source: 'mongodb', data: normalized });
       }
     }
   } catch (e: any) {
@@ -34,31 +42,38 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const newEd = platformStore.addEPaperEdition(body);
+    const pdfUrl = body.pdfUrl || newEd.pdfUrl || newEd.pages?.[0]?.pdfUrl;
 
     try {
       const conn = await connectToDatabase();
       if (conn) {
-        const doc = new EPaperEditionModel({
-          id: newEd.id,
-          date: newEd.date,
-          editionCity: newEd.editionCity,
-          language: newEd.language || 'hi',
-          totalPageCount: newEd.pagesCount,
-          thumbnailUrl: newEd.thumbnailUrl,
-          pages: newEd.pages.map(p => ({
-            pageNumber: p.pageNumber,
-            title: p.title,
-            imageUrl: p.imageUrl,
-            pdfPageUrl: p.pdfUrl
-          }))
-        });
-        await doc.save();
+        await EPaperEditionModel.findOneAndUpdate(
+          { id: newEd.id },
+          {
+            $set: {
+              id: newEd.id,
+              date: newEd.date,
+              editionCity: newEd.editionCity,
+              language: newEd.language || 'hi',
+              totalPageCount: newEd.pagesCount,
+              pdfUrl: pdfUrl,
+              thumbnailUrl: newEd.thumbnailUrl,
+              pages: newEd.pages.map(p => ({
+                pageNumber: p.pageNumber,
+                title: p.title,
+                imageUrl: p.imageUrl,
+                pdfPageUrl: p.pdfUrl || pdfUrl
+              }))
+            }
+          },
+          { upsert: true, new: true }
+        ).exec();
       }
     } catch (dbErr: any) {
       console.warn('MongoDB epaper save error:', dbErr?.message);
     }
 
-    return NextResponse.json({ success: true, data: newEd }, { status: 201 });
+    return NextResponse.json({ success: true, data: { ...newEd, pdfUrl } }, { status: 201 });
   } catch (error) {
     return NextResponse.json({ success: false, message: 'Invalid payload' }, { status: 400 });
   }

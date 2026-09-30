@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { useApp } from '@/context/AppContext';
 import { UserRole } from '@/types';
 import { ALL_INDIA_LOCATIONS } from '@/lib/locations';
@@ -22,6 +23,7 @@ import {
 } from 'lucide-react';
 
 export default function AuthModal() {
+  const router = useRouter();
   const { 
     isAuthModalOpen, 
     closeAuthModal, 
@@ -84,6 +86,7 @@ export default function AuthModal() {
     if (success) {
       addNotification('सफलतापूर्वक लॉगिन हो गए!');
       closeAuthModal();
+      router.push('/dashboard');
     } else {
       setLoginError('अमान्य विवरण। कृपया सही मोबाइल नंबर/ईमेल व पासवर्ड दर्ज करें।');
     }
@@ -128,6 +131,7 @@ export default function AuthModal() {
 
       addNotification(`बधाई हो ${newUser.name}! आपका ${selectedRole === 'citizen_journalist' ? 'नागरिक पत्रकार' : 'पाठक'} खाता सक्रिय हो गया है।`);
       closeAuthModal();
+      router.push('/dashboard');
     } catch (err: any) {
       setRegError(err?.message || 'पंजीकरण में त्रुटि हुई।');
     }
@@ -284,53 +288,6 @@ export default function AuthModal() {
                 <LogIn className="w-4 h-4" />
                 <span>लॉगिन करें</span>
               </button>
-
-              {/* Quick 1-Click Demo Logins */}
-              <div className="pt-3 border-t border-slate-200 dark:border-slate-800 space-y-2">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block text-center">
-                  त्वरित 1-क्लिक डेमो लॉगिन:
-                </span>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      switchRole('citizen_journalist');
-                      addNotification('नागरिक पत्रकार (विकास शुक्ला) के रूप में लॉगिन हो गए!');
-                      closeAuthModal();
-                    }}
-                    className="p-2.5 rounded-xl border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/30 hover:bg-red-100 dark:hover:bg-red-950/60 text-left transition cursor-pointer"
-                  >
-                    <div className="text-[11px] font-extrabold text-red-700 dark:text-red-400">✍️ नागरिक पत्रकार</div>
-                    <div className="text-[10px] text-slate-500 truncate">विकास शुक्ला (सीतापुर)</div>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      switchRole('reader');
-                      addNotification('सामान्य पाठक (अमित कुमार सिंह) के रूप में लॉगिन हो गए!');
-                      closeAuthModal();
-                    }}
-                    className="p-2.5 rounded-xl border border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-950/30 hover:bg-amber-100 dark:hover:bg-amber-950/60 text-left transition cursor-pointer"
-                  >
-                    <div className="text-[11px] font-extrabold text-amber-700 dark:text-amber-400">📖 सामान्य पाठक</div>
-                    <div className="text-[10px] text-slate-500 truncate">अमित कुमार सिंह (लखनऊ)</div>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      switchRole('admin');
-                      addNotification('प्रधान संपादक / एडमिन के रूप में लॉगिन हो गए!');
-                      closeAuthModal();
-                    }}
-                    className="p-2.5 rounded-xl border border-purple-200 dark:border-purple-900/60 bg-purple-50 dark:bg-purple-950/30 hover:bg-purple-100 dark:hover:bg-purple-950/60 text-left transition cursor-pointer"
-                  >
-                    <div className="text-[11px] font-extrabold text-purple-700 dark:text-purple-400">🛡️ CMS एडमिन</div>
-                    <div className="text-[10px] text-slate-500 truncate">रामेश्वर दयाल (लखनऊ)</div>
-                  </button>
-                </div>
-              </div>
             </form>
           ) : (
             /* ================= REGISTER TAB ================= */

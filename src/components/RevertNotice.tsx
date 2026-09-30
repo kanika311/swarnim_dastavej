@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { useApp } from '@/context/AppContext';
 import { CitizenSubmission } from '@/types';
@@ -17,6 +17,34 @@ export default function RevertNotice() {
   const [items, setItems] = useState<CitizenSubmission[]>([]);
   const [popup, setPopup] = useState<CitizenSubmission | null>(null);
   const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Close notification dropdown when clicking outside or pressing Escape
+  useEffect(() => {
+    if (!open) return;
+
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [open]);
 
   useEffect(() => {
     if (!currentUser) {
@@ -64,7 +92,7 @@ export default function RevertNotice() {
 
   return (
     <>
-      <div className="relative">
+      <div ref={containerRef} className="relative">
         <button
           type="button"
           onClick={() => setOpen((value) => !value)}
@@ -78,7 +106,7 @@ export default function RevertNotice() {
           </span>
         </button>
         {open && (
-          <div className="absolute right-0 mt-2 w-72 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 p-2 z-50">
+          <div className="absolute right-0 mt-2 w-72 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 p-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
             <div className="px-2 py-1.5 text-[11px] font-bold text-slate-500">संपादक ने ये खबरें वापस भेजीं</div>
             {items.map((sub) => (
               <Link
@@ -96,7 +124,12 @@ export default function RevertNotice() {
       </div>
 
       {popup && (
-        <div className="fixed inset-0 z-[80] bg-black/50 flex items-center justify-center p-4">
+        <div
+          className="fixed inset-0 z-[80] bg-black/50 flex items-center justify-center p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) dismissPopup();
+          }}
+        >
           <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-amber-200 p-5 space-y-3">
             <div className="flex items-start justify-between gap-3">
               <h3 className="text-base font-extrabold text-slate-900 dark:text-white">संपादक ने खबर वापस भेजी</h3>

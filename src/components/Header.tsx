@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
@@ -26,7 +26,8 @@ import {
   LogOut,
   PenTool,
   Check,
-  Globe
+  Globe,
+  LayoutDashboard
 } from 'lucide-react';
 import { UserRole } from '@/types';
 import AuthModal from '@/components/AuthModal';
@@ -52,6 +53,7 @@ export default function Header() {
     setHomeViewMode,
     language,
     setLanguage,
+    lastUpdatedTime,
     t
   } = useApp();
 
@@ -63,6 +65,46 @@ export default function Header() {
   const [showRoleMenu, setShowRoleMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
+  const [showMobileLang, setShowMobileLang] = useState(false);
+
+  const languageMenuRef = useRef<HTMLDivElement>(null);
+  const roleMenuRef = useRef<HTMLDivElement>(null);
+  const mobileLangRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showLanguageMenu && !showRoleMenu && !showMobileLang) return;
+
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      const target = event.target as Node;
+      if (showLanguageMenu && languageMenuRef.current && !languageMenuRef.current.contains(target)) {
+        setShowLanguageMenu(false);
+      }
+      if (showRoleMenu && roleMenuRef.current && !roleMenuRef.current.contains(target)) {
+        setShowRoleMenu(false);
+      }
+      if (showMobileLang && mobileLangRef.current && !mobileLangRef.current.contains(target)) {
+        setShowMobileLang(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setShowLanguageMenu(false);
+        setShowRoleMenu(false);
+        setShowMobileLang(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [showLanguageMenu, showRoleMenu, showMobileLang]);
 
   const cities = ['सभी शहर', 'लखनऊ', 'सीतापुर', 'कानपुर', 'अयोध्या', 'वाराणसी', 'प्रयागराज', 'दिल्ली'];
 
@@ -86,6 +128,43 @@ export default function Header() {
     }
   };
 
+  const formatHeaderDateTime = (dateStr: string, lang: string) => {
+    const d = dateStr ? new Date(dateStr) : new Date();
+    const validDate = isNaN(d.getTime()) ? new Date() : d;
+
+    if (lang === 'en') {
+      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      const dayName = days[validDate.getDay()];
+      const monthName = months[validDate.getMonth()];
+      const dateNum = validDate.getDate();
+      const year = validDate.getFullYear();
+      const timeStr = validDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+      return `${dayName}, ${monthName} ${dateNum}, ${year} • ${timeStr}`;
+    }
+
+    if (lang === 'ur') {
+      const daysUr = ['اتوار', 'پیر', 'منگل', 'بدھ', 'جمعرات', 'جمعہ', 'ہفتہ'];
+      const monthsUr = ['جنوری', 'فروری', 'مارچ', 'اپریل', 'مئی', 'جون', 'جولائی', 'اگست', 'ستمبر', 'اکتوبر', 'نومبر', 'دسمبر'];
+      const dayName = daysUr[validDate.getDay()];
+      const monthName = monthsUr[validDate.getMonth()];
+      const dateNum = validDate.getDate();
+      const year = validDate.getFullYear();
+      const timeStr = validDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+      return `${dayName}، ${dateNum} ${monthName} ${year} • ${timeStr}`;
+    }
+
+    // Default Hindi
+    const daysHi = ['रविवार', 'सोमवार', 'मंगलवार', 'बुधवार', 'गुरुवार', 'शुक्रवार', 'शनिवार'];
+    const monthsHi = ['जनवरी', 'फ़रवरी', 'मार्च', 'अप्रैल', 'मई', 'जून', 'जुलाई', 'अगस्त', 'सितंबर', 'अक्टूबर', 'नवंबर', 'दिसंबर'];
+    const dayName = daysHi[validDate.getDay()];
+    const monthName = monthsHi[validDate.getMonth()];
+    const dateNum = validDate.getDate();
+    const year = validDate.getFullYear();
+    const timeStr = validDate.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
+    return `${dayName}, ${dateNum} ${monthName} ${year} | ${timeStr}`;
+  };
+
   return (
     <header className="sticky top-0 z-50 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-xs transition-colors">
       
@@ -96,7 +175,11 @@ export default function Header() {
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
 
           {/* Logo & Live Time (Bhaskar Style) */}
-          <Link href="/" className="flex items-center gap-2 sm:gap-3 group shrink-0">
+          <Link 
+            href="/" 
+            onClick={() => setHomeViewMode('news')}
+            className="flex items-center gap-2 sm:gap-3 group shrink-0"
+          >
             {/* Official Brand Logo (New 3D Golden Emblem) */}
             <div className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden bg-white shadow-md border-2 border-amber-400/80 dark:border-amber-500/80 flex items-center justify-center p-0.5 group-hover:scale-105 transition-transform shrink-0">
               <Image
@@ -120,7 +203,7 @@ export default function Header() {
                 </span>
               </div>
               <p className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-medium whitespace-nowrap">
-                Sun, Sep 27, 2026
+                {formatHeaderDateTime(lastUpdatedTime, language)}
               </p>
             </div>
           </Link>
@@ -129,7 +212,23 @@ export default function Header() {
         {/* CENTER: Navigation Items with Icons (Bhaskar Style) */}
         <nav className="hidden lg:flex items-center gap-1.5 xl:gap-3 2xl:gap-5 text-xs xl:text-sm font-semibold text-slate-700 dark:text-slate-200 shrink-0">
           
-          {/* 1. Today's Newspaper (आज का अखबार - Default First) */}
+          {/* 1. Live news (Default Home View) */}
+          <button
+            onClick={() => {
+              setHomeViewMode('news');
+              if (pathname !== '/') router.push('/');
+            }}
+            className={`flex items-center gap-1.5 px-2.5 xl:px-3 py-1 rounded-xl transition cursor-pointer whitespace-nowrap shrink-0 ${
+              pathname === '/' && homeViewMode === 'news'
+                ? 'bg-amber-600 text-white font-extrabold shadow-xs'
+                : 'hover:text-red-700 dark:hover:text-amber-400'
+            }`}
+          >
+            <Home className="w-4 h-4 text-amber-500 shrink-0" />
+            <span>{language === 'en' ? 'Live News' : t('home_news')}</span>
+          </button>
+
+          {/* 2. Today's Newspaper (आज का ई-पेपर) */}
           <button
             onClick={() => {
               setHomeViewMode('epaper');
@@ -146,22 +245,6 @@ export default function Header() {
             <span className="hidden xl:inline-block text-[10px] bg-amber-400 text-slate-950 font-black px-1.5 py-0.2 rounded-full uppercase shrink-0">
               {language === 'en' ? 'E-Paper' : 'ई-पेपर'}
             </span>
-          </button>
-
-          {/* 2. Live news */}
-          <button
-            onClick={() => {
-              setHomeViewMode('news');
-              if (pathname !== '/') router.push('/');
-            }}
-            className={`flex items-center gap-1.5 px-2.5 xl:px-3 py-1 rounded-xl transition cursor-pointer whitespace-nowrap shrink-0 ${
-              pathname === '/' && homeViewMode === 'news'
-                ? 'bg-amber-600 text-white font-extrabold shadow-xs'
-                : 'hover:text-red-700 dark:hover:text-amber-400'
-            }`}
-          >
-            <Home className="w-4 h-4 text-amber-600 shrink-0" />
-            <span>{t('home_news')}</span>
           </button>
 
           {/* Videos */}
@@ -187,51 +270,47 @@ export default function Header() {
         {/* RIGHT UTILITIES & ACTIONS (CLEAN & ELEGANT) */}
         <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           
-          {/* 📍 All India State / City Location Selector Button */}
+          {/* 📍 All India State / City Location Selector Button (Desktop Only) */}
           <button
             onClick={() => setShowLocationModal(true)}
-            className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-300 border border-amber-300/80 dark:border-amber-700/80 hover:bg-amber-100 dark:hover:bg-amber-900/50 text-xs font-bold transition cursor-pointer shadow-2xs shrink-0"
-            title="राज्य व शहर चुनें (Select State & City)"
+            className="hidden lg:flex relative p-1.5 sm:p-2 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer shrink-0"
+            title={selectedCity ? `शहर: ${selectedCity}` : 'राज्य व शहर चुनें (Select State & City)'}
+            aria-label="राज्य व शहर चुनें"
           >
-            <MapPin className="w-3.5 h-3.5 text-red-600 shrink-0" />
-            <span className="hidden sm:inline max-w-[70px] xl:max-w-[95px] truncate">{selectedCity || 'सभी शहर'}</span>
-            <ChevronDown className="w-3 h-3 text-amber-700 dark:text-amber-400 shrink-0" />
+            <MapPin className="w-4 h-4 text-red-600" />
+            {selectedCity && selectedCity !== 'सभी शहर' && selectedCity !== 'All Cities' && (
+              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-600 ring-2 ring-white dark:ring-slate-900" />
+            )}
           </button>
 
-          {/* Quick Search Button */}
+          {/* Quick Search Button (Desktop Only) */}
           <button
             onClick={() => setShowSearchModal(true)}
-            className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-semibold border border-slate-200 dark:border-slate-700 transition cursor-pointer shrink-0"
-            title="Search"
+            className="hidden lg:flex p-1.5 sm:p-2 rounded-full text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer shrink-0"
+            title={t('search')}
+            aria-label="खोजें (Search)"
           >
-            <Search className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-            <span className="hidden xl:inline">{t('search')}</span>
+            <Search className="w-4 h-4 text-amber-600" />
           </button>
 
-          <RevertNotice />
+          {/* Notifications (Desktop Only) */}
+          <div className="hidden lg:block">
+            <RevertNotice />
+          </div>
 
-          {/* Dark Mode Toggle */}
-          <button
-            onClick={toggleDarkMode}
-            className="p-1.5 sm:p-2 rounded-full text-slate-600 dark:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer shrink-0"
-            title={isDarkMode ? 'लाइट मोड' : 'डार्क मोड'}
-            aria-label="थीम बदलें"
-          >
-            {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          </button>
-
-          {/* Language Selector Dropdown (Desktop only, mobile version is in the menu!) */}
-          <div className="hidden lg:block relative">
+          {/* Language Selector Dropdown (Desktop Only) */}
+          <div ref={languageMenuRef} className="hidden lg:block relative">
             <button
               onClick={() => setShowLanguageMenu(!showLanguageMenu)}
-              className="flex items-center gap-1 p-1 sm:px-2 sm:py-1 rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+              className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 transition cursor-pointer shrink-0 select-none"
               title="भाषा बदलें (Change Language)"
               aria-label="भाषा चुनें"
             >
-              <span className="w-6 h-6 rounded-full bg-amber-500 text-slate-950 font-black flex items-center justify-center text-xs shadow-xs">
-                {language === 'hi' ? 'अ' : language === 'en' ? 'A' : 'ع'}
+              <Globe className="w-4 h-4 text-slate-600 dark:text-slate-300 shrink-0" />
+              <span className="text-xs sm:text-sm font-bold tracking-wide text-slate-800 dark:text-slate-100 uppercase">
+                {(language || 'hi').toUpperCase()}
               </span>
-              <ChevronDown className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+              <ChevronDown className={`w-3.5 h-3.5 text-slate-500 dark:text-slate-400 shrink-0 transition-transform ${showLanguageMenu ? 'rotate-180' : ''}`} />
             </button>
 
             {showLanguageMenu && (
@@ -252,7 +331,7 @@ export default function Header() {
                   }`}
                 >
                   <span className="flex items-center gap-2">
-                    <span className="w-5 h-5 rounded-full bg-amber-500 text-slate-950 text-[11px] font-black flex items-center justify-center">अ</span>
+                    <span className="w-5 h-5 rounded-full bg-amber-500 text-slate-950 text-[10px] font-black flex items-center justify-center">HI</span>
                     <span>हिन्दी (Hindi)</span>
                   </span>
                   {language === 'hi' && <Check className="w-3.5 h-3.5 text-amber-600" />}
@@ -270,7 +349,7 @@ export default function Header() {
                   }`}
                 >
                   <span className="flex items-center gap-2">
-                    <span className="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 text-[11px] font-bold flex items-center justify-center">A</span>
+                    <span className="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 text-[10px] font-bold flex items-center justify-center">EN</span>
                     <span>English</span>
                   </span>
                   {language === 'en' && <Check className="w-3.5 h-3.5 text-amber-600" />}
@@ -288,7 +367,7 @@ export default function Header() {
                   }`}
                 >
                   <span className="flex items-center gap-2">
-                    <span className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 text-[11px] font-bold flex items-center justify-center">ع</span>
+                    <span className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 text-[10px] font-bold flex items-center justify-center">UR</span>
                     <span>اردو (Urdu)</span>
                   </span>
                   {language === 'ur' && <Check className="w-3.5 h-3.5 text-emerald-600" />}
@@ -297,17 +376,31 @@ export default function Header() {
             )}
           </div>
 
+          {/* Dark Mode Toggle (Desktop Only) */}
+          <button
+            onClick={toggleDarkMode}
+            className="hidden lg:flex p-1.5 sm:p-2 rounded-full text-slate-600 dark:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer shrink-0"
+            title={isDarkMode ? 'लाइट मोड' : 'डार्क मोड'}
+            aria-label="थीम बदलें"
+          >
+            {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
+
 
           {/* Real User Profile / Login Button (Desktop only, mobile is inside the menu) */}
           {currentUser ? (
-            <div className="hidden lg:block relative">
+            <div ref={roleMenuRef} className="hidden lg:block relative">
               <button
                 onClick={() => setShowRoleMenu(!showRoleMenu)}
                 className="flex items-center gap-1.5 p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-100 text-xs font-semibold transition"
                 title={language === 'en' ? 'My Profile' : language === 'ur' ? 'میری پروفائل' : 'मेरी प्रोफ़ाइल'}
               >
-                <div className="w-6 h-6 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center font-bold text-[11px]">
-                  {getLocalizedUserFirstName(currentUser.name, language).charAt(0) || 'U'}
+                <div className="w-6 h-6 rounded-full overflow-hidden bg-amber-500 text-slate-950 flex items-center justify-center font-bold text-[11px] shrink-0 border border-amber-300">
+                  {currentUser.avatarUrl ? (
+                    <img src={currentUser.avatarUrl} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    getLocalizedUserFirstName(currentUser.name, language).charAt(0) || 'U'
+                  )}
                 </div>
                 <div className="hidden xl:flex flex-col text-left leading-tight">
                   <span className="text-[12px] font-bold text-slate-900 dark:text-white truncate max-w-[90px]">
@@ -350,83 +443,54 @@ export default function Header() {
                     </div>
                   </div>
 
-                  {/* Role Specific Actions */}
+                  {/* Journalist Actions (Reference: Yogsathi User Menu) */}
                   <div className="py-2 space-y-1">
-                    {/* Direct link to submit news - NEVER shows login/register popup if already logged in! */}
                     <Link
-                      href="/submit-news"
-                      onClick={() => {
-                        setShowRoleMenu(false);
-                        if (currentUser.role === 'reader') {
-                          switchRole('citizen_journalist');
-                        }
-                      }}
-                      className="w-full text-left px-2.5 py-2 rounded-lg flex items-center gap-2 hover:bg-amber-50 dark:hover:bg-amber-950/40 text-red-700 dark:text-red-400 font-bold transition cursor-pointer"
+                      href="/dashboard"
+                      onClick={() => setShowRoleMenu(false)}
+                      className="w-full text-left px-2.5 py-2 rounded-lg flex items-center gap-2 bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-300 font-bold transition cursor-pointer"
                     >
-                      <PenSquare className="w-4 h-4 text-red-600 shrink-0" />
-                      <span>
-                        {currentUser.role === 'reader' ? getTranslation(language, 'become_citizen_journalist') : getTranslation(language, 'submit_new_story')}
-                      </span>
+                      <LayoutDashboard className="w-4 h-4 text-amber-600 shrink-0" />
+                      <span>डैशबोर्ड (Dashboard)</span>
                     </Link>
 
-                    {currentUser.role === 'citizen_journalist' && (
-                      <Link
-                        href="/submit-news?tab=my_submissions"
-                        onClick={() => setShowRoleMenu(false)}
-                        className="w-full text-left px-2.5 py-1.5 rounded-lg flex items-center gap-2 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition"
-                      >
-                        <UserCheck className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                        <span>{getTranslation(language, 'my_submitted_stories')}</span>
-                      </Link>
-                    )}
+                    <Link
+                      href="/dashboard?tab=submit"
+                      onClick={() => setShowRoleMenu(false)}
+                      className="w-full text-left px-2.5 py-2 rounded-lg flex items-center gap-2 hover:bg-red-50 dark:hover:bg-red-950/40 text-red-700 dark:text-red-400 font-bold transition cursor-pointer"
+                    >
+                      <PenSquare className="w-4 h-4 text-red-600 shrink-0" />
+                      <span>नई खबर / रिपोर्ट दर्ज करें</span>
+                    </Link>
+
+                    <Link
+                      href="/dashboard?tab=my_reports"
+                      onClick={() => setShowRoleMenu(false)}
+                      className="w-full text-left px-2.5 py-1.5 rounded-lg flex items-center gap-2 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition"
+                    >
+                      <UserCheck className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                      <span>मेरी भेजी गई खबरें व स्टेटस</span>
+                    </Link>
+
+                    <Link
+                      href="/dashboard?tab=profile"
+                      onClick={() => setShowRoleMenu(false)}
+                      className="w-full text-left px-2.5 py-1.5 rounded-lg flex items-center gap-2 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition"
+                    >
+                      <UserIcon className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                      <span>मेरी प्रोफ़ाइल (Profile)</span>
+                    </Link>
 
                     {currentUser.role === 'admin' && (
                       <Link
-                        href="/admin"
+                        href="/RaviAdminMishra"
                         onClick={() => setShowRoleMenu(false)}
                         className="w-full text-left px-2.5 py-1.5 rounded-lg flex items-center gap-2 hover:bg-slate-100 dark:hover:bg-slate-700 text-red-600 font-bold transition"
                       >
                         <ShieldCheck className="w-3.5 h-3.5 text-red-600 shrink-0" />
-                        <span>{language === 'en' ? 'CMS Admin Dashboard' : language === 'ur' ? 'ایڈمن ڈیش بورڈ' : 'CMS एडमिन डैशबोर्ड'}</span>
+                        <span>CMS एडमिन डैशबोर्ड</span>
                       </Link>
                     )}
-                  </div>
-
-                  {/* Quick Profile / Role Switcher */}
-                  <div className="pt-2 pb-1 border-t border-slate-100 dark:border-slate-700">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block px-1 mb-1.5">
-                      {language === 'en' ? 'Switch Role:' : language === 'ur' ? 'کردار تبدیل کریں:' : 'आईडी भूमिका बदलें (Switch Role):'}
-                    </span>
-                    <div className="grid grid-cols-2 gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          switchRole('citizen_journalist');
-                          setShowRoleMenu(false);
-                        }}
-                        className={`px-2 py-1.5 rounded-lg text-center font-bold text-[11px] transition cursor-pointer ${
-                          currentUser.role === 'citizen_journalist'
-                            ? 'bg-red-700 text-white shadow-xs'
-                            : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200'
-                        }`}
-                      >
-                        {language === 'en' ? '✍️ Journalist' : language === 'ur' ? '✍️ صحافی' : '✍️ पत्रकार'}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          switchRole('reader');
-                          setShowRoleMenu(false);
-                        }}
-                        className={`px-2 py-1.5 rounded-lg text-center font-bold text-[11px] transition cursor-pointer ${
-                          currentUser.role === 'reader'
-                            ? 'bg-amber-600 text-white shadow-xs'
-                            : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200'
-                        }`}
-                      >
-                        {language === 'en' ? '📖 Reader' : language === 'ur' ? '📖 قارئین' : '📖 पाठक'}
-                      </button>
-                    </div>
                   </div>
 
                   {/* Logout Button */}
@@ -516,12 +580,40 @@ export default function Header() {
       {mobileMenuOpen && (
         <div className="lg:hidden bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 p-4 space-y-4 shadow-xl max-h-[85vh] overflow-y-auto">
           
+          {/* 🔍 QUICK SEARCH BAR (MOBILE) */}
+          <form
+            onSubmit={(e) => {
+              handleSearch(e);
+              setMobileMenuOpen(false);
+            }}
+            className="relative"
+          >
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="खबर, ई-पेपर, जिला या विषय खोजें..."
+              className="w-full pl-10 pr-20 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+            />
+            <button
+              type="submit"
+              className="absolute right-1.5 top-1.5 px-3 py-1.5 bg-red-700 hover:bg-red-800 text-white font-bold text-xs rounded-lg transition cursor-pointer"
+            >
+              खोजें
+            </button>
+          </form>
+
           {/* 1. USER PROFILE OR LOGIN CARD */}
           {currentUser ? (
             <div className="bg-slate-50 dark:bg-slate-800/80 rounded-2xl p-3.5 border border-slate-200 dark:border-slate-700">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center font-black text-sm shadow-xs shrink-0">
-                  {getLocalizedUserFirstName(currentUser.name, language).charAt(0) || 'U'}
+                <div className="w-10 h-10 rounded-full overflow-hidden bg-amber-500 text-slate-950 flex items-center justify-center font-black text-sm shadow-xs shrink-0 border border-amber-300">
+                  {currentUser.avatarUrl ? (
+                    <img src={currentUser.avatarUrl} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    getLocalizedUserFirstName(currentUser.name, language).charAt(0) || 'U'
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-extrabold text-sm text-slate-900 dark:text-white truncate">
@@ -551,66 +643,47 @@ export default function Header() {
                 </div>
               </div>
 
-              {/* Role specific quick action */}
+              {/* User Dashboard & Journalism Links */}
               <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700 space-y-2">
                 <Link
-                  href="/submit-news"
-                  onClick={() => {
-                    setMobileMenuOpen(false);
-                    if (currentUser.role === 'reader') {
-                      switchRole('citizen_journalist');
-                    }
-                  }}
+                  href="/dashboard"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full text-left px-3 py-2 rounded-xl flex items-center gap-2 bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-300 font-bold text-xs transition cursor-pointer"
+                >
+                  <LayoutDashboard className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span>पत्रकार डैशबोर्ड (Journalist Dashboard)</span>
+                </Link>
+
+                <Link
+                  href="/dashboard?tab=submit"
+                  onClick={() => setMobileMenuOpen(false)}
                   className="w-full text-left px-3 py-2 rounded-xl flex items-center gap-2 bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 font-bold text-xs transition cursor-pointer"
                 >
                   <PenSquare className="w-4 h-4 text-red-600 shrink-0" />
-                  <span>{currentUser.role === 'reader' ? getTranslation(language, 'become_citizen_journalist') : getTranslation(language, 'submit_new_story')}</span>
+                  <span>नई खबर / रिपोर्ट दर्ज करें</span>
                 </Link>
 
-                {currentUser.role === 'citizen_journalist' && (
-                  <Link
-                    href="/submit-news?tab=my_submissions"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="w-full text-left px-3 py-2 rounded-xl flex items-center gap-2 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold"
-                  >
-                    <UserCheck className="w-4 h-4 text-amber-600 shrink-0" />
-                    <span>{getTranslation(language, 'my_submitted_stories')}</span>
-                  </Link>
-                )}
+                <Link
+                  href="/dashboard?tab=my_reports"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full text-left px-3 py-2 rounded-xl flex items-center gap-2 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold"
+                >
+                  <UserCheck className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span>मेरी भेजी गई खबरें व स्टेटस</span>
+                </Link>
 
-                {/* Mobile Quick Role Switcher */}
-                <div className="pt-2 border-t border-slate-100 dark:border-slate-700">
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        switchRole('citizen_journalist');
-                        setMobileMenuOpen(false);
-                      }}
-                      className={`py-1.5 px-2 rounded-lg text-center font-bold text-xs transition ${
-                        currentUser.role === 'citizen_journalist' ? 'bg-red-700 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200'
-                      }`}
-                    >
-                      {language === 'en' ? '✍️ Journalist Mode' : language === 'ur' ? '✍️ صحافی موڈ' : '✍️ पत्रकार मोड'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        switchRole('reader');
-                        setMobileMenuOpen(false);
-                      }}
-                      className={`py-1.5 px-2 rounded-lg text-center font-bold text-xs transition ${
-                        currentUser.role === 'reader' ? 'bg-amber-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200'
-                      }`}
-                    >
-                      {language === 'en' ? '📖 Reader Mode' : language === 'ur' ? '📖 قارئین موڈ' : '📖 पाठक मोड'}
-                    </button>
-                  </div>
-                </div>
+                <Link
+                  href="/dashboard?tab=profile"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full text-left px-3 py-2 rounded-xl flex items-center gap-2 bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold"
+                >
+                  <UserIcon className="w-4 h-4 text-slate-500 shrink-0" />
+                  <span>मेरी प्रोफ़ाइल (Profile)</span>
+                </Link>
 
                 {currentUser.role === 'admin' && (
                   <Link
-                    href="/admin"
+                    href="/RaviAdminMishra"
                     onClick={() => setMobileMenuOpen(false)}
                     className="w-full text-left px-3 py-2 rounded-xl flex items-center gap-2 bg-red-700 text-white font-bold text-xs shadow-xs"
                   >
@@ -653,90 +726,107 @@ export default function Header() {
             </div>
           )}
 
-          {/* 2. LANGUAGE SELECTOR (MOBILE) */}
-          <div className="bg-slate-50 dark:bg-slate-800/60 rounded-2xl p-3 border border-slate-200 dark:border-slate-700">
-            <div className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 flex items-center gap-1.5">
-              <Globe className="w-3.5 h-3.5 text-amber-600" />
-              <span>भाषा चुनें (Language):</span>
+          {/* 🌟 1-LINE QUICK CONTROLS: LANGUAGE, LOCATION, THEME (LOGOS ONLY, NO TEXT) */}
+          <div className="relative flex items-center justify-around py-2 px-2 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xs">
+            
+            {/* 1. Language Logo / Selector */}
+            <div ref={mobileLangRef} className="relative flex-1 flex justify-center">
+              <button
+                type="button"
+                onClick={() => setShowMobileLang(!showMobileLang)}
+                className="p-2.5 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition cursor-pointer flex items-center justify-center"
+                title="भाषा (Language)"
+                aria-label="भाषा बदलें"
+              >
+                <Globe className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+              </button>
+
+              {showMobileLang && (
+                <div className="absolute left-1/2 -translate-x-1/2 top-full mt-2 w-32 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 py-1.5 z-50">
+                  <button
+                    type="button"
+                    onClick={() => { setLanguage('hi'); setShowMobileLang(false); }}
+                    className={`w-full text-left px-3 py-1.5 text-xs font-bold transition ${language === 'hi' ? 'text-amber-600 bg-amber-50 dark:bg-amber-950/40' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
+                  >
+                    अ हिन्दी
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setLanguage('en'); setShowMobileLang(false); }}
+                    className={`w-full text-left px-3 py-1.5 text-xs font-bold transition ${language === 'en' ? 'text-amber-600 bg-amber-50 dark:bg-amber-950/40' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
+                  >
+                    A English
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setLanguage('ur'); setShowMobileLang(false); }}
+                    className={`w-full text-left px-3 py-1.5 text-xs font-bold transition ${language === 'ur' ? 'text-amber-600 bg-amber-50 dark:bg-amber-950/40' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
+                  >
+                    ع اردو
+                  </button>
+                </div>
+              )}
             </div>
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                onClick={() => setLanguage('hi')}
-                className={`py-2 px-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer ${
-                  language === 'hi'
-                    ? 'bg-amber-500 text-slate-950 shadow-xs'
-                    : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100'
-                }`}
-              >
-                <span className="w-4 h-4 rounded-full bg-black/10 flex items-center justify-center text-[10px] font-black">अ</span>
-                <span>हिन्दी</span>
-              </button>
 
-              <button
-                onClick={() => setLanguage('en')}
-                className={`py-2 px-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer ${
-                  language === 'en'
-                    ? 'bg-amber-500 text-slate-950 shadow-xs'
-                    : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100'
-                }`}
-              >
-                <span className="w-4 h-4 rounded-full bg-black/10 flex items-center justify-center text-[10px] font-black">A</span>
-                <span>English</span>
-              </button>
+            <div className="w-[1px] h-6 bg-slate-200 dark:bg-slate-700" />
 
+            {/* 2. Location Logo */}
+            <div className="flex-1 flex justify-center">
               <button
-                onClick={() => setLanguage('ur')}
-                className={`py-2 px-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer ${
-                  language === 'ur'
-                    ? 'bg-amber-500 text-slate-950 shadow-xs'
-                    : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100'
-                }`}
-              >
-                <span className="w-4 h-4 rounded-full bg-black/10 flex items-center justify-center text-[10px] font-black">ع</span>
-                <span>اردو</span>
-              </button>
-            </div>
-          </div>
-
-          {/* LOCATION SELECTOR (MOBILE) */}
-          <div className="bg-slate-50 dark:bg-slate-800/60 rounded-2xl p-3 border border-slate-200 dark:border-slate-700">
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                <MapPin className="w-3.5 h-3.5 text-red-600" />
-                <span>स्थान चुनें ({selectedCity || 'सभी शहर'})</span>
-              </div>
-              <button
+                type="button"
                 onClick={() => {
                   setMobileMenuOpen(false);
                   setShowLocationModal(true);
                 }}
-                className="text-[11px] font-bold text-amber-600 dark:text-amber-400 hover:underline cursor-pointer"
+                className="relative p-2.5 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition cursor-pointer flex items-center justify-center"
+                title={selectedCity ? `शहर: ${selectedCity}` : "स्थान चुनें (Select Location)"}
+                aria-label="स्थान चुनें"
               >
-                सभी 28 राज्य देखें →
+                <MapPin className="w-5 h-5 text-red-600" />
+                {selectedCity && selectedCity !== 'सभी शहर' && selectedCity !== 'All Cities' && (
+                  <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-red-600 ring-2 ring-white dark:ring-slate-800" />
+                )}
               </button>
             </div>
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-              {['सभी शहर', 'लखनऊ', 'सीतापुर', 'दिल्ली', 'कानपुर', 'अयोध्या', 'वाराणसी', 'पटना', 'भोपाल'].map((c) => (
-                <button
-                  key={c}
-                  onClick={() => {
-                    setSelectedCity(c);
-                    setMobileMenuOpen(false);
-                  }}
-                  className={`px-2.5 py-1 rounded-full text-xs font-bold shrink-0 transition cursor-pointer ${
-                    selectedCity === c || (c === 'सभी शहर' && (selectedCity === 'सभी शहर' || selectedCity === 'All Cities'))
-                      ? 'bg-amber-600 text-white'
-                      : 'bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-600'
-                  }`}
-                >
-                  {c}
-                </button>
-              ))}
+
+            <div className="w-[1px] h-6 bg-slate-200 dark:bg-slate-700" />
+
+            {/* 3. Theme Toggle Logo */}
+            <div className="flex-1 flex justify-center">
+              <button
+                type="button"
+                onClick={toggleDarkMode}
+                className="p-2.5 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition cursor-pointer flex items-center justify-center"
+                title={isDarkMode ? "लाइट मोड" : "डार्क मोड"}
+                aria-label="थीम बदलें"
+              >
+                {isDarkMode ? (
+                  <Sun className="w-5 h-5 text-amber-400" />
+                ) : (
+                  <Moon className="w-5 h-5 text-slate-700 dark:text-slate-200" />
+                )}
+              </button>
             </div>
+
           </div>
 
-          {/* 3. NAVIGATION TILES */}
+          {/* 2. NAVIGATION TILES */}
           <div className="space-y-2">
+            <button 
+              onClick={() => {
+                setHomeViewMode('news');
+                setMobileMenuOpen(false);
+                if (pathname !== '/') router.push('/');
+              }}
+              className="w-full p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 font-bold flex items-center justify-between text-left border border-amber-200/60 dark:border-amber-900/60 cursor-pointer"
+            >
+              <div className="flex items-center gap-2.5">
+                <Home className="w-5 h-5 text-amber-600" />
+                <span className="text-sm">{language === 'en' ? 'Live News Feed' : t('home_news')}</span>
+              </div>
+              <span className="text-[10px] bg-amber-500 text-slate-950 font-black px-2 py-0.5 rounded-full uppercase">LIVE</span>
+            </button>
+
             <button 
               onClick={() => {
                 setHomeViewMode('epaper');
@@ -747,26 +837,14 @@ export default function Header() {
             >
               <div className="flex items-center gap-2.5">
                 <Newspaper className="w-5 h-5 text-red-600" />
-                <span className="text-sm">{t('todays_epaper')}</span>
+                <span className="text-sm">{language === 'en' ? "Today's E-Paper" : t('todays_epaper')}</span>
               </div>
-              <span className="text-[10px] bg-red-600 text-white font-black px-2 py-0.5 rounded-full">डिफ़ॉल्ट</span>
-            </button>
-
-            <button 
-              onClick={() => {
-                setHomeViewMode('news');
-                setMobileMenuOpen(false);
-                if (pathname !== '/') router.push('/');
-              }}
-              className="w-full p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 font-bold flex items-center gap-2.5 text-left border border-amber-200/60 dark:border-amber-900/60 cursor-pointer"
-            >
-              <Home className="w-5 h-5 text-amber-600" />
-              <span className="text-sm">{t('home_news')}</span>
+              <span className="text-[10px] bg-red-600 text-white font-black px-2 py-0.5 rounded-full">E-Paper</span>
             </button>
 
             <div className="grid grid-cols-2 gap-2 pt-1">
               <Link 
-                href="/submit-news" 
+                href="/dashboard?tab=submit" 
                 onClick={() => setMobileMenuOpen(false)}
                 className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold text-xs flex items-center gap-2 border border-slate-200 dark:border-slate-700 hover:bg-slate-100"
               >

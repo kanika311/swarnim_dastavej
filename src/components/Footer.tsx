@@ -3,7 +3,19 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ShieldCheck, Mail, Phone, MapPin } from 'lucide-react';
+import { 
+  ShieldCheck, 
+  Mail, 
+  Phone, 
+  MapPin, 
+  PenTool, 
+  Newspaper, 
+  ClipboardList, 
+  FileText, 
+  Scale, 
+  BookOpen, 
+  ShieldAlert 
+} from 'lucide-react';
 import { SiteSettings } from '@/types';
 import { useApp } from '@/context/AppContext';
 import { getTranslation } from '@/lib/translations';
@@ -119,45 +131,47 @@ export default function Footer() {
             <h4 className="text-sm font-bold text-[#0C2E5C] dark:text-[#F8E7B0] uppercase tracking-wider mb-3 flex items-center gap-1.5 border-b border-[#E4C56A] dark:border-[#C9962A]/50 pb-1">
               {getTranslation(language, 'footer_services_policies')}
             </h4>
-            <ul className="space-y-2 text-xs text-[#1B4E8C] dark:text-[#F4EBD8]">
+            <ul className="space-y-2.5 text-xs text-[#1B4E8C] dark:text-[#F4EBD8]">
               <li>
-                <Link href="/submit-news" className="text-[#8A6410] dark:text-[#F0C14A] hover:underline flex items-center gap-1">
-                  ✍️ {language === 'en' ? 'Citizen Journalism' : language === 'ur' ? 'شہری صحافت' : 'नागरिक पत्रकारिता'}
+                <Link href="/submit-news" className="text-[#8A6410] dark:text-[#F0C14A] hover:underline flex items-center gap-2 font-medium">
+                  <PenTool className="w-3.5 h-3.5 text-[#C9962A] shrink-0" />
+                  <span>{language === 'en' ? 'Citizen Journalism' : language === 'ur' ? 'شہری صحافت' : 'नागरिक पत्रकारिता'}</span>
                 </Link>
               </li>
               <li>
-                <Link href="/epaper" className="hover:text-[#A37B12] dark:hover:text-[#F0C14A] flex items-center gap-1">
-                  📰 {language === 'en' ? 'Daily E-Paper (Digital)' : language === 'ur' ? 'روزنامہ ای پیپر' : 'दैनिक ई-पेपर (डिजिटल संस्करण)'}
+                <Link href="/epaper" className="hover:text-[#A37B12] dark:hover:text-[#F0C14A] flex items-center gap-2">
+                  <Newspaper className="w-3.5 h-3.5 text-[#C9962A] shrink-0" />
+                  <span>{language === 'en' ? 'Daily E-Paper (Digital)' : language === 'ur' ? 'روزنامہ ای پیپر' : 'दैनिक ई-पेपर (डिजिटल संस्करण)'}</span>
                 </Link>
               </li>
               <li>
-                <Link href="/classifieds" className="hover:text-[#A37B12] dark:hover:text-[#F0C14A] flex items-center gap-1">
-                  📋 {language === 'en' ? 'Classifieds & Tenders' : language === 'ur' ? 'کلاسیفائیڈ اور ٹینڈرز' : 'क्लासिफाइड एवं निविदाएं'}
+                <Link href="/classifieds" className="hover:text-[#A37B12] dark:hover:text-[#F0C14A] flex items-center gap-2">
+                  <ClipboardList className="w-3.5 h-3.5 text-[#C9962A] shrink-0" />
+                  <span>{language === 'en' ? 'Classifieds & Tenders' : language === 'ur' ? 'کلاسیفائیڈ اور ٹینڈرز' : 'क्लासिफाइड एवं निविदाएं'}</span>
                 </Link>
               </li>
               <li>
-                <Link href="/privacy-policy" className="hover:text-[#A37B12] dark:hover:text-[#F0C14A] flex items-center gap-1">
-                  📜 {language === 'en' ? 'Privacy Policy' : language === 'ur' ? 'پرائیویسی پالیسی' : 'गोपनीयता नीति'}
+                <Link href="/privacy-policy" className="hover:text-[#A37B12] dark:hover:text-[#F0C14A] flex items-center gap-2">
+                  <FileText className="w-3.5 h-3.5 text-[#C9962A] shrink-0" />
+                  <span>{language === 'en' ? 'Privacy Policy' : language === 'ur' ? 'پرائیویسی پالیسی' : 'गोपनीयता नीति'}</span>
                 </Link>
               </li>
               <li>
-                <Link href="/terms" className="hover:text-[#A37B12] dark:hover:text-[#F0C14A] flex items-center gap-1">
-                  ⚖️ {language === 'en' ? 'Terms & Conditions' : language === 'ur' ? 'شرائط و ضوابط' : 'नियम एवं शर्तें'}
+                <Link href="/terms" className="hover:text-[#A37B12] dark:hover:text-[#F0C14A] flex items-center gap-2">
+                  <Scale className="w-3.5 h-3.5 text-[#C9962A] shrink-0" />
+                  <span>{language === 'en' ? 'Terms & Conditions' : language === 'ur' ? 'شرائط व ضوابط' : 'नियम एवं शर्तें'}</span>
                 </Link>
               </li>
               <li>
-                <Link href="/editorial-policy" className="hover:text-[#A37B12] dark:hover:text-[#F0C14A] flex items-center gap-1">
-                  📰 {language === 'en' ? 'Editorial Policy' : language === 'ur' ? 'ادارتی پالیسی' : 'संपादकीय नीति'}
+                <Link href="/editorial-policy" className="hover:text-[#A37B12] dark:hover:text-[#F0C14A] flex items-center gap-2">
+                  <BookOpen className="w-3.5 h-3.5 text-[#C9962A] shrink-0" />
+                  <span>{language === 'en' ? 'Editorial Policy' : language === 'ur' ? 'ادارتی پالیسی' : 'संपादकीय नीति'}</span>
                 </Link>
               </li>
               <li>
-                <Link href="/grievance" className="hover:text-[#A37B12] dark:hover:text-[#F0C14A] flex items-center gap-1">
-                  🛡️ {language === 'en' ? 'Grievance Officer (IT Rules)' : language === 'ur' ? 'ازالہ شکایات افسر' : 'शिकायत निवारण अधिकारी'}
-                </Link>
-              </li>
-              <li>
-                <Link href="/admin" className="hover:text-[#A37B12] dark:hover:text-[#F0C14A] flex items-center gap-1">
-                  🔒 {language === 'en' ? 'Editorial CMS Login' : language === 'ur' ? 'ادارتی CMS لاگ ان' : 'संपादकीय CMS लॉगिन'}
+                <Link href="/grievance" className="hover:text-[#A37B12] dark:hover:text-[#F0C14A] flex items-center gap-2">
+                  <ShieldAlert className="w-3.5 h-3.5 text-[#C9962A] shrink-0" />
+                  <span>{language === 'en' ? 'Grievance Officer (IT Rules)' : language === 'ur' ? 'ازالہ شکایات افسر' : 'शिकायत निवारण अधिकारी'}</span>
                 </Link>
               </li>
             </ul>
