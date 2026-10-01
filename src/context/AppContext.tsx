@@ -162,11 +162,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const savedEditions = localStorage.getItem('swarnim_epaper_editions');
       if (savedEditions) {
         const parsed = JSON.parse(savedEditions);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const existingIds = new Set(parsed.map((e: EPaperEdition) => e.id));
-          const missing = INITIAL_EPAPER_EDITIONS.filter(e => !existingIds.has(e.id));
-          const updated = [...parsed, ...missing].sort((a, b) => b.date.localeCompare(a.date));
-          setEpaperEditions(updated);
+        if (Array.isArray(parsed)) {
+          setEpaperEditions(parsed.sort((a: EPaperEdition, b: EPaperEdition) => b.date.localeCompare(a.date)));
         }
       }
 
@@ -193,15 +190,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
               })) || []
             }));
 
-            setEpaperEditions(prev => {
-              const serverIds = new Set(serverList.map(e => e.id));
-              const localOnly = prev.filter(e => !serverIds.has(e.id));
-              const merged = [...serverList, ...localOnly].sort((a, b) => b.date.localeCompare(a.date));
-              try {
-                localStorage.setItem('swarnim_epaper_editions', JSON.stringify(merged));
-              } catch (e) {}
-              return merged;
-            });
+            const sorted = [...serverList].sort((a, b) => b.date.localeCompare(a.date));
+            setEpaperEditions(sorted);
+            try {
+              localStorage.setItem('swarnim_epaper_editions', JSON.stringify(sorted));
+            } catch (e) {}
           }
         })
         .catch(() => {});
@@ -224,15 +217,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           .catch(() => {});
       }
 
-      // Load unlocked epapers
-      const savedUnlocked = localStorage.getItem('swarnim_unlocked_epapers');
-      if (savedUnlocked) {
-        const parsed = JSON.parse(savedUnlocked);
-        if (Array.isArray(parsed)) {
-          setUnlockedEpaperKeys(parsed);
-        }
-      }
-
       // Load saved language
       const savedLang = localStorage.getItem('swarnim_language');
       if (savedLang === 'hi' || savedLang === 'en' || savedLang === 'ur') {
@@ -241,6 +225,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     } catch (e) {}
     setSessionReady(true);
   }, []);
+
+  useEffect(() => {
+    if (!currentUser) {
+      setUnlockedEpaperKeys([]);
+      return;
+    }
+    try {
+      const raw = localStorage.getItem('swarnim_unlocked_epapers');
+      const parsed = raw ? JSON.parse(raw) : {};
+      const mine = parsed && !Array.isArray(parsed) ? parsed[currentUser.id] : [];
+      setUnlockedEpaperKeys(Array.isArray(mine) ? mine : []);
+    } catch {
+      setUnlockedEpaperKeys([]);
+    }
+  }, [currentUser]);
 
   const handleSetLanguage = (lang: LanguageCode) => {
     setLanguage(lang);
@@ -458,6 +457,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       } catch (e) {}
       return updated;
     });
+    fetch(`/api/epaper?id=${encodeURIComponent(id)}`, { method: 'DELETE' }).catch(() => {});
   };
 
   const addOrUpdatePricingPlan = (plan: EPaperPricingPlan) => {
@@ -500,6 +500,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const unlockEPaper = (key: string | string[], planTitle?: string) => {
+    if (!currentUser) return;
     const keys = (Array.isArray(key) ? key : [key]).filter(Boolean);
     setUnlockedEpaperKeys(prev => {
       const next = [...prev];
@@ -507,7 +508,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         if (!next.includes(item)) next.push(item);
       }
       try {
-        localStorage.setItem('swarnim_unlocked_epapers', JSON.stringify(next));
+        const raw = localStorage.getItem('swarnim_unlocked_epapers');
+        const parsed = raw ? JSON.parse(raw) : {};
+        const map = parsed && !Array.isArray(parsed) && typeof parsed === 'object' ? parsed : {};
+        map[currentUser.id] = next;
+        localStorage.setItem('swarnim_unlocked_epapers', JSON.stringify(map));
       } catch (e) {}
       return next;
     });
@@ -520,6 +525,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const isEPaperUnlocked = (editionId?: string, date?: string): boolean => {
+    if (!currentUser) return false;
     // Staff/admin roles always have full free access
     if (
       currentUser?.role === 'admin' ||

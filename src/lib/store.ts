@@ -89,6 +89,7 @@ class PlatformStore {
   private submissions: CitizenSubmission[] = [...INITIAL_SUBMISSIONS];
   private users: User[] = [...INITIAL_USERS];
   private epaperEditions: EPaperEdition[] = [...INITIAL_EPAPER_EDITIONS];
+  private deletedEpaperIds = new Set<string>();
   private poll: Poll = { ...INITIAL_POLL };
   private ads: AdBanner[] = [...INITIAL_ADS];
   private classifieds: ClassifiedItem[] = [...INITIAL_CLASSIFIEDS];
@@ -437,7 +438,7 @@ class PlatformStore {
 
   // E-Paper
   getEPaperEditions(filter?: { date?: string; city?: string; language?: string }) {
-    let list = [...this.epaperEditions];
+    let list = this.epaperEditions.filter(e => !this.deletedEpaperIds.has(e.id));
     if (filter?.date) {
       list = list.filter(e => e.date === filter.date);
     }
@@ -464,6 +465,11 @@ class PlatformStore {
     };
     this.epaperEditions.unshift(newEd);
     return newEd;
+  }
+
+  deleteEPaperEdition(id: string) {
+    this.deletedEpaperIds.add(id);
+    this.epaperEditions = this.epaperEditions.filter(e => e.id !== id);
   }
 
   // Ads
@@ -629,7 +635,8 @@ function getPlatformStore(): PlatformStore {
   const existing = global.__platformStore;
   if (existing) {
     Object.setPrototypeOf(existing, PlatformStore.prototype);
-    const record = existing as unknown as { siteSettings?: SiteSettings; articles?: Article[]; epaperEditions?: EPaperEdition[] };
+    const record = existing as unknown as { siteSettings?: SiteSettings; articles?: Article[]; epaperEditions?: EPaperEdition[]; deletedEpaperIds?: Set<string> };
+    if (!record.deletedEpaperIds) record.deletedEpaperIds = new Set<string>();
     if (!record.siteSettings) {
       record.siteSettings = { ...DEFAULT_SETTINGS };
     }
@@ -641,8 +648,10 @@ function getPlatformStore(): PlatformStore {
       }
     }
     if (record.epaperEditions) {
+      record.epaperEditions = record.epaperEditions.filter((e: EPaperEdition) => !record.deletedEpaperIds?.has(e.id));
+      const currentIds = new Set(record.epaperEditions.map((e: EPaperEdition) => e.id));
       for (const ep of INITIAL_EPAPER_EDITIONS) {
-        if (!record.epaperEditions.some((e: EPaperEdition) => e.id === ep.id)) {
+        if (!currentIds.has(ep.id) && !record.deletedEpaperIds?.has(ep.id)) {
           record.epaperEditions.push(ep);
         }
       }

@@ -306,6 +306,7 @@ export default function TodayNewspaperReader() {
   const { 
     epaperEditions, 
     currentUser, 
+    openAuthModal,
     language, 
     setLanguage, 
     t, 
@@ -423,9 +424,13 @@ export default function TodayNewspaperReader() {
     : (currentEdition?.pages?.length || 6);
 
   const isCurrentEditionUnlocked = isEPaperUnlocked(currentEdition?.id, selectedDate);
-  const isPageLocked = activePageIndex > 0 && !isCurrentEditionUnlocked;
+  const isPageLocked = !isCurrentEditionUnlocked;
 
   const handleOpenCheckout = (plan?: EPaperPricingPlan) => {
+    if (!currentUser) {
+      openAuthModal('login');
+      return;
+    }
     const chosen = plan || pricingPlans.find(p => p.price === 1) || pricingPlans[0];
     setSelectedPlanForUnlock(chosen);
     setIsCheckoutOpen(true);
@@ -763,13 +768,13 @@ export default function TodayNewspaperReader() {
                 e.stopPropagation();
                 handleOpenCheckout();
               }}
-              className="absolute inset-0 z-20 bg-slate-950/80 backdrop-blur-[5px] flex flex-col justify-between p-4 sm:p-5 text-white text-center select-none"
+              className="absolute inset-0 z-30 bg-slate-950/45 flex flex-col justify-between p-4 sm:p-5 text-white text-center select-none"
             >
               {/* Top Banner */}
               <div className="pt-2">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500 text-slate-950 text-xs font-black uppercase tracking-wider shadow-md">
                   <Lock className="w-3.5 h-3.5" />
-                  <span>{language === 'en' ? 'Page 2 & Beyond Locked' : 'पृष्ठ 2 एवं आगे के अंक लॉक हैं'}</span>
+                  <span>{!currentUser ? (language === 'en' ? 'Login to read' : 'पढ़ने के लिए लॉगिन करें') : (language === 'en' ? 'This date is locked' : 'यह तारीख का अखबार लॉक है')}</span>
                 </span>
               </div>
 
@@ -780,13 +785,19 @@ export default function TodayNewspaperReader() {
                 </div>
                 
                 <h3 className="text-base sm:text-lg font-black text-amber-300 font-serif leading-tight">
-                  {language === 'en' ? 'Unlock Full E-Paper to Continue Reading' : 'आगे पढ़ने हेतु ई-पेपर अनलॉक करें'}
+                  {!currentUser
+                    ? (language === 'en' ? 'Login first, then buy this paper' : 'पहले लॉगिन करें, फिर यह अखबार खरीदें')
+                    : (language === 'en' ? 'Buy this date’s paper to read it' : 'पढ़ने के लिए इस तारीख का अखबार खरीदें')}
                 </h3>
                 
                 <p className="text-[11px] text-slate-300 leading-relaxed">
-                  {language === 'en'
-                    ? 'Page 1 is free for all readers. Unlock today\'s edition starting at just ₹1, or subscribe yearly for ₹340.'
-                    : 'पहला पृष्ठ सभी पाठकों के लिए निःशुल्क है। मात्र ₹1 में आज का पूरा अखबार अनलॉक करें या ₹340 में साल भर पढ़ें।'}
+                  {!currentUser
+                    ? (language === 'en'
+                      ? 'The paper stays hidden until you log in. After login you can pay for this date and read it.'
+                      : 'लॉगिन से पहले अखबार नहीं खुलता। लॉगिन के बाद इस तारीख का भुगतान करके पूरा पढ़ सकते हैं।')
+                    : (language === 'en'
+                      ? 'Without payment the paper stays blurred. Buy this date to read and download it.'
+                      : 'भुगतान के बिना अखबार धुंधला रहता है। इस तारीख को खरीदने पर पूरा पढ़ और डाउनलोड कर सकते हैं।')}
                 </p>
 
                 {/* Quick Plan Pills */}
@@ -823,7 +834,7 @@ export default function TodayNewspaperReader() {
                   className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs sm:text-sm shadow-xl flex items-center justify-center gap-2 cursor-pointer transition transform hover:scale-[1.02] active:scale-[0.98]"
                 >
                   <Sparkles className="w-4 h-4" />
-                  <span>{language === 'en' ? 'Unlock Today at ₹1 Only' : 'मात्र ₹1 में आज का पूरा अंक अनलॉक करें'}</span>
+                  <span>{!currentUser ? (language === 'en' ? 'Login to continue' : 'जारी रखने के लिए लॉगिन करें') : (language === 'en' ? 'Unlock Today at ₹1 Only' : 'मात्र ₹1 में आज का पूरा अंक अनलॉक करें')}</span>
                 </button>
               </div>
 
@@ -837,14 +848,14 @@ export default function TodayNewspaperReader() {
 
           {/* AUTHENTIC BROADSHEET NEWSPAPER PAGE CONTENT OR EMBEDDED PDF */}
           {activePdfUrl ? (
-            <div className={`flex-1 w-full min-h-0 relative overflow-hidden bg-white ${isPageLocked ? 'filter blur-[7px] pointer-events-none' : ''}`}>
-              {!isPageLocked && (
+            <div className="flex-1 w-full min-h-0 relative overflow-hidden bg-white">
+              <div className={isPageLocked ? 'w-full h-full blur-md pointer-events-none select-none' : 'w-full h-full'}>
                 <PdfSinglePage
                   url={activePdfUrl}
                   pageNumber={activePageIndex + 1}
                   onPageCount={setPdfPageCount}
                 />
-              )}
+              </div>
               {!isPageLocked && (
                 <div 
                   onClick={() => setIsModalOpen(true)}
@@ -1261,14 +1272,17 @@ export default function TodayNewspaperReader() {
                 className="transition-all duration-200 bg-white rounded-xl shadow-2xl overflow-hidden border border-slate-700 relative"
               >
                 {/* Paywall Overlay inside Fullscreen Modal if locked */}
+                <div className={isPageLocked ? 'absolute inset-0 blur-md pointer-events-none' : 'absolute inset-0'}>
+                  <PdfSinglePage url={activePdfUrl} pageNumber={activePageIndex + 1} />
+                </div>
                 {isPageLocked && (
-                  <div className="absolute inset-0 z-30 bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-white text-center">
+                  <div className="absolute inset-0 z-30 bg-slate-950/45 flex flex-col items-center justify-center p-6 text-white text-center">
                     <div className="max-w-md w-full p-6 rounded-2xl bg-slate-900 border border-amber-400/60 shadow-2xl space-y-4">
                       <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-amber-500 to-amber-300 text-slate-950 flex items-center justify-center font-bold shadow-lg">
                         <Lock className="w-7 h-7 stroke-[2.5]" />
                       </div>
                       <h3 className="text-lg font-black text-amber-300">
-                        {language === 'en' ? 'E-Paper Locked (Page 2 & Beyond)' : 'ई-पेपर लॉक है (पृष्ठ 2 एवं आगे)'}
+                        {language === 'en' ? 'Buy this date to read the paper' : 'इस तारीख का अखबार खरीदें'}
                       </h3>
                       <p className="text-xs text-slate-300 leading-relaxed">
                         {language === 'en'
@@ -1290,9 +1304,6 @@ export default function TodayNewspaperReader() {
                     </div>
                   </div>
                 )}
-                {!isPageLocked && (
-                  <PdfSinglePage url={activePdfUrl} pageNumber={activePageIndex + 1} />
-                )}
               </div>
             ) : (
             <div
@@ -1307,7 +1318,7 @@ export default function TodayNewspaperReader() {
                       <Lock className="w-7 h-7 stroke-[2.5]" />
                     </div>
                     <h3 className="text-lg font-black text-amber-300">
-                      {language === 'en' ? 'E-Paper Locked (Page 2 & Beyond)' : 'ई-पेपर लॉक है (पृष्ठ 2 एवं आगे)'}
+                      {language === 'en' ? 'Buy this date to read the paper' : 'इस तारीख का अखबार खरीदें'}
                     </h3>
                     <p className="text-xs text-slate-300 leading-relaxed">
                       {language === 'en'

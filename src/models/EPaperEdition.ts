@@ -8,6 +8,7 @@ export interface IEPaperEdition extends Document {
   totalPageCount: number;
   pdfUrl?: string;
   thumbnailUrl: string;
+  isDeleted?: boolean;
   pages: Array<{
     pageNumber: number;
     title: string;
@@ -27,6 +28,7 @@ const EPaperEditionSchema = new Schema<IEPaperEdition>(
     totalPageCount: { type: Number, default: 6 },
     pdfUrl: String,
     thumbnailUrl: { type: String, required: true },
+    isDeleted: { type: Boolean, default: false, index: true },
     pages: [
       {
         pageNumber: Number,
