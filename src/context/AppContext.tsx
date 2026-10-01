@@ -7,6 +7,7 @@ import { getTranslation, Language } from '@/lib/translations';
 
 interface AppContextType {
   currentUser: User | null;
+  sessionReady: boolean;
   setCurrentUser: (user: User | null) => void;
   usersList: User[];
   login: (identifier: string, password?: string) => Promise<boolean>;
@@ -49,7 +50,7 @@ interface AppContextType {
   addOrUpdatePricingPlan: (plan: EPaperPricingPlan) => void;
   deletePricingPlan: (id: string) => void;
   unlockedEpaperKeys: string[];
-  unlockEPaper: (key: string, planTitle?: string) => void;
+  unlockEPaper: (key: string | string[], planTitle?: string) => void;
   isEPaperUnlocked: (editionId?: string, date?: string) => boolean;
 
   // View Mode: 'epaper' | 'news' (Default: 'news' for Live News First)
@@ -67,8 +68,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // Registered users state with localStorage support
   const [usersList, setUsersList] = useState<User[]>(INITIAL_USERS);
   
-  // Default user: पाठक (Reader) Amit Kumar Singh so user can immediately browse news & videos
-  const [currentUser, setCurrentUser] = useState<User | null>(INITIAL_USERS[4]);
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [sessionReady, setSessionReady] = useState(false);
 
   // Auth modal control
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
@@ -238,6 +239,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setLanguage(savedLang);
       }
     } catch (e) {}
+    setSessionReady(true);
   }, []);
 
   const handleSetLanguage = (lang: LanguageCode) => {
@@ -294,7 +296,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     if (found) {
       if (found.isBanned) return false;
-      if (found.password && found.password !== (password || '')) return false;
+      const staff = found.role === 'admin' || found.role === 'super_admin' || found.role === 'editor';
+      if (staff) {
+        if (!found.password || found.password !== (password || '')) return false;
+      } else if (found.password && found.password !== (password || '')) {
+        return false;
+      }
       const { password: _password, ...session } = found;
       setCurrentUser(session);
       try {
@@ -492,9 +499,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     } catch {}
   };
 
-  const unlockEPaper = (key: string, planTitle?: string) => {
+  const unlockEPaper = (key: string | string[], planTitle?: string) => {
+    const keys = (Array.isArray(key) ? key : [key]).filter(Boolean);
     setUnlockedEpaperKeys(prev => {
-      const next = prev.includes(key) ? prev : [...prev, key];
+      const next = [...prev];
+      for (const item of keys) {
+        if (!next.includes(item)) next.push(item);
+      }
       try {
         localStorage.setItem('swarnim_unlocked_epapers', JSON.stringify(next));
       } catch (e) {}
@@ -530,6 +541,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     <AppContext.Provider
       value={{
         currentUser,
+        sessionReady,
         setCurrentUser,
         usersList,
         login,

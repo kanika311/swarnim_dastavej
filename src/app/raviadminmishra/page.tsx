@@ -80,6 +80,8 @@ import {
 export default function AdminDashboardPage() {
   const { 
     currentUser, 
+    sessionReady,
+    login,
     switchRole, 
     logout,
     epaperEditions, 
@@ -97,6 +99,10 @@ export default function AdminDashboardPage() {
   const [activeTab, setActiveTab] = useState<'dashboard' | 'submissions' | 'epaper' | 'pricing' | 'articles' | 'videos' | 'users' | 'journalists' | 'ads' | 'grievances' | 'settings' | 'admins'>('dashboard');
   const [tabSearchQuery, setTabSearchQuery] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [gateEmail, setGateEmail] = useState('');
+  const [gatePassword, setGatePassword] = useState('');
+  const [gateError, setGateError] = useState('');
+  const [gateBusy, setGateBusy] = useState(false);
 
   // User Management Tab States (Readers)
   const [userFilter, setUserFilter] = useState<'all' | 'active' | 'inactive'>('all');
@@ -1247,6 +1253,90 @@ export default function AdminDashboardPage() {
   );
 
   const pendingSubmissions = submissions.filter(s => s.status === 'pending_review');
+  const isStaff = currentUser?.role === 'admin' || currentUser?.role === 'super_admin' || currentUser?.role === 'editor';
+
+  const handleAdminGateLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setGateError('');
+    if (!gateEmail.trim() || !gatePassword.trim()) {
+      setGateError('ईमेल और पासवर्ड दोनों भरें।');
+      return;
+    }
+    setGateBusy(true);
+    try {
+      const ok = await login(gateEmail.trim(), gatePassword);
+      if (!ok) {
+        setGateError('ईमेल या पासवर्ड गलत है।');
+        return;
+      }
+      let role = '';
+      try {
+        role = JSON.parse(localStorage.getItem('swarnim_current_user') || '{}').role || '';
+      } catch {
+        role = '';
+      }
+      if (role !== 'admin' && role !== 'super_admin' && role !== 'editor') {
+        logout();
+        setGateError('इस खाते को एडमिन पैनल की अनुमति नहीं है।');
+      }
+    } finally {
+      setGateBusy(false);
+    }
+  };
+
+  if (!sessionReady) {
+    return (
+      <div className="min-h-screen bg-[#0B192C] flex items-center justify-center text-amber-200 text-sm font-semibold">
+        जाँच हो रही है...
+      </div>
+    );
+  }
+
+  if (!isStaff) {
+    return (
+      <div className="min-h-screen bg-[#0B192C] flex items-center justify-center p-4">
+        <form onSubmit={handleAdminGateLogin} className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-6 space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-xl overflow-hidden bg-white border-2 border-[#D97706] shrink-0">
+              <Image src="/logo.png?v=4" alt="Logo" width={48} height={48} className="w-full h-full object-contain" unoptimized />
+            </div>
+            <div>
+              <h1 className="text-lg font-black text-slate-900">एडमिन लॉगिन</h1>
+              <p className="text-xs text-slate-500">पैनल खोलने के लिए ईमेल और पासवर्ड डालें।</p>
+            </div>
+          </div>
+          <label className="block space-y-1">
+            <span className="text-xs font-bold text-slate-600">ईमेल या फोन</span>
+            <input
+              type="text"
+              value={gateEmail}
+              onChange={(e) => setGateEmail(e.target.value)}
+              autoComplete="username"
+              className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"
+            />
+          </label>
+          <label className="block space-y-1">
+            <span className="text-xs font-bold text-slate-600">पासवर्ड</span>
+            <input
+              type="password"
+              value={gatePassword}
+              onChange={(e) => setGatePassword(e.target.value)}
+              autoComplete="current-password"
+              className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"
+            />
+          </label>
+          {gateError && <p className="text-xs font-semibold text-red-600">{gateError}</p>}
+          <button
+            type="submit"
+            disabled={gateBusy}
+            className="w-full bg-gradient-to-r from-[#B45309] via-[#D97706] to-[#F59E0B] text-white font-bold text-sm py-2.5 rounded-xl disabled:opacity-60"
+          >
+            {gateBusy ? 'जाँच हो रही है...' : 'लॉगिन करें'}
+          </button>
+        </form>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex bg-[#F4F7FB] text-slate-800 font-sans antialiased">
@@ -1393,7 +1483,6 @@ export default function AdminDashboardPage() {
             <button
               onClick={() => {
                 logout();
-                window.location.href = '/';
               }}
               className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-[#10233B] rounded-lg transition cursor-pointer"
               title="Logout"

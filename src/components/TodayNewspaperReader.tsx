@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useApp } from '@/context/AppContext';
 import { EPaperEdition, EPaperPage, EPaperPricingPlan } from '@/types';
 import { playPageTurnSound } from '@/lib/audioSound';
+import PdfSinglePage from '@/components/PdfSinglePage';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -332,6 +333,7 @@ export default function TodayNewspaperReader() {
   const [selectedDate, setSelectedDate] = useState<string>('2026-09-30');
   const [selectedCity, setSelectedCity] = useState<string>('लखनऊ');
   const [activePageIndex, setActivePageIndex] = useState<number>(0);
+  const [pdfPageCount, setPdfPageCount] = useState(0);
 
   // Automatically sync to latest uploaded edition's date whenever editions load
   useEffect(() => {
@@ -401,7 +403,6 @@ export default function TodayNewspaperReader() {
     candidatePool[0] ||
     publishedEditions[0];
 
-  const totalPages = currentEdition?.pages?.length || 6;
   const currentPage: EPaperPage = currentEdition?.pages?.[activePageIndex] || {
     pageNumber: activePageIndex + 1,
     title: `${content.pageLabel} ${activePageIndex + 1}`,
@@ -417,6 +418,10 @@ export default function TodayNewspaperReader() {
     currentEdition?.pages?.find(p => p.pdfUrl || (p as any)?.pdfPageUrl)?.pdfUrl ||
     (currentEdition?.pages?.find(p => (p as any)?.pdfPageUrl) as any)?.pdfPageUrl;
 
+  const totalPages = activePdfUrl && pdfPageCount > 0
+    ? pdfPageCount
+    : (currentEdition?.pages?.length || 6);
+
   const isCurrentEditionUnlocked = isEPaperUnlocked(currentEdition?.id, selectedDate);
   const isPageLocked = activePageIndex > 0 && !isCurrentEditionUnlocked;
 
@@ -430,8 +435,8 @@ export default function TodayNewspaperReader() {
   const handleExecuteUnlock = (plan: EPaperPricingPlan) => {
     setIsProcessingPayment(true);
     setTimeout(() => {
-      const unlockKey = plan.duration === 'single_edition' 
-        ? (currentEdition?.id || selectedDate) 
+      const unlockKey = plan.duration === 'single_edition'
+        ? [selectedDate, currentEdition?.id || ''].filter(Boolean)
         : 'all';
       unlockEPaper(unlockKey, plan.title);
       setIsProcessingPayment(false);
@@ -471,6 +476,29 @@ export default function TodayNewspaperReader() {
       handlePageChange(activePageIndex - 1, 'prev');
     }
   };
+
+  const touchStartX = useRef<number | null>(null);
+  const didSwipe = useRef(false);
+
+  const handleTouchStart = (event: React.TouchEvent) => {
+    touchStartX.current = event.changedTouches[0]?.clientX ?? null;
+    didSwipe.current = false;
+  };
+
+  const handleTouchEnd = (event: React.TouchEvent) => {
+    if (touchStartX.current == null) return;
+    const endX = event.changedTouches[0]?.clientX ?? touchStartX.current;
+    const delta = endX - touchStartX.current;
+    touchStartX.current = null;
+    if (Math.abs(delta) < 48) return;
+    didSwipe.current = true;
+    if (delta < 0) handleNextPage();
+    else handlePrevPage();
+  };
+
+  useEffect(() => {
+    setPdfPageCount(0);
+  }, [activePdfUrl]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -604,18 +632,27 @@ export default function TodayNewspaperReader() {
             </button>
 
             {/* Direct PDF Link if uploaded */}
-            {activePdfUrl && (
+            {activePdfUrl && isCurrentEditionUnlocked ? (
               <a
                 href={activePdfUrl}
-                target="_blank"
-                rel="noopener noreferrer"
+                download={`swarnim-dastavej-${selectedDate}.pdf`}
                 className="flex items-center gap-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black px-3 py-1.5 rounded-xl shadow-xs text-xs transition"
-                title="Download or View PDF File"
+                title="इस तारीख का अखबार डाउनलोड करें"
               >
                 <Download className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">PDF</span>
               </a>
-            )}
+            ) : activePdfUrl ? (
+              <button
+                type="button"
+                onClick={() => handleOpenCheckout()}
+                className="flex items-center gap-1.5 bg-slate-200 text-slate-600 font-black px-3 py-1.5 rounded-xl shadow-xs text-xs"
+                title="इस तारीख का अखबार खरीदने के बाद डाउनलोड होगा"
+              >
+                <Lock className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">PDF</span>
+              </button>
+            ) : null}
 
             {/* Admin CMS link */}
             {(currentUser?.role === 'admin' || currentUser?.role === 'editor') && (
@@ -674,8 +711,17 @@ export default function TodayNewspaperReader() {
 
         {/* NEWSPAPER PAGE (Broadsheet Ratio 1:1.414) */}
         <div
-          onClick={() => (isPageLocked ? handleOpenCheckout() : setIsModalOpen(true))}
-          className={`cursor-pointer bg-[#fbf9f4] text-slate-900 border-2 border-slate-300 dark:border-slate-700 rounded-sm shadow-2xl overflow-hidden transition-all duration-300 group hover:shadow-red-500/20 w-full max-w-[min(100%,520px)] aspect-[1/1.414] max-h-[76vh] relative flex flex-col justify-between ${
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          onClick={() => {
+            if (didSwipe.current) {
+              didSwipe.current = false;
+              return;
+            }
+            if (isPageLocked) handleOpenCheckout();
+            else setIsModalOpen(true);
+          }}
+          className={`cursor-pointer touch-pan-y bg-[#fbf9f4] text-slate-900 border-2 border-slate-300 dark:border-slate-700 rounded-sm shadow-2xl overflow-hidden transition-all duration-300 group hover:shadow-red-500/20 w-full max-w-[min(100%,520px)] aspect-[1/1.414] max-h-[76vh] relative flex flex-col justify-between ${
             isFlipping 
               ? flipDirection === 'next' 
                 ? 'scale-[0.98] rotate-y-6 opacity-80' 
@@ -791,12 +837,14 @@ export default function TodayNewspaperReader() {
 
           {/* AUTHENTIC BROADSHEET NEWSPAPER PAGE CONTENT OR EMBEDDED PDF */}
           {activePdfUrl ? (
-            <div className={`flex-1 w-full h-full relative overflow-hidden bg-white ${isPageLocked ? 'filter blur-[7px] pointer-events-none' : ''}`}>
-              <iframe
-                src={`${activePdfUrl}#page=${currentPage.pageNumber}&view=FitH&toolbar=0&navpanes=0`}
-                className="w-full h-full border-0 pointer-events-auto"
-                title={`${currentEdition?.editionTitle || 'E-Paper'} - Page ${currentPage.pageNumber}`}
-              />
+            <div className={`flex-1 w-full min-h-0 relative overflow-hidden bg-white ${isPageLocked ? 'filter blur-[7px] pointer-events-none' : ''}`}>
+              {!isPageLocked && (
+                <PdfSinglePage
+                  url={activePdfUrl}
+                  pageNumber={activePageIndex + 1}
+                  onPageCount={setPdfPageCount}
+                />
+              )}
               {!isPageLocked && (
                 <div 
                   onClick={() => setIsModalOpen(true)}
@@ -1178,7 +1226,11 @@ export default function TodayNewspaperReader() {
           </div>
 
           {/* Modal Main Viewport */}
-          <div className="flex-1 overflow-auto p-4 flex items-center justify-center relative select-none">
+          <div
+            className="flex-1 overflow-auto p-4 flex items-center justify-center relative select-none touch-pan-y"
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
+          >
             
             {/* Modal Prev Arrow */}
             {activePageIndex > 0 && (
@@ -1238,11 +1290,9 @@ export default function TodayNewspaperReader() {
                     </div>
                   </div>
                 )}
-                <iframe
-                  src={`${activePdfUrl}#page=${activePageIndex + 1}&view=Fit`}
-                  className="w-full h-full border-0"
-                  title={`Zoomed PDF Page ${activePageIndex + 1}`}
-                />
+                {!isPageLocked && (
+                  <PdfSinglePage url={activePdfUrl} pageNumber={activePageIndex + 1} />
+                )}
               </div>
             ) : (
             <div

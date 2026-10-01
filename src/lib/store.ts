@@ -411,7 +411,12 @@ class PlatformStore {
     );
     if (!user) return { status: 'not_found' };
     if (user.isBanned) return { status: 'banned' };
-    if (user.password && user.password !== password) return { status: 'invalid' };
+    const staff = user.role === 'admin' || user.role === 'super_admin' || user.role === 'editor';
+    if (staff) {
+      if (!user.password || user.password !== password) return { status: 'invalid' };
+    } else if (user.password && user.password !== password) {
+      return { status: 'invalid' };
+    }
     const { password: _password, ...safe } = user;
     return { status: 'ok', user: safe };
   }
