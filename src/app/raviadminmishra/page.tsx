@@ -1263,7 +1263,7 @@ export default function AdminDashboardPage() {
           
           {/* Brand Logo, Admin Title & Close Button for mobile */}
           <div className="flex items-center justify-between">
-            <Link href="/RaviAdminMishra" className="flex items-center gap-3 px-1 py-1 group">
+            <Link href="/raviadminmishra" className="flex items-center gap-3 px-1 py-1 group">
               <div className="w-10 h-10 rounded-xl overflow-hidden bg-white shadow-md border-2 border-[#D97706] flex items-center justify-center p-0.5 shrink-0">
                 <Image
                   src="/logo.png?v=4"

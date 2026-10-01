@@ -483,7 +483,7 @@ export default function Header() {
 
                     {currentUser.role === 'admin' && (
                       <Link
-                        href="/RaviAdminMishra"
+                        href="/raviadminmishra"
                         onClick={() => setShowRoleMenu(false)}
                         className="w-full text-left px-2.5 py-1.5 rounded-lg flex items-center gap-2 hover:bg-slate-100 dark:hover:bg-slate-700 text-red-600 font-bold transition"
                       >
@@ -683,7 +683,7 @@ export default function Header() {
 
                 {currentUser.role === 'admin' && (
                   <Link
-                    href="/RaviAdminMishra"
+                    href="/raviadminmishra"
                     onClick={() => setMobileMenuOpen(false)}
                     className="w-full text-left px-3 py-2 rounded-xl flex items-center gap-2 bg-red-700 text-white font-bold text-xs shadow-xs"
                   >

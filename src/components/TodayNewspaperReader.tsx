@@ -620,7 +620,7 @@ export default function TodayNewspaperReader() {
             {/* Admin CMS link */}
             {(currentUser?.role === 'admin' || currentUser?.role === 'editor') && (
               <Link
-                href="/RaviAdminMishra?tab=epaper"
+                href="/raviadminmishra?tab=epaper"
                 className="flex items-center gap-1 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black px-2.5 py-1.5 rounded-xl shadow-xs text-xs"
                 title="CMS: E-Paper Admin"
               >
