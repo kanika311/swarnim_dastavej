@@ -19,6 +19,29 @@ export async function GET(request: Request) {
         query.status = status;
       }
       dbSubmissions = await CitizenSubmissionModel.find(query).sort({ createdAt: -1 }).lean().exec() as typeof storeSubmissions;
+
+      // Sync engagement metrics from ArticleModel if available
+      const publishedArticles = await ArticleModel.find({ status: 'published' }).lean();
+      const articleMap = new Map(publishedArticles.map(a => [a.id, a]));
+      const articleHeadlineMap = new Map(publishedArticles.map(a => [a.headline.trim().toLowerCase(), a]));
+
+      dbSubmissions = dbSubmissions.map((sub: any) => {
+        let matchingArt = sub.publishedArticleId ? articleMap.get(sub.publishedArticleId) : undefined;
+        if (!matchingArt && sub.headline) {
+          matchingArt = articleHeadlineMap.get(sub.headline.trim().toLowerCase());
+        }
+        if (matchingArt) {
+          return {
+            ...sub,
+            publishedArticleId: matchingArt.id,
+            viewsCount: Math.max(sub.viewsCount || 0, matchingArt.viewsCount || 0),
+            likesCount: Math.max(sub.likesCount || 0, matchingArt.likesCount || 0),
+            commentsCount: Math.max(sub.commentsCount || 0, matchingArt.commentsCount || 0),
+            sharesCount: Math.max(sub.sharesCount || 0, matchingArt.sharesCount || 0),
+          };
+        }
+        return sub;
+      });
     }
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'MongoDB submissions GET error';
@@ -273,6 +296,8 @@ export async function PUT(request: Request) {
               status: 'published'
             });
             await articleDoc.save();
+            subDoc.publishedArticleId = articleDoc.id;
+            await subDoc.save();
           }
         }
       }

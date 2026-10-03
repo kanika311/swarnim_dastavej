@@ -1,301 +1,322 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { 
-  Play, 
   ExternalLink, 
+  ChevronLeft, 
   ChevronRight, 
-  ArrowUpRight, 
-  Download, 
-  CloudSun, 
-  TrendingUp, 
-  FileText,
+  Sparkles,
   Megaphone
 } from 'lucide-react';
 import { AdBanner } from '@/types';
-import { useApp } from '@/context/AppContext';
+
+function formatExternalUrl(url?: string): string {
+  if (!url || url === '#' || url.trim() === '') return '#';
+  const trimmed = url.trim();
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('/')) {
+    return trimmed;
+  }
+  return `https://${trimmed}`;
+}
+
+const DEFAULT_FALLBACK_ADS: AdBanner[] = [
+  {
+    id: 'ad_bhutan_magical',
+    title: 'Experience The Magic Of Bhutan: From serene monasteries to sacred peaks. Luxury stays, flights & visa assistance included.',
+    advertiser: 'Bhutan Tourism Partner',
+    imageUrl: 'https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=800&auto=format&fit=crop&q=80',
+    targetUrl: 'https://www.tourism.gov.bt',
+    placement: 'sidebar',
+    isActive: true,
+    impressions: 650,
+    clicks: 52
+  },
+  {
+    id: 'ad_up_investor',
+    title: 'उत्तर प्रदेश औद्योगिक विकास महाकुंभ 2026: नए उद्योग, आधुनिक इंफ्रास्ट्रक्चर व निवेश के अपार अवसर।',
+    advertiser: 'उद्योग एवं सूचना विभाग - उत्तर प्रदेश',
+    imageUrl: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&auto=format&fit=crop&q=80',
+    targetUrl: 'https://investup.org.in',
+    placement: 'sidebar',
+    isActive: true,
+    impressions: 480,
+    clicks: 39
+  },
+  {
+    id: 'ad_sitapur_agro',
+    title: 'किसान समृद्धि सोलर पंप योजना: 75% तक की सरकारी सब्सिडी के साथ अपने खेतों में लगाएं आधुनिक सोलर पंप।',
+    advertiser: 'राष्ट्रीय कृषि एवं सौर ऊर्जा मिशन',
+    imageUrl: 'https://images.unsplash.com/photo-1509391365360-2e959784a276?w=800&auto=format&fit=crop&q=80',
+    targetUrl: 'https://pmkusum.mnre.gov.in',
+    placement: 'sidebar',
+    isActive: true,
+    impressions: 410,
+    clicks: 31
+  }
+];
 
 export default function RightSponsoredSidebar() {
-  const { language, epaperEditions } = useApp();
   const [adIndex, setAdIndex] = useState(0);
   const [ads, setAds] = useState<AdBanner[]>([]);
+  const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
 
-  useEffect(() => {
-    fetch('/api/ads')
+  const fetchAds = () => {
+    fetch('/api/ads', { cache: 'no-store' })
       .then((r) => r.json())
       .then((d) => {
         if (d.success && Array.isArray(d.data)) {
-          setAds(d.data.filter((ad: AdBanner) => ad.isActive));
+          const activeAds = d.data.filter((ad: AdBanner) => ad.isActive);
+          if (activeAds.length > 0) {
+            setAds(activeAds);
+            return;
+          }
         }
+        setAds(DEFAULT_FALLBACK_ADS);
       })
-      .catch(() => {});
-  }, []);
+      .catch(() => {
+        setAds(DEFAULT_FALLBACK_ADS);
+      });
+  };
 
   useEffect(() => {
-    if (ads.length < 2) return;
+    fetchAds();
+    const interval = setInterval(fetchAds, 20000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const displayAds = ads.length > 0 ? ads : DEFAULT_FALLBACK_ADS;
+
+  // Auto rotate every 7 seconds
+  useEffect(() => {
+    if (displayAds.length < 2) return;
     const timer = setInterval(() => {
-      setAdIndex((prev) => (prev + 1) % ads.length);
-    }, 6000);
+      setAdIndex((prev) => (prev + 1) % displayAds.length);
+    }, 7000);
     return () => clearInterval(timer);
-  }, [ads.length]);
+  }, [displayAds.length]);
+
+  const currentAd = displayAds[adIndex] || displayAds[0];
+
+  useEffect(() => {
+    if (currentAd?.id && !currentAd.id.startsWith('ad_')) {
+      fetch('/api/ads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adId: currentAd.id, event: 'impression' })
+      }).catch(() => {});
+    }
+  }, [currentAd?.id]);
+
+  const handleAdClick = (ad: AdBanner) => {
+    if (!ad?.id) return;
+    if (!ad.id.startsWith('ad_')) {
+      fetch('/api/ads', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adId: ad.id, event: 'click' })
+      }).catch(() => {});
+    }
+  };
+
+  const handlePrev = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setAdIndex((prev) => (prev - 1 + displayAds.length) % displayAds.length);
+  };
+
+  const handleNext = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setAdIndex((prev) => (prev + 1) % displayAds.length);
+  };
 
   return (
-    <aside className="w-full min-w-0 lg:w-80 lg:shrink-0 lg:sticky lg:top-24 lg:z-20 lg:self-start lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto scrollbar-none space-y-4">
+    <aside className="w-full min-w-0 lg:w-80 lg:shrink-0 lg:sticky lg:top-24 lg:z-20 lg:self-start space-y-4">
       
-      {/* 1. GOOGLE NEWS FAVORITE CARD (Dainik Bhaskar Style) */}
-      <div className="bg-amber-50/70 dark:bg-slate-800/80 border border-amber-200/80 dark:border-slate-700 rounded-xl p-3.5 shadow-xs flex items-center justify-between gap-3 hover:border-amber-400 transition group">
-        <div className="flex-1">
-          <Link 
-            href="https://news.google.com" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="text-[13px] font-bold text-slate-800 dark:text-slate-100 group-hover:text-red-700 dark:group-hover:text-amber-400 leading-snug flex items-center gap-1"
-          >
-            <span>स्वर्णिम दस्तावेज़ को Google पर पसंदीदा सोर्स बनाएं</span>
-            <ChevronRight className="w-4 h-4 shrink-0 transition-transform group-hover:translate-x-1" />
-          </Link>
-        </div>
-
-        {/* Google News Badge Button */}
-        <Link 
-          href="https://news.google.com" 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="shrink-0 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg px-2.5 py-1.5 flex items-center gap-1.5 shadow-xs"
-        >
-          {/* Google colors icon */}
-          <div className="flex items-center gap-0.5 text-[11px] font-black">
-            <span className="text-blue-500">G</span>
-            <span className="text-red-500">o</span>
-            <span className="text-yellow-500">o</span>
-            <span className="text-blue-500">g</span>
-            <span className="text-green-500">l</span>
-            <span className="text-red-500">e</span>
-          </div>
-          <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-1.5 py-0.5 rounded">
-            +Follow us
-          </span>
-        </Link>
-      </div>
-
-      {/* 2. SPONSORED AD CAROUSEL */}
-      {ads.length > 0 && ads[adIndex] && (
-      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-xs">
-        <div className="px-3 py-2 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px]">
-          <span className="font-extrabold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-            प्रायोजित (Sponsored)
-          </span>
-          <span className="text-slate-400 text-[10px]">विज्ञापन</span>
-        </div>
-
-        <div className="relative p-3">
-          <div className="relative aspect-[16/10] w-full rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800">
-            <a href={ads[adIndex].targetUrl} target="_blank" rel="noopener noreferrer">
-            <img
-              src={ads[adIndex].imageUrl}
-              alt={ads[adIndex].title}
-              className="w-full h-full object-cover transition-opacity duration-500"
-            />
-            </a>
-            <div className="absolute top-2 left-2 bg-slate-900/80 backdrop-blur-xs text-amber-300 font-bold text-[10px] px-2 py-0.5 rounded">
-              प्रायोजित
-            </div>
-          </div>
-
-          <div className="mt-2.5">
-            <p className="text-[11px] text-slate-400 font-medium">
-              {ads[adIndex].advertiser}
-            </p>
-            <h4 className="text-[14px] font-bold text-slate-800 dark:text-slate-100 mt-0.5 line-clamp-2 leading-snug">
-              {ads[adIndex].title}
-            </h4>
-          </div>
-
-          {/* Carousel Pagination Dots (like Bhaskar) */}
-          <div className="flex items-center justify-center gap-1.5 mt-3 pt-2 border-t border-slate-100 dark:border-slate-800">
-            {ads.map((_, idx) => (
-              <button
-                key={idx}
-                onClick={() => setAdIndex(idx)}
-                className={`w-2 h-2 rounded-full transition-all ${
-                  idx === adIndex 
-                    ? 'w-5 bg-amber-600 dark:bg-amber-400' 
-                    : 'bg-slate-300 dark:bg-slate-700'
-                }`}
-                aria-label={`विज्ञापन ${idx + 1}`}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-      )}
-
-      {/* 3. VIDEO WIDGET (Dainik Bhaskar Style: 'वीडियो और देखें') */}
-      <div className="bg-slate-950 text-white rounded-xl overflow-hidden shadow-md border border-slate-800">
-        <div className="p-3.5 flex items-center justify-between border-b border-slate-800">
+      {/* EXCLUSIVELY SPONSORED ADS CONTAINER - TALL FORMAT WITH NAVIGATION */}
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm flex flex-col">
+        
+        {/* Header with live pulsing dot & index counter */}
+        <div className="px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
           <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-red-600 animate-ping"></span>
-            <h3 className="font-extrabold text-base tracking-wide">
-              वीडियो (Videos)
-            </h3>
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+            </span>
+            <span className="font-black text-slate-800 dark:text-slate-100 uppercase tracking-wider text-[11px]">
+              SPONSORED
+            </span>
+            <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
+              (प्रायोजित)
+            </span>
           </div>
-          <Link
-            href="/category/videos"
-            className="text-[12px] font-bold text-amber-400 hover:text-amber-300 flex items-center gap-0.5 transition"
-          >
-            <span>और देखें</span>
-            <ChevronRight className="w-3.5 h-3.5" />
-          </Link>
+
+          <div className="flex items-center gap-2">
+            {displayAds.length > 1 && (
+              <span className="text-[11px] font-mono font-bold text-slate-600 dark:text-slate-300 bg-slate-200/70 dark:bg-slate-700/70 px-2 py-0.5 rounded-full">
+                {adIndex + 1} / {displayAds.length}
+              </span>
+            )}
+            <span className="text-[10px] text-slate-400 dark:text-slate-500">विज्ञापन</span>
+          </div>
         </div>
 
-        {/* Video Card */}
-        <Link href="/article/art-2" className="block relative group">
-          <div className="relative aspect-video w-full overflow-hidden bg-slate-900">
-            <img
-              src="https://images.unsplash.com/photo-1547683905-f686c993aae5?w=800&auto=format&fit=crop&q=80"
-              alt="बारिश से हाहाकार"
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 opacity-90"
-            />
-            {/* Play Button Overlay */}
-            <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/20 transition">
-              <div className="w-12 h-12 rounded-full bg-red-600/90 text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-                <Play className="w-5 h-5 fill-current ml-0.5" />
-              </div>
-            </div>
-
-            {/* Video duration pill */}
-            <span className="absolute bottom-2 right-2 bg-black/80 text-white text-[11px] font-mono px-1.5 py-0.5 rounded">
-              0:49
-            </span>
-          </div>
-
-          <div className="p-3 bg-slate-900">
-            <span className="text-[11px] font-bold text-amber-400 uppercase">
-              सीतापुर - लखनऊ वेदर अलर्ट
-            </span>
-            <h4 className="text-[14px] font-bold text-white group-hover:text-amber-300 line-clamp-2 mt-1 leading-snug">
-              बारिश से हाहाकार: घाघरा व सरायन नदी का जलस्तर खतरे के निशान के पास, तटवर्ती गांवों में अलर्ट
-            </h4>
-          </div>
-        </Link>
-      </div>
-
-      {/* 4. E-PAPER TODAY'S EDITION WIDGET */}
-      {(() => {
-        const matchingEdition = epaperEditions.find(e => (e.language || 'hi') === language) || epaperEditions[0];
-        const previewImage = matchingEdition?.pages?.[0]?.imageUrl || "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=400&auto=format&fit=crop&q=80";
-        const editionTitle = matchingEdition 
-          ? (language === 'en' 
-              ? `${matchingEdition.editionCity.toUpperCase()} Daily Edition (English)` 
-              : language === 'ur'
-              ? `${matchingEdition.editionCity === 'lucknow' ? 'لکھنؤ' : 'سیتاپور'} روزنامہ ایڈیشن (اردو)`
-              : `${matchingEdition.editionCity === 'lucknow' ? 'लखनऊ' : 'सीतापुर'} संयुक्त संस्करण (हिन्दी)`)
-          : (language === 'en' ? 'Daily E-Paper Edition' : language === 'ur' ? 'روزنامہ ای-پیپر' : 'लखनऊ एवं सीतापुर संयुक्त संस्करण');
-        const pagesSummary = matchingEdition
-          ? (language === 'en'
-              ? `${matchingEdition.pages.length} Pages • Digital Print`
-              : language === 'ur'
-              ? `${matchingEdition.pages.length} صفحات • ڈیجیٹل ایڈیشن`
-              : `${matchingEdition.pages.length} मुख्य पृष्ठ • रंगीन मुद्रित स्वरूप`)
-          : (language === 'en' ? 'Full Digital Edition' : 'रंगीन मुद्रित स्वरूप');
-
-        return (
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-xs">
-            <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-100 dark:border-slate-800">
-              <div className="flex items-center gap-1.5">
-                <FileText className="w-4 h-4 text-amber-600" />
-                <span className="font-bold text-[14px] text-slate-900 dark:text-white">
-                  {language === 'en' ? "Today's E-Paper" : language === 'ur' ? 'آج کا ای-پیپر' : 'आज का ई-पेपर (E-Paper)'}
-                </span>
-              </div>
-              <span className="text-[10px] font-bold bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-300 px-2 py-0.5 rounded">
-                {language === 'en' ? 'Free Edition' : language === 'ur' ? 'مفت ایڈیشن' : 'निशुल्क'}
-              </span>
-            </div>
-
-            <div className="flex gap-3 items-center">
-              <div className="w-20 aspect-[3/4] bg-slate-100 dark:bg-slate-800 rounded border border-slate-300 dark:border-slate-700 overflow-hidden shrink-0 shadow-xs relative">
+        {/* Tall Visual Card with Left & Right Buttons */}
+        <div className="relative p-3 flex-1 flex flex-col">
+          
+          {/* Main Visual Display - Full Photo Display (Never Cropped or Cut Off) */}
+          <div className="relative w-full h-[480px] sm:h-[520px] rounded-xl overflow-hidden bg-slate-950 flex items-center justify-center group shadow-inner">
+            
+            {currentAd.imageUrl && !failedImages[currentAd.id] ? (
+              <a 
+                href={formatExternalUrl(currentAd.targetUrl)} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                onClick={() => handleAdClick(currentAd)}
+                className="w-full h-full relative flex items-center justify-center overflow-hidden"
+              >
+                {/* Ambient blurred backdrop for seamless, edge-to-edge color fill */}
                 <img
-                  src={previewImage}
-                  alt={editionTitle}
-                  className="w-full h-full object-cover"
+                  src={currentAd.imageUrl}
+                  alt=""
+                  aria-hidden="true"
+                  className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-40 scale-125 pointer-events-none"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 to-transparent flex items-end justify-center p-1">
-                  <span className="text-[9px] font-bold text-white uppercase">
-                    {matchingEdition?.language || 'hi'}
+                <div className="absolute inset-0 bg-black/25 pointer-events-none" />
+
+                {/* Main Full Image: object-contain guarantees 100% of photo is visible without cutting */}
+                <img
+                  key={currentAd.id}
+                  src={currentAd.imageUrl}
+                  alt={currentAd.title}
+                  onError={() => setFailedImages((prev) => ({ ...prev, [currentAd.id]: true }))}
+                  className="relative max-w-full max-h-full w-auto h-auto object-contain z-10 transition-transform duration-300 group-hover:scale-[1.01]"
+                />
+
+                {/* Top Floating Badge */}
+                <div className="absolute top-2.5 left-2.5 bg-black/75 backdrop-blur-md text-amber-300 font-extrabold text-[10px] px-2.5 py-1 rounded-md shadow-sm border border-amber-400/30 flex items-center gap-1 z-20">
+                  <Sparkles className="w-3 h-3 text-amber-400" />
+                  <span>प्रायोजित</span>
+                </div>
+              </a>
+            ) : (
+              /* Fallback rich tall banner */
+              <a
+                href={formatExternalUrl(currentAd.targetUrl)}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => handleAdClick(currentAd)}
+                className="w-full h-full p-5 bg-gradient-to-br from-amber-800 via-amber-950 to-slate-950 flex flex-col justify-between text-white group"
+              >
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="bg-amber-400 text-slate-950 font-black text-[10px] px-2.5 py-0.5 rounded uppercase tracking-wider shadow-xs">
+                      प्रायोजित
+                    </span>
+                    <span className="text-xs font-bold text-amber-200 uppercase">
+                      {currentAd.advertiser}
+                    </span>
+                  </div>
+
+                  <h3 className="text-lg sm:text-xl font-black leading-snug mt-8 text-white group-hover:text-amber-200 transition-colors">
+                    {currentAd.title}
+                  </h3>
+                </div>
+
+                <div className="pt-4 border-t border-white/20 flex items-center justify-between">
+                  <span className="text-xs text-slate-300">आधिकारिक विज्ञापन</span>
+                  <span className="inline-flex items-center gap-1.5 bg-amber-400 text-slate-950 font-black text-xs px-4 py-2.5 rounded-lg shadow-md transition group-hover:bg-amber-300">
+                    <span>साइट देखें</span>
+                    <ExternalLink className="w-3.5 h-3.5 stroke-[2.5]" />
                   </span>
                 </div>
-              </div>
+              </a>
+            )}
 
-              <div className="flex-1">
-                <p className="text-[13px] font-bold text-slate-800 dark:text-slate-100 leading-snug">
-                  {editionTitle}
-                </p>
-                <p className="text-[11px] text-slate-500 mt-1">
-                  {pagesSummary}
-                </p>
-                <Link
-                  href="/epaper"
-                  className="inline-flex items-center gap-1 mt-2.5 text-[12px] font-bold text-white bg-red-700 hover:bg-red-800 px-3 py-1.5 rounded-md shadow-xs transition"
+            {/* Left & Right Navigation Buttons */}
+            {displayAds.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={handlePrev}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/70 hover:bg-black/95 text-white flex items-center justify-center backdrop-blur-md transition shadow-xl cursor-pointer z-30 hover:scale-110 active:scale-95 border border-white/30"
+                  aria-label="पिछला विज्ञापन (Previous Ad)"
+                  title="पिछला विज्ञापन"
                 >
-                  <span>{language === 'en' ? 'Open E-Paper' : language === 'ur' ? 'ای-پیپر پڑھیں' : 'ई-पेपर खोलें'}</span>
-                  <ArrowUpRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
+                  <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/70 hover:bg-black/95 text-white flex items-center justify-center backdrop-blur-md transition shadow-xl cursor-pointer z-30 hover:scale-110 active:scale-95 border border-white/30"
+                  aria-label="अगला विज्ञापन (Next Ad)"
+                  title="अगला विज्ञापन"
+                >
+                  <ChevronRight className="w-5 h-5 stroke-[2.5]" />
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* Clean Details & CTA Bar Below Image (Does Not Cut Off Or Obscure Photo) */}
+          <div className="mt-2.5 px-3 py-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <span className="text-[10px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-400 block truncate">
+                {currentAd.advertiser}
+              </span>
+              <h3 className="text-xs font-bold text-slate-800 dark:text-slate-100 truncate" title={currentAd.title}>
+                {currentAd.title}
+              </h3>
             </div>
-          </div>
-        );
-      })()}
 
-      {/* 5. WEATHER & MANDI QUICK WIDGET */}
-      <div className="bg-gradient-to-br from-slate-50 to-amber-50/40 dark:from-slate-800 dark:to-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-3.5 text-xs text-slate-700 dark:text-slate-300 space-y-2">
-        <div className="flex items-center justify-between font-bold text-[13px] text-slate-900 dark:text-white">
-          <span className="flex items-center gap-1.5">
-            <CloudSun className="w-4 h-4 text-amber-500" />
-            स्थानीय मौसम व मंडी भाव
+            <a
+              href={formatExternalUrl(currentAd.targetUrl)}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => handleAdClick(currentAd)}
+              className="shrink-0 inline-flex items-center gap-1.5 bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 hover:opacity-95 text-slate-950 font-black text-xs px-3.5 py-2 rounded-lg shadow-sm transition cursor-pointer"
+            >
+              <span>विस्तार से देखें</span>
+              <ExternalLink className="w-3.5 h-3.5 stroke-[2.5]" />
+            </a>
+          </div>
+
+          {/* Carousel Pagination Dots */}
+          {displayAds.length > 1 && (
+            <div className="flex items-center justify-center gap-1.5 mt-3 pt-2">
+              {displayAds.map((_, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => setAdIndex(idx)}
+                  className={`h-2 rounded-full transition-all cursor-pointer ${
+                    idx === adIndex 
+                      ? 'w-7 bg-amber-500 dark:bg-amber-400' 
+                      : 'w-2 bg-slate-300 dark:bg-slate-700 hover:bg-slate-400'
+                  }`}
+                  aria-label={`विज्ञापन ${idx + 1}`}
+                />
+              ))}
+            </div>
+          )}
+
+        </div>
+
+        {/* Footer: Advertise with Us */}
+        <div className="p-3 bg-slate-50 dark:bg-slate-800/50 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
+          <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+            डिजिटल एवं ई-पेपर विज्ञापन
           </span>
-          <span className="text-[10px] text-slate-400">आज</span>
-        </div>
-
-        <div className="grid grid-cols-2 gap-2 pt-1 text-[11px]">
-          <div className="bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-200 dark:border-slate-700">
-            <span className="font-bold text-slate-900 dark:text-slate-100 block">सीतापुर: 29°C</span>
-            <span className="text-slate-500">हल्के बादल, आर्द्रता 72%</span>
-          </div>
-          <div className="bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-200 dark:border-slate-700">
-            <span className="font-bold text-slate-900 dark:text-slate-100 block">लखनऊ: 30°C</span>
-            <span className="text-slate-500">साफ धूप, हवा 12 km/h</span>
-          </div>
-        </div>
-
-        <div className="bg-white dark:bg-slate-900 p-2 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center justify-between text-[11px]">
-          <span className="text-slate-600 dark:text-slate-400">सीतापुर नवीन मंडी (गेहूं):</span>
-          <span className="font-bold text-emerald-600 dark:text-emerald-400">₹2,425 / क्विंटल</span>
-        </div>
-      </div>
-
-      {/* 6. CITIZEN JOURNALISM CTA BOX */}
-      <div className="bg-gradient-to-r from-red-700 to-amber-700 text-white rounded-xl p-4 shadow-sm relative overflow-hidden">
-        <div className="relative z-10">
-          <span className="bg-amber-300 text-slate-950 text-[10px] font-black uppercase px-2 py-0.5 rounded shadow-xs">
-            नागरिक पत्रकारिता मंच
-          </span>
-          <h4 className="text-[15px] font-bold mt-2 font-serif leading-snug">
-            अपने क्षेत्र की समस्या या खबर सीधे संपादक तक पहुंचाएं
-          </h4>
-          <p className="text-[11px] text-slate-100 mt-1 opacity-90">
-            सड़क, पानी, बिजली या जनसरोकार से जुड़े मुद्दे फोटो-वीडियो सहित साझा करें।
-          </p>
-          <Link
-            href="/submit-news"
-            className="inline-flex items-center gap-1.5 mt-3 bg-white text-red-800 hover:bg-amber-100 font-extrabold text-[12px] px-3.5 py-1.5 rounded-lg shadow-sm transition"
+          <a
+            href="mailto:contact@swarnimdastavej.com?subject=Advertise%20With%20Us"
+            className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 dark:text-amber-400 hover:underline"
           >
             <Megaphone className="w-3.5 h-3.5" />
-            <span>खबर भेजें / शिकायत दर्ज करें</span>
-          </Link>
+            <span>विज्ञापन लगवाएं</span>
+          </a>
         </div>
+
       </div>
 
     </aside>

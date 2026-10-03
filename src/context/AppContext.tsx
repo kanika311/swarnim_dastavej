@@ -10,7 +10,7 @@ interface AppContextType {
   sessionReady: boolean;
   setCurrentUser: (user: User | null) => void;
   usersList: User[];
-  login: (identifier: string, password?: string) => Promise<boolean>;
+  login: (identifier: string, password?: string, isStaffGate?: boolean) => Promise<boolean>;
   logout: () => void;
   registerUser: (userData: Partial<User>) => User;
   updateCurrentUser: (updates: Partial<User>) => void;
@@ -154,7 +154,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (savedActiveUser) {
         const parsedUser = JSON.parse(savedActiveUser);
         if (parsedUser && parsedUser.id) {
-          setCurrentUser(parsedUser);
+          const isStaff = parsedUser.role === 'admin' || parsedUser.role === 'super_admin' || parsedUser.role === 'editor';
+          if (isStaff) {
+            try {
+              localStorage.removeItem('swarnim_current_user');
+            } catch (e) {}
+            setCurrentUser(null);
+          } else {
+            setCurrentUser(parsedUser);
+          }
         }
       }
 
@@ -265,25 +273,45 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setIsAuthModalOpen(false);
   };
 
-  const login = async (identifier: string, password?: string): Promise<boolean> => {
+  const login = async (identifier: string, password?: string, isStaffGate: boolean = false): Promise<boolean> => {
     const cleanId = identifier.trim().toLowerCase();
     const phoneDigits = cleanId.replace(/\D/g, '');
+
+    // Strictly block admin / staff logins from public website login modal
+    if (!isStaffGate) {
+      const isKnownStaff = 
+        cleanId === 'swarnimdastavej@gmail.com' ||
+        cleanId.includes('admin') ||
+        usersList.some(u => 
+          (u.email.toLowerCase() === cleanId || (u.phone && phoneDigits.length >= 10 && u.phone.replace(/\D/g, '') === phoneDigits)) &&
+          (u.role === 'admin' || u.role === 'super_admin' || u.role === 'editor')
+        );
+
+      if (isKnownStaff) {
+        return false;
+      }
+    }
 
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identifier: identifier.trim(), password: password || '' })
+        body: JSON.stringify({ identifier: identifier.trim(), password: password || '', isStaffGate })
       });
       const data = await res.json();
       if (data.success && data.data) {
-        setCurrentUser(data.data);
+        const user = data.data;
+        const staff = user.role === 'admin' || user.role === 'super_admin' || user.role === 'editor';
+        if (staff && !isStaffGate) {
+          return false;
+        }
+        setCurrentUser(user);
         try {
-          localStorage.setItem('swarnim_current_user', JSON.stringify(data.data));
+          localStorage.setItem('swarnim_current_user', JSON.stringify(user));
         } catch (e) {}
         return true;
       }
-      if (res.status === 401 || res.status === 403) {
+      if (res.status === 401 || res.status === 403 || !res.ok) {
         return false;
       }
     } catch (e) {}
@@ -296,12 +324,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (found) {
       if (found.isBanned) return false;
       const staff = found.role === 'admin' || found.role === 'super_admin' || found.role === 'editor';
+      if (staff && !isStaffGate) {
+        return false;
+      }
       if (staff) {
         if (!found.password || found.password !== (password || '')) return false;
       } else if (found.password && found.password !== (password || '')) {
         return false;
       }
       const { password: _password, ...session } = found;
+      if (!isStaffGate && (session.role === 'admin' || session.role === 'super_admin' || session.role === 'editor')) {
+        return false;
+      }
       setCurrentUser(session);
       try {
         localStorage.setItem('swarnim_current_user', JSON.stringify(session));
@@ -309,7 +343,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       return true;
     }
 
-    // Fallback: if user is not in list but identifier looks valid, create a session
+    // Do NOT create fallback sessions for anything that looks like admin or staff
+    if (cleanId.includes('admin') || cleanId.includes('swarnim') || (!isStaffGate && password?.includes('admin'))) {
+      return false;
+    }
+
+    // Fallback: if user is not in list but identifier looks valid, create a reader session
     const fallbackUser: User = {
       id: `user-${Date.now()}`,
       name: identifier.includes('@') ? identifier.split('@')[0] : `उपयोगकर्ता ${identifier.slice(-4)}`,

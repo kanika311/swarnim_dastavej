@@ -6,6 +6,11 @@ const nextConfig: NextConfig = {
       { source: "/admin", destination: "/raviadminmishra", permanent: false },
     ];
   },
+  async rewrites() {
+    return [
+      { source: "/uploads/:path*", destination: "/api/media/:path*" },
+    ];
+  },
   serverExternalPackages: ["sharp", "ffmpeg-static"],
   experimental: {
     proxyClientMaxBodySize: "80mb",

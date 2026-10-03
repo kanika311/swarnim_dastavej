@@ -37,7 +37,7 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     // Topics
     topic_all: 'टॉप न्यूज़',
     topic_state_city: 'राज्य-शहर',
-    topic_tejaswini: 'तेजस्विनी',
+    topic_national: 'देश और राजनीति',
     topic_investigation: 'स्वर्णिम पड़ताल',
     topic_cricket: 'क्रिकेट',
     topic_special: 'स्वर्णिम खास',
@@ -121,7 +121,7 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     // Topics
     topic_all: 'Top News',
     topic_state_city: 'State-City',
-    topic_tejaswini: 'Tejaswini',
+    topic_national: 'National & Politics',
     topic_investigation: 'Fact Check & Investigation',
     topic_cricket: 'Cricket',
     topic_special: 'Special Stories',
@@ -205,7 +205,7 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     // Topics
     topic_all: 'اہم خبریں',
     topic_state_city: 'ریاست اور شہر',
-    topic_tejaswini: 'تیجسونی',
+    topic_national: 'قومی و سیاست',
     topic_investigation: 'تحقیقات',
     topic_cricket: 'کرکٹ',
     topic_special: 'خصوصی خبریں',

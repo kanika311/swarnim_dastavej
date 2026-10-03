@@ -111,17 +111,14 @@ export async function DELETE(request: Request) {
       );
     }
 
-    const exists = platformStore.getUsers().some((u) => u.id === userId);
     const ok = platformStore.deleteUser(userId);
     if (!ok) {
       return NextResponse.json(
         {
           success: false,
-          message: exists
-            ? 'The last administrator account cannot be removed'
-            : 'Admin account not found or could not be removed'
+          message: 'Admin account not found or could not be removed'
         },
-        { status: exists ? 400 : 404 }
+        { status: 404 }
       );
     }
 

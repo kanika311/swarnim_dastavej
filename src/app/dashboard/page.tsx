@@ -37,8 +37,19 @@ import {
   PhoneCall,
   Video,
   Camera,
-  Link2
+  Link2,
+  Trophy,
+  Eye,
+  Heart,
+  Award,
+  TrendingUp,
+  Flame
 } from 'lucide-react';
+import { WeeklyContest, LeaderboardEntry } from '@/types';
+import ShareModal from '@/components/ShareModal';
+import LeaderboardModal from '@/components/LeaderboardModal';
+import ArticleCommentsModal from '@/components/ArticleCommentsModal';
+import { convertImageToWebP } from '@/lib/imageOptimization';
 
 function JournalistDashboardContent() {
   const router = useRouter();
@@ -50,6 +61,14 @@ function JournalistDashboardContent() {
   const [activeTab, setActiveTab] = useState<'feed' | 'submit' | 'my_reports' | 'profile'>(
     initialTab === 'submit' ? 'submit' : initialTab === 'my_reports' ? 'my_reports' : initialTab === 'profile' ? 'profile' : 'feed'
   );
+
+  // Strictly disallow admin/staff roles on public Citizen Journalist Dashboard
+  useEffect(() => {
+    if (currentUser && (currentUser.role === 'admin' || currentUser.role === 'super_admin' || currentUser.role === 'editor')) {
+      logout();
+      router.replace('/');
+    }
+  }, [currentUser, logout, router]);
 
   // Social Community Posts State
   const [posts, setPosts] = useState<CommunityPost[]>([]);
@@ -89,6 +108,99 @@ function JournalistDashboardContent() {
   const [mySubmissions, setMySubmissions] = useState<CitizenSubmission[]>([]);
   const [statusFilter, setStatusFilter] = useState<'all' | 'pending_review' | 'approved' | 'sent_back'>('all');
   const [isLoadingReports, setIsLoadingReports] = useState(false);
+
+  // Real Engagement & Weekly Contest States
+  const [statsData, setStatsData] = useState<{
+    totalReports: number;
+    publishedReports: number;
+    totalViews: number;
+    totalLikes: number;
+    totalComments: number;
+    totalShares: number;
+    weeklyRank: number;
+    weeklyScore: number;
+    viewsThisWeek: number;
+    pointsToNextRank: number;
+    motivationMessage: string;
+    activeContest: WeeklyContest | null;
+  } | null>(null);
+
+  const [leaderboardData, setLeaderboardData] = useState<{
+    contest: WeeklyContest | null;
+    leaderboard: LeaderboardEntry[];
+    userRank: number;
+    userScore: number;
+    pointsToNextRank: number;
+    nearbyRankings: LeaderboardEntry[];
+    motivationMessage: string;
+  } | null>(null);
+
+  const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(false);
+  const [shareModalData, setShareModalData] = useState<{ isOpen: boolean; title: string; url: string; targetId: string } | null>(null);
+  const [commentsModalData, setCommentsModalData] = useState<{ isOpen: boolean; targetId: string; title: string } | null>(null);
+  const [userLikesMap, setUserLikesMap] = useState<Record<string, boolean>>({});
+
+  const fetchJournalistStats = () => {
+    if (!currentUser) return;
+    fetch(`/api/journalist/stats?userId=${currentUser.id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.data) {
+          setStatsData(data.data);
+        }
+      })
+      .catch(() => {});
+
+    fetch(`/api/contest/leaderboard?userId=${currentUser.id}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.data) {
+          setLeaderboardData(data.data);
+        }
+      })
+      .catch(() => {});
+  };
+
+  useEffect(() => {
+    fetchJournalistStats();
+  }, [currentUser]);
+
+  const handleLikeReport = async (sub: CitizenSubmission) => {
+    if (!currentUser) {
+      openAuthModal('login');
+      return;
+    }
+    const targetId = sub.publishedArticleId || sub.id;
+    const isCurrentlyLiked = !!userLikesMap[targetId];
+    const prevCount = sub.likesCount || 0;
+    const nextCount = isCurrentlyLiked ? Math.max(0, prevCount - 1) : prevCount + 1;
+
+    setUserLikesMap((prev) => ({ ...prev, [targetId]: !isCurrentlyLiked }));
+    setMySubmissions((prev) =>
+      prev.map((s) => (s.id === sub.id ? { ...s, likesCount: nextCount } : s))
+    );
+
+    try {
+      const res = await fetch(`/api/articles/${targetId}/engagement`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'like', userId: currentUser.id }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setUserLikesMap((prev) => ({ ...prev, [targetId]: data.liked }));
+        setMySubmissions((prev) =>
+          prev.map((s) => (s.id === sub.id ? { ...s, likesCount: data.likesCount } : s))
+        );
+        fetchJournalistStats();
+      }
+    } catch {
+      setUserLikesMap((prev) => ({ ...prev, [targetId]: isCurrentlyLiked }));
+      setMySubmissions((prev) =>
+        prev.map((s) => (s.id === sub.id ? { ...s, likesCount: prevCount } : s))
+      );
+    }
+  };
 
   // Sync tab with URL if needed
   useEffect(() => {
@@ -257,9 +369,10 @@ function JournalistDashboardContent() {
     if (!file) return;
 
     setIsUploadingPostImg(true);
-    const fd = new FormData();
-    fd.append('file', file);
     try {
+      const fileToUpload = await convertImageToWebP(file);
+      const fd = new FormData();
+      fd.append('file', fileToUpload);
       const res = await fetch('/api/upload', { method: 'POST', body: fd });
       const data = await res.json();
       if (data.success && data.url) {
@@ -312,9 +425,10 @@ function JournalistDashboardContent() {
     if (!file) return;
 
     setIsUploadingProfile(true);
-    const fd = new FormData();
-    fd.append('file', file);
     try {
+      const fileToUpload = await convertImageToWebP(file);
+      const fd = new FormData();
+      fd.append('file', fileToUpload);
       const res = await fetch('/api/upload', { method: 'POST', body: fd });
       const data = await res.json();
       if (data.success && data.url) {
@@ -337,9 +451,10 @@ function JournalistDashboardContent() {
     if (!file) return;
 
     setUploadingNewsImg(true);
-    const fd = new FormData();
-    fd.append('file', file);
     try {
+      const fileToUpload = await convertImageToWebP(file);
+      const fd = new FormData();
+      fd.append('file', fileToUpload);
       const res = await fetch('/api/upload', { method: 'POST', body: fd });
       const data = await res.json();
       if (data.success && data.url) {
@@ -606,7 +721,7 @@ function JournalistDashboardContent() {
                     {language === 'en' ? 'Score' : language === 'ur' ? 'اسکور' : 'क्रेडिट स्कोर'}
                   </span>
                   <span className="font-bold text-amber-600 dark:text-amber-400 block">
-                    150 {language === 'en' ? 'pts' : 'अंक'}
+                    {(statsData?.weeklyScore ?? 0).toLocaleString('en-IN')} {language === 'en' ? 'pts' : 'अंक'}
                   </span>
                 </div>
               </div>
@@ -1272,16 +1387,157 @@ function JournalistDashboardContent() {
                       className="px-6 py-2.5 bg-red-700 hover:bg-red-800 text-white font-bold text-sm rounded-xl shadow-md transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
                     >
                       <Send className="w-4 h-4" />
-                      <span>{isSubmittingNews ? (language === 'en' ? 'Submitting...' : 'भेजा जा रहा है...') : (language === 'en' ? 'Submit for Editorial Review & Publishing' : language === 'ur' ? 'ادارتی جائزے اور اشاعت کے لیے بھیجیں' : 'संपादकीय समीक्षा एवं प्रकाशन हेतु भेजें')}</span>
+                      <span>{isSubmittingNews ? (language === 'en' ? 'Submitting...' : 'भेजा जा रहा है...') : (language === 'en' ? 'Submit for Editorial Review & Publishing' : language === 'ur' ? 'ادارتی جائزے اور اشاعت के लिए भीजें' : 'संपादकीय समीक्षा एवं प्रकाशन हेतु भेजें')}</span>
                     </button>
                   </div>
                 </form>
               </div>
             )}
-
-            {/* TAB 3: MY REPORTS & SUBMISSIONS STATUS */}
+                                      {/* TAB 3: MY REPORTS & SUBMISSIONS STATUS */}
             {activeTab === 'my_reports' && (
               <div className="space-y-4">
+                
+                {/* 1. ENGAGEMENT SUMMARY CARDS (6 METRICS) */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
+                  <div className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs">
+                    <span className="text-[10px] text-slate-400 block font-medium">कुल रिपोर्ट्स</span>
+                    <span className="text-base font-extrabold text-slate-900 dark:text-white block mt-0.5">
+                      {statsData?.totalReports ?? mySubmissions.length}
+                    </span>
+                  </div>
+
+                  <div className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs">
+                    <span className="text-[10px] text-slate-400 block font-medium">स्वीकृत / प्रकाशित</span>
+                    <span className="text-base font-extrabold text-emerald-600 dark:text-emerald-400 block mt-0.5">
+                      {statsData?.publishedReports ?? mySubmissions.filter(s => s.status === 'approved').length}
+                    </span>
+                  </div>
+
+                  <div className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs">
+                    <span className="text-[10px] text-slate-400 block font-medium flex items-center gap-1">
+                      <Eye className="w-3 h-3 text-amber-500" /> कुल व्यूज़
+                    </span>
+                    <span className="text-base font-extrabold text-amber-600 dark:text-amber-400 block mt-0.5">
+                      {(statsData?.totalViews ?? 0).toLocaleString('en-IN')}
+                    </span>
+                  </div>
+
+                  <div className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs">
+                    <span className="text-[10px] text-slate-400 block font-medium flex items-center gap-1">
+                      <Heart className="w-3 h-3 text-red-500" /> कुल लाइक्स
+                    </span>
+                    <span className="text-base font-extrabold text-red-600 dark:text-red-400 block mt-0.5">
+                      {(statsData?.totalLikes ?? 0).toLocaleString('en-IN')}
+                    </span>
+                  </div>
+
+                  <div className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs">
+                    <span className="text-[10px] text-slate-400 block font-medium flex items-center gap-1">
+                      <MessageSquare className="w-3 h-3 text-blue-500" /> कुल कमेंट्स
+                    </span>
+                    <span className="text-base font-extrabold text-blue-600 dark:text-blue-400 block mt-0.5">
+                      {(statsData?.totalComments ?? 0).toLocaleString('en-IN')}
+                    </span>
+                  </div>
+
+                  <div className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xs">
+                    <span className="text-[10px] text-slate-400 block font-medium flex items-center gap-1">
+                      <Share2 className="w-3 h-3 text-emerald-500" /> कुल शेयर्स
+                    </span>
+                    <span className="text-base font-extrabold text-emerald-600 dark:text-emerald-400 block mt-0.5">
+                      {(statsData?.totalShares ?? 0).toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                </div>
+
+                {/* 2. WEEKLY CONTEST PERFORMANCE CARDS (4 HIGHLIGHTS) */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                  <div className="p-3.5 rounded-2xl bg-gradient-to-br from-amber-500/15 via-amber-500/5 to-transparent border border-amber-300 dark:border-amber-800 shadow-2xs">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] text-amber-800 dark:text-amber-300 font-bold uppercase">साप्ताहिक रैंक</span>
+                      <Trophy className="w-3.5 h-3.5 text-amber-600" />
+                    </div>
+                    <span className="text-xl font-black text-amber-700 dark:text-amber-400 block mt-1">
+                      {statsData?.weeklyRank ? `#${statsData.weeklyRank}` : '-'}
+                    </span>
+                  </div>
+
+                  <div className="p-3.5 rounded-2xl bg-gradient-to-br from-amber-500/15 via-amber-500/5 to-transparent border border-amber-300 dark:border-amber-800 shadow-2xs">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] text-amber-800 dark:text-amber-300 font-bold uppercase">साप्ताहिक स्कोर</span>
+                      <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                    </div>
+                    <span className="text-xl font-black text-slate-900 dark:text-white block mt-1">
+                      {(statsData?.weeklyScore ?? 0).toLocaleString('en-IN')} pts
+                    </span>
+                  </div>
+
+                  <div className="p-3.5 rounded-2xl bg-gradient-to-br from-blue-500/10 via-blue-500/5 to-transparent border border-blue-200 dark:border-blue-900/60 shadow-2xs">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] text-blue-800 dark:text-blue-300 font-bold uppercase">इस सप्ताह व्यूज़</span>
+                      <TrendingUp className="w-3.5 h-3.5 text-blue-600" />
+                    </div>
+                    <span className="text-xl font-black text-blue-700 dark:text-blue-400 block mt-1">
+                      {(statsData?.viewsThisWeek ?? 0).toLocaleString('en-IN')}
+                    </span>
+                  </div>
+
+                  <div className="p-3.5 rounded-2xl bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent border border-emerald-200 dark:border-emerald-900/60 shadow-2xs">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] text-emerald-800 dark:text-emerald-300 font-bold uppercase">अगली रैंक दूरी</span>
+                      <Award className="w-3.5 h-3.5 text-emerald-600" />
+                    </div>
+                    <span className="text-xl font-black text-emerald-700 dark:text-emerald-400 block mt-1">
+                      {statsData?.pointsToNextRank ? `${statsData.pointsToNextRank} pts दूर` : 'शीर्ष पर!'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* 3. WEEKLY CONTEST MOTIVATION & PRIZES BANNER */}
+                <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-600 via-red-600 to-amber-700 text-white shadow-md flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 rounded-full bg-white/20 text-[10px] font-black uppercase tracking-wider">
+                        🏆 साप्ताहिक पत्रकार चैलेंज
+                      </span>
+                      <span className="text-xs text-amber-200 font-semibold">
+                        {statsData?.activeContest?.title || 'Weekly Citizen Journalist Challenge'}
+                      </span>
+                    </div>
+                    <p className="text-xs font-bold text-white flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                      <span>{statsData?.motivationMessage || 'अपनी खबरें शेयर करें और अधिक पाठकों तक पहुंचाकर अंक अर्जित करें!'}</span>
+                    </p>
+                    {/* Prize badges */}
+                    <div className="flex flex-wrap items-center gap-2 pt-1">
+                      {(statsData?.activeContest?.prizes || [
+                        { rank: 1, amount: 5000, rewardText: '' },
+                        { rank: 2, amount: 3000, rewardText: '' },
+                        { rank: 3, amount: 1500, rewardText: '' },
+                      ]).map((p) => {
+                        const hasCash = typeof p.amount === 'number' && p.amount > 0;
+                        const label = hasCash 
+                          ? `₹${Number(p.amount).toLocaleString('en-IN')}` 
+                          : (p.rewardText || '📜 ई-प्रमाणपत्र');
+                        return (
+                          <span key={p.rank} className="px-2 py-0.5 rounded-lg bg-black/25 text-[10px] font-bold text-amber-200 border border-white/10 flex items-center gap-1">
+                            <span>{p.rank === 1 ? '🥇' : p.rank === 2 ? '🥈' : '🥉'} #{p.rank}:</span>
+                            <span>{label}</span>
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsLeaderboardOpen(true)}
+                    className="px-4 py-2 rounded-xl bg-white text-slate-900 font-extrabold text-xs shadow-md hover:bg-amber-100 transition cursor-pointer shrink-0 flex items-center gap-1.5"
+                  >
+                    <Trophy className="w-4 h-4 text-amber-600" />
+                    <span>लीडरबोर्ड देखें (Leaderboard)</span>
+                  </button>
+                </div>
                 
                 {/* Filter Chips */}
                 <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-3 flex items-center gap-2 overflow-x-auto scrollbar-none text-xs">
@@ -1342,7 +1598,7 @@ function JournalistDashboardContent() {
                 <div className="space-y-3">
                   {isLoadingReports ? (
                     <div className="bg-white dark:bg-slate-900 p-8 rounded-2xl border text-center text-slate-400 text-sm">
-                      {language === 'en' ? 'Loading your reports...' : language === 'ur' ? 'آپ کی رپورٹیں لوڈ ہو رہی ہیں...' : 'आपकी खबरें लोड हो रही हैं...'}
+                      {language === 'en' ? 'Loading your reports...' : language === 'ur' ? 'آپ کی رپورٹیں لوڈ ہو रही हैं...' : 'आपकी खबरें लोड हो रही हैं...'}
                     </div>
                   ) : filteredReports.length === 0 ? (
                     <div className="bg-white dark:bg-slate-900 p-8 rounded-2xl border text-center text-slate-400 text-sm space-y-3">
@@ -1436,6 +1692,139 @@ function JournalistDashboardContent() {
                             </div>
                           )}
 
+                          {/* ENGAGEMENT STATS BAR (FOR APPROVED / PUBLISHED REPORTS) */}
+                          {isApproved ? (
+                            <div className="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-3">
+                              <div className="flex items-center justify-between">
+                                <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 flex items-center gap-1">
+                                  📊 सहभागिता आंकड़े (Engagement Stats)
+                                </span>
+                                <div className="flex items-center gap-2">
+                                  <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
+                                    🏆 स्कोर: {((sub.viewsCount || 0) > 0 ? Math.floor((sub.viewsCount || 0) / 100) : 0) + (sub.likesCount || 0) * 2 + (sub.commentsCount || 0) * 3 + (sub.sharesCount || 0) * 4 + 10} pts
+                                  </span>
+                                  {statsData?.weeklyRank && (
+                                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                                      📈 रैंक: #{statsData.weeklyRank}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* 4-Stat Grid (2x2 on Mobile, 4-col on Desktop) */}
+                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                                <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60 flex items-center gap-2">
+                                  <div className="p-1.5 rounded-lg bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300">
+                                    <Eye className="w-3.5 h-3.5" />
+                                  </div>
+                                  <div>
+                                    <span className="text-[10px] text-slate-400 block font-medium">व्यूज़ (Views)</span>
+                                    <span className="font-extrabold text-slate-900 dark:text-white">
+                                      {(sub.viewsCount || 0).toLocaleString('en-IN')}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60 flex items-center gap-2">
+                                  <div className="p-1.5 rounded-lg bg-red-100 dark:bg-red-950/80 text-red-700 dark:text-red-300">
+                                    <Heart className="w-3.5 h-3.5 fill-red-500" />
+                                  </div>
+                                  <div>
+                                    <span className="text-[10px] text-slate-400 block font-medium">लाइक्स (Likes)</span>
+                                    <span className="font-extrabold text-slate-900 dark:text-white">
+                                      {(sub.likesCount || 0).toLocaleString('en-IN')}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60 flex items-center gap-2">
+                                  <div className="p-1.5 rounded-lg bg-blue-100 dark:bg-blue-950/80 text-blue-700 dark:text-blue-300">
+                                    <MessageSquare className="w-3.5 h-3.5" />
+                                  </div>
+                                  <div>
+                                    <span className="text-[10px] text-slate-400 block font-medium">कमेंट्स</span>
+                                    <span className="font-extrabold text-slate-900 dark:text-white">
+                                      {(sub.commentsCount || 0).toLocaleString('en-IN')}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60 flex items-center gap-2">
+                                  <div className="p-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300">
+                                    <Share2 className="w-3.5 h-3.5" />
+                                  </div>
+                                  <div>
+                                    <span className="text-[10px] text-slate-400 block font-medium">शेयर्स (Shares)</span>
+                                    <span className="font-extrabold text-slate-900 dark:text-white">
+                                      {(sub.sharesCount || 0).toLocaleString('en-IN')}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Action Buttons: [ View News ] [ Like ] [ Share ] [ Comments ] */}
+                              <div className="flex flex-wrap items-center gap-2 pt-1">
+                                <Link
+                                  href={`/article/${sub.publishedArticleId || sub.id}`}
+                                  target="_blank"
+                                  className="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:hover:bg-slate-100 dark:text-slate-900 font-bold text-xs flex items-center gap-1.5 transition"
+                                >
+                                  <Eye className="w-3.5 h-3.5" />
+                                  <span>खबर देखें (View News)</span>
+                                </Link>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleLikeReport(sub)}
+                                  className={`px-3.5 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-1.5 transition cursor-pointer ${
+                                    userLikesMap[sub.publishedArticleId || sub.id]
+                                      ? 'bg-red-50 dark:bg-red-950/50 border-red-300 dark:border-red-800 text-red-600'
+                                      : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-red-50/50'
+                                  }`}
+                                >
+                                  <Heart className={`w-3.5 h-3.5 ${userLikesMap[sub.publishedArticleId || sub.id] ? 'fill-red-600 text-red-600' : 'text-slate-500'}`} />
+                                  <span>{userLikesMap[sub.publishedArticleId || sub.id] ? 'Liked ❤️' : 'Like'}</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const targetId = sub.publishedArticleId || sub.id;
+                                    const newsUrl = typeof window !== 'undefined'
+                                      ? `${window.location.origin}/article/${targetId}`
+                                      : `/article/${targetId}`;
+                                    setShareModalData({
+                                      isOpen: true,
+                                      title: sub.headline,
+                                      url: newsUrl,
+                                      targetId,
+                                    });
+                                  }}
+                                  className="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 transition cursor-pointer shadow-2xs"
+                                >
+                                  <Share2 className="w-3.5 h-3.5" />
+                                  <span>शेयर करें (Share)</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const targetId = sub.publishedArticleId || sub.id;
+                                    setCommentsModalData({
+                                      isOpen: true,
+                                      targetId,
+                                      title: sub.headline,
+                                    });
+                                  }}
+                                  className="px-3.5 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/50 hover:bg-blue-100 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 font-bold text-xs flex items-center gap-1.5 transition cursor-pointer"
+                                >
+                                  <MessageSquare className="w-3.5 h-3.5" />
+                                  <span>कमेंट्स ({sub.commentsCount || 0})</span>
+                                </button>
+                              </div>
+                            </div>
+                          ) : null}
+
                           {/* Editor feedback callout if sent back */}
                           {isSentBack && (
                             <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-xs text-amber-900 dark:text-amber-200 flex items-start gap-2">
@@ -1460,6 +1849,68 @@ function JournalistDashboardContent() {
                     })
                   )}
                 </div>
+
+                {/* NEARBY COMPETITOR COMPARISON WIDGET */}
+                {leaderboardData && leaderboardData.nearbyRankings?.length > 0 && (
+                  <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-4 sm:p-5 space-y-3">
+                    <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
+                      <div className="flex items-center gap-2">
+                        <Trophy className="w-4 h-4 text-amber-500" />
+                        <h4 className="font-extrabold text-sm text-slate-900 dark:text-white">
+                          आपके निकटवर्ती प्रतिस्पर्धी (Nearby Journalists Around You)
+                        </h4>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setIsLeaderboardOpen(true)}
+                        className="text-xs font-bold text-amber-600 hover:text-amber-700 hover:underline cursor-pointer"
+                      >
+                        पूरा लीडरबोर्ड देखें →
+                      </button>
+                    </div>
+
+                    <div className="space-y-2">
+                      {leaderboardData.nearbyRankings.map((nearby) => {
+                        const isMe = nearby.userId === currentUser?.id;
+                        return (
+                          <div
+                            key={nearby.userId}
+                            className={`p-2.5 rounded-xl border flex items-center justify-between transition ${
+                              isMe
+                                ? 'bg-amber-50/80 dark:bg-amber-950/40 border-amber-300 dark:border-amber-700 font-bold'
+                                : 'bg-slate-50/60 dark:bg-slate-800/40 border-slate-100 dark:border-slate-700/60'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5">
+                              <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black shrink-0 ${
+                                nearby.rank === 1 ? 'bg-amber-400 text-slate-950' : nearby.rank === 2 ? 'bg-slate-300 text-slate-900' : nearby.rank === 3 ? 'bg-amber-700 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300'
+                              }`}>
+                                #{nearby.rank}
+                              </span>
+                              <div>
+                                <span className="text-xs text-slate-900 dark:text-white font-bold flex items-center gap-1.5">
+                                  {nearby.userName || nearby.name}
+                                  {isMe && (
+                                    <span className="px-1.5 py-0.2 rounded text-[8px] bg-red-600 text-white uppercase font-black">
+                                      YOU
+                                    </span>
+                                  )}
+                                </span>
+                                <span className="text-[10px] text-slate-400 block">
+                                  {nearby.district} • {(nearby.viewsCount ?? nearby.views ?? 0).toLocaleString('en-IN')} व्यूज़
+                                </span>
+                              </div>
+                            </div>
+
+                            <span className="text-xs font-black text-amber-600 dark:text-amber-400">
+                              {nearby.score.toLocaleString('en-IN')} pts
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
 
               </div>
             )}
@@ -1601,6 +2052,106 @@ function JournalistDashboardContent() {
                     {language === 'en' ? 'Active' : language === 'ur' ? 'فعال' : 'सक्रिय'}
                   </span>
                 </div>
+
+                {/* Performance & Engagement Metrics Overview */}
+                <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <h3 className="font-extrabold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                    <Award className="w-4 h-4 text-amber-500" />
+                    <span>पत्रकार सहभागिता व प्रदर्शन (Performance & Engagement)</span>
+                  </h3>
+                  
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                    <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60">
+                      <span className="text-[10px] text-slate-400 block font-medium">प्रकाशित खबरें</span>
+                      <span className="text-base font-extrabold text-emerald-600 dark:text-emerald-400 block mt-0.5">
+                        {statsData?.publishedReports ?? mySubmissions.filter(s => s.status === 'approved').length}
+                      </span>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60">
+                      <span className="text-[10px] text-slate-400 block font-medium">कुल पाठक व्यूज़</span>
+                      <span className="text-base font-extrabold text-amber-600 dark:text-amber-400 block mt-0.5">
+                        {(statsData?.totalViews ?? 0).toLocaleString('en-IN')}
+                      </span>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60">
+                      <span className="text-[10px] text-slate-400 block font-medium">लाइक्स एवं प्रतिक्रियाएं</span>
+                      <span className="text-base font-extrabold text-red-600 dark:text-red-400 block mt-0.5">
+                        {(statsData?.totalLikes ?? 0).toLocaleString('en-IN')}
+                      </span>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60">
+                      <span className="text-[10px] text-slate-400 block font-medium">कमेंट्स एवं शेयर्स</span>
+                      <span className="text-base font-extrabold text-blue-600 dark:text-blue-400 block mt-0.5">
+                        {((statsData?.totalComments ?? 0) + (statsData?.totalShares ?? 0)).toLocaleString('en-IN')}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Profile Weekly Ranking & Nearby Journalists Comparison */}
+                <div className="p-4 rounded-2xl bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/60 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider block">
+                        साप्ताहिक पत्रकार रैंकिंग (Weekly Ranking)
+                      </span>
+                      <h4 className="font-black text-sm text-slate-900 dark:text-white mt-0.5">
+                        {statsData?.weeklyRank 
+                          ? `#${statsData.weeklyRank} (कुल ${leaderboardData?.leaderboard?.length || 1} पत्रकारों में)` 
+                          : 'प्रतियोगिता रैंकिंग'}
+                      </h4>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsLeaderboardOpen(true)}
+                      className="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-bold text-xs transition cursor-pointer flex items-center gap-1.5"
+                    >
+                      <Trophy className="w-3.5 h-3.5 text-amber-400" />
+                      <span>लीडरबोर्ड देखें</span>
+                    </button>
+                  </div>
+
+                  {leaderboardData && leaderboardData.nearbyRankings?.length > 0 && (
+                    <div className="space-y-1.5 pt-2 border-t border-amber-200/60 dark:border-amber-900/60">
+                      <span className="text-[11px] font-bold text-slate-500 block mb-1">
+                        निकटवर्ती रैंकिंग (Nearby Rankings):
+                      </span>
+                      {leaderboardData.nearbyRankings.map((nearby) => {
+                        const isMe = nearby.userId === currentUser?.id;
+                        return (
+                          <div
+                            key={nearby.userId}
+                            className={`p-2 rounded-xl flex items-center justify-between text-xs ${
+                              isMe
+                                ? 'bg-amber-200/60 dark:bg-amber-900/50 font-bold border border-amber-400/80'
+                                : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="font-black text-slate-700 dark:text-slate-300">
+                                #{nearby.rank}
+                              </span>
+                              <span className="text-slate-900 dark:text-white flex items-center gap-1">
+                                {nearby.userName || nearby.name}
+                                {isMe && (
+                                  <span className="px-1.5 py-0.2 rounded text-[8px] bg-red-600 text-white font-black">
+                                    YOU
+                                  </span>
+                                )}
+                              </span>
+                            </div>
+                            <span className="font-extrabold text-amber-700 dark:text-amber-400">
+                              {nearby.score.toLocaleString('en-IN')} pts
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
@@ -1741,6 +2292,53 @@ function JournalistDashboardContent() {
 
         </div>
       </div>
+
+      {/* Share Modal */}
+      {shareModalData && (
+        <ShareModal
+          isOpen={shareModalData.isOpen}
+          onClose={() => setShareModalData(null)}
+          title={shareModalData.title}
+          url={shareModalData.url}
+          articleId={shareModalData.targetId}
+          userId={currentUser?.id}
+          onShareLogged={(newShares) => {
+            if (typeof newShares === 'number') {
+              setMySubmissions((prev) =>
+                prev.map((s) => (s.id === shareModalData.targetId || s.publishedArticleId === shareModalData.targetId ? { ...s, sharesCount: newShares } : s))
+              );
+              fetchJournalistStats();
+            }
+          }}
+        />
+      )}
+
+      {/* Leaderboard Modal */}
+      <LeaderboardModal
+        isOpen={isLeaderboardOpen}
+        onClose={() => setIsLeaderboardOpen(false)}
+        contest={leaderboardData?.contest || statsData?.activeContest || null}
+        leaderboard={leaderboardData?.leaderboard || []}
+        currentUserId={currentUser?.id}
+      />
+
+      {/* Comments Drawer/Modal */}
+      {commentsModalData && (
+        <ArticleCommentsModal
+          isOpen={commentsModalData.isOpen}
+          onClose={() => setCommentsModalData(null)}
+          targetId={commentsModalData.targetId}
+          targetTitle={commentsModalData.title}
+          currentUser={currentUser}
+          onCommentCountChange={(count) => {
+            setMySubmissions((prev) =>
+              prev.map((s) => (s.id === commentsModalData.targetId || s.publishedArticleId === commentsModalData.targetId ? { ...s, commentsCount: count } : s))
+            );
+            fetchJournalistStats();
+          }}
+          onRequireAuth={() => openAuthModal('login')}
+        />
+      )}
 
       <Footer />
     </div>

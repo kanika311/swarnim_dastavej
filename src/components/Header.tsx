@@ -407,7 +407,9 @@ export default function Header() {
                     {getLocalizedUserFirstName(currentUser.name, language)}
                   </span>
                   <span className="text-[10px] text-amber-600 dark:text-amber-400 font-medium">
-                    {getLocalizedUserRole(currentUser.role, language, true)}
+                    {currentUser.role === 'citizen_journalist'
+                      ? getLocalizedUserRole('citizen_journalist', language, true)
+                      : getLocalizedUserRole('reader', language, true)}
                   </span>
                 </div>
                 <ChevronDown className="w-3.5 h-3.5 opacity-60" />
@@ -427,17 +429,12 @@ export default function Header() {
                       {currentUser.role === 'citizen_journalist' ? (
                         <>
                           <PenTool className="w-3 h-3 text-red-600" />
-                          <span>{getLocalizedUserRole(currentUser.role, language)} ({currentUser.city || (language === 'en' ? 'Sitapur' : 'सीतापुर')})</span>
-                        </>
-                      ) : currentUser.role === 'admin' ? (
-                        <>
-                          <ShieldCheck className="w-3 h-3 text-amber-600" />
-                          <span>{getLocalizedUserRole(currentUser.role, language)}</span>
+                          <span>{getLocalizedUserRole('citizen_journalist', language)} ({currentUser.city || (language === 'en' ? 'Sitapur' : 'सीतापुर')})</span>
                         </>
                       ) : (
                         <>
                           <BookOpen className="w-3 h-3 text-amber-600" />
-                          <span>{getLocalizedUserRole(currentUser.role, language)}</span>
+                          <span>{getLocalizedUserRole('reader', language)}</span>
                         </>
                       )}
                     </div>
@@ -480,17 +477,6 @@ export default function Header() {
                       <UserIcon className="w-3.5 h-3.5 text-slate-500 shrink-0" />
                       <span>मेरी प्रोफ़ाइल (Profile)</span>
                     </Link>
-
-                    {currentUser.role === 'admin' && (
-                      <Link
-                        href="/raviadminmishra"
-                        onClick={() => setShowRoleMenu(false)}
-                        className="w-full text-left px-2.5 py-1.5 rounded-lg flex items-center gap-2 hover:bg-slate-100 dark:hover:bg-slate-700 text-red-600 font-bold transition"
-                      >
-                        <ShieldCheck className="w-3.5 h-3.5 text-red-600 shrink-0" />
-                        <span>CMS एडमिन डैशबोर्ड</span>
-                      </Link>
-                    )}
                   </div>
 
                   {/* Logout Button */}
@@ -626,17 +612,12 @@ export default function Header() {
                     {currentUser.role === 'citizen_journalist' ? (
                       <>
                         <PenTool className="w-3 h-3 text-red-600" />
-                        <span>{getLocalizedUserRole(currentUser.role, language)}</span>
-                      </>
-                    ) : currentUser.role === 'admin' ? (
-                      <>
-                        <ShieldCheck className="w-3 h-3 text-amber-600" />
-                        <span>{getLocalizedUserRole(currentUser.role, language)}</span>
+                        <span>{getLocalizedUserRole('citizen_journalist', language)}</span>
                       </>
                     ) : (
                       <>
                         <BookOpen className="w-3 h-3 text-amber-600" />
-                        <span>{getLocalizedUserRole(currentUser.role, language)}</span>
+                        <span>{getLocalizedUserRole('reader', language)}</span>
                       </>
                     )}
                   </div>
@@ -680,17 +661,6 @@ export default function Header() {
                   <UserIcon className="w-4 h-4 text-slate-500 shrink-0" />
                   <span>मेरी प्रोफ़ाइल (Profile)</span>
                 </Link>
-
-                {currentUser.role === 'admin' && (
-                  <Link
-                    href="/raviadminmishra"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="w-full text-left px-3 py-2 rounded-xl flex items-center gap-2 bg-red-700 text-white font-bold text-xs shadow-xs"
-                  >
-                    <ShieldCheck className="w-4 h-4" />
-                    <span>{language === 'en' ? 'Open CMS Admin' : language === 'ur' ? 'ایڈمن ڈیش بورڈ کھولیں' : 'CMS एडमिन डैशबोर्ड खोलें'}</span>
-                  </Link>
-                )}
 
                 <button
                   onClick={() => {

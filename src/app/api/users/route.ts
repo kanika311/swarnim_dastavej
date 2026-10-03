@@ -100,17 +100,14 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ success: false, message: 'User ID is required' }, { status: 400 });
     }
 
-    const exists = platformStore.getUsers().some((u) => u.id === userId);
     const deleted = platformStore.deleteUser(userId);
     if (!deleted) {
       return NextResponse.json(
         {
           success: false,
-          message: exists
-            ? 'The last administrator account cannot be removed'
-            : 'User not found'
+          message: 'User not found or could not be removed'
         },
-        { status: exists ? 400 : 404 }
+        { status: 404 }
       );
     }
 

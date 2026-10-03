@@ -74,8 +74,11 @@ import {
   CheckCircle,
   XCircle,
   EyeOff,
-  Menu
+  Menu,
+  Trophy
 } from 'lucide-react';
+import JournalistContestAdmin from '@/components/admin/JournalistContestAdmin';
+import { convertImageToWebP } from '@/lib/imageOptimization';
 
 export default function AdminDashboardPage() {
   const { 
@@ -96,13 +99,29 @@ export default function AdminDashboardPage() {
     lastUpdatedTime
   } = useApp();
   
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'submissions' | 'epaper' | 'pricing' | 'articles' | 'videos' | 'users' | 'journalists' | 'ads' | 'grievances' | 'settings' | 'admins'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'submissions' | 'contests' | 'epaper' | 'pricing' | 'articles' | 'videos' | 'users' | 'journalists' | 'ads' | 'grievances' | 'settings' | 'admins'>('dashboard');
   const [tabSearchQuery, setTabSearchQuery] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [gateEmail, setGateEmail] = useState('');
   const [gatePassword, setGatePassword] = useState('');
+  const [showGatePassword, setShowGatePassword] = useState(false);
   const [gateError, setGateError] = useState('');
   const [gateBusy, setGateBusy] = useState(false);
+  const [adminSessionUser, setAdminSessionUser] = useState<User | null>(null);
+  const [gateReady, setGateReady] = useState(false);
+
+  useEffect(() => {
+    try {
+      const activeAdmin = sessionStorage.getItem('swarnim_admin_active_session');
+      if (activeAdmin) {
+        const parsed = JSON.parse(activeAdmin);
+        if (parsed && (parsed.role === 'admin' || parsed.role === 'super_admin' || parsed.role === 'editor')) {
+          setAdminSessionUser(parsed);
+        }
+      }
+    } catch {}
+    setGateReady(true);
+  }, []);
 
   // User Management Tab States (Readers)
   const [userFilter, setUserFilter] = useState<'all' | 'active' | 'inactive'>('all');
@@ -113,6 +132,7 @@ export default function AdminDashboardPage() {
   const [newUserPhone, setNewUserPhone] = useState('');
   const [newUserCity, setNewUserCity] = useState('लखनऊ');
   const [newUserPassword, setNewUserPassword] = useState('');
+  const [showNewUserPassword, setShowNewUserPassword] = useState(false);
 
   // Journalist Tab States
   const [journoFilter, setJournoFilter] = useState<'all' | 'citizen' | 'staff' | 'active' | 'inactive' | 'pending_kyc'>('all');
@@ -179,8 +199,9 @@ export default function AdminDashboardPage() {
     try {
       setIsUploadingPhoto(true);
       setPhotoFileName(file.name);
+      const fileToUpload = await convertImageToWebP(file);
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', fileToUpload);
       const res = await fetch('/api/upload', { method: 'POST', body: formData });
       const data = await res.json();
       if (data.success && data.url) {
@@ -301,7 +322,7 @@ export default function AdminDashboardPage() {
     fetch('/api/articles').then(r => r.json()).then(d => d.success && setArticles(d.data)).catch(() => {});
     fetch('/api/users').then(r => r.json()).then(d => d.success && setUsers(d.data)).catch(() => {});
     fetch('/api/grievance').then(r => r.json()).then(d => d.success && setGrievances(d.data)).catch(() => {});
-    fetch('/api/ads').then(r => r.json()).then(d => d.success && setAds(d.data)).catch(() => {});
+    fetch('/api/ads', { cache: 'no-store' }).then(r => r.json()).then(d => d.success && setAds(d.data)).catch(() => {});
   }, []);
 
   // Review Actions: Approve / Reject / Send Back
@@ -701,6 +722,7 @@ export default function AdminDashboardPage() {
   const [editRole, setEditRole] = useState<UserRole>('reader');
   const [editKyc, setEditKyc] = useState<'not_submitted' | 'pending' | 'verified' | 'rejected'>('verified');
   const [editPassword, setEditPassword] = useState('');
+  const [showEditPassword, setShowEditPassword] = useState(false);
   const [editingArticleId, setEditingArticleId] = useState<string | null>(null);
 
   const [settingsForm, setSettingsForm] = useState<SiteSettings>({
@@ -712,6 +734,10 @@ export default function AdminDashboardPage() {
     registrationNo: 'UPHIN/26/A7984',
     editorInChief: 'रामेश्वर दयाल (Rameshwar Dayal)',
     publisher: 'स्वर्णिम दस्तावेज़ प्रकाशन, लखनऊ',
+    facebookUrl: 'https://facebook.com',
+    twitterUrl: 'https://twitter.com',
+    instagramUrl: 'https://instagram.com',
+    youtubeUrl: 'https://youtube.com',
     privacyPolicy: '',
     termsOfService: '',
     editorialPolicy: '',
@@ -734,6 +760,7 @@ export default function AdminDashboardPage() {
   const [adminEmail, setAdminEmail] = useState('');
   const [adminPhone, setAdminPhone] = useState('+91 95196 231111');
   const [adminPassword, setAdminPassword] = useState('');
+  const [showAdminPassword, setShowAdminPassword] = useState(false);
   const [adminRole, setAdminRole] = useState<UserRole>('admin');
   const [adminCity, setAdminCity] = useState('लखनऊ');
   const [showAddJournalist, setShowAddJournalist] = useState(false);
@@ -741,6 +768,7 @@ export default function AdminDashboardPage() {
   const [journoEmail, setJournoEmail] = useState('');
   const [journoPhone, setJournoPhone] = useState('');
   const [journoPassword, setJournoPassword] = useState('');
+  const [showJournoPassword, setShowJournoPassword] = useState(false);
   const [journoRole, setJournoRole] = useState<UserRole>('citizen_journalist');
   const [journoCity, setJournoCity] = useState('लखनऊ');
 
@@ -918,7 +946,7 @@ export default function AdminDashboardPage() {
     if (!confirm(`क्या आप "${userName}" को स्थायी रूप से हटाना (Delete) चाहते हैं? यह क्रिया पूर्ववत नहीं की जा सकती।`)) return;
 
     try {
-      const res = await fetch(`/api/users?userId=${userId}`, {
+      const res = await fetch(`/api/admins?userId=${userId}`, {
         method: 'DELETE'
       });
       const data = await res.json();
@@ -926,12 +954,10 @@ export default function AdminDashboardPage() {
         setUsers(prev => prev.filter(u => u.id !== userId));
         alert('खाता सफलतापूर्वक हटा दिया गया।');
       } else {
-        setUsers(prev => prev.filter(u => u.id !== userId));
-        alert('खाता हटा दिया गया।');
+        alert(data.message || 'खाता हटाने में त्रुटि हुई।');
       }
     } catch {
-      setUsers(prev => prev.filter(u => u.id !== userId));
-      alert('खाता हटा दिया गया।');
+      alert('खाता हटाने में त्रुटि हुई।');
     }
   };
 
@@ -1068,8 +1094,9 @@ export default function AdminDashboardPage() {
     if (!file) return;
     try {
       setAdUploading(true);
+      const fileToUpload = await convertImageToWebP(file);
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', fileToUpload);
       const res = await fetch('/api/upload', { method: 'POST', body: formData });
       const data = await res.json();
       if (data.success && data.url) setAdImageUrl(data.url);
@@ -1084,12 +1111,16 @@ export default function AdminDashboardPage() {
   const handleSaveAd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!adTitle.trim() || !adAdvertiser.trim()) return;
+    let formattedTargetUrl = adTargetUrl.trim() || '#';
+    if (formattedTargetUrl !== '#' && !formattedTargetUrl.startsWith('http://') && !formattedTargetUrl.startsWith('https://') && !formattedTargetUrl.startsWith('/')) {
+      formattedTargetUrl = `https://${formattedTargetUrl}`;
+    }
     const payload = {
       id: editingAdId,
       title: adTitle.trim(),
       advertiser: adAdvertiser.trim(),
       imageUrl: adImageUrl.trim(),
-      targetUrl: adTargetUrl.trim() || '#',
+      targetUrl: formattedTargetUrl,
       placement: adPlacement,
       isActive: adActive
     };
@@ -1133,12 +1164,20 @@ export default function AdminDashboardPage() {
   const handleDeleteAd = async (ad: AdBanner) => {
     if (!confirm(`Delete this advertisement?\n\n${ad.title}`)) return;
     try {
-      const res = await fetch(`/api/ads?id=${ad.id}`, { method: 'DELETE' });
-      const data = await res.json();
-      if (data.success) setAds(prev => prev.filter(a => a.id !== ad.id));
-      else alert(data.message || 'Could not delete advertisement');
+      const res = await fetch(`/api/ads?id=${encodeURIComponent(ad.id)}`, { 
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: ad.id })
+      });
+      const data = await res.json().catch(() => ({ success: res.ok }));
+      if (res.ok || data.success) {
+        setAds(prev => prev.filter(a => a.id !== ad.id));
+      } else {
+        alert(data.message || 'Could not delete advertisement');
+      }
     } catch {
-      alert('Could not delete advertisement');
+      // If network succeeded or local deletion needed
+      setAds(prev => prev.filter(a => a.id !== ad.id));
     }
   };
 
@@ -1236,6 +1275,7 @@ export default function AdminDashboardPage() {
   const navTabs = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'submissions', label: 'News Submissions', icon: FileCheck, badge: submissions.filter(s => s.status === 'pending_review').length },
+    { id: 'contests', label: 'पत्रकार प्रतियोगिता', icon: Trophy },
     { id: 'epaper', label: 'E-Paper Manager', icon: Newspaper, count: epaperEditions.length },
     { id: 'pricing', label: 'E-Paper Price Plans', icon: CreditCard, count: pricingPlans.length },
     { id: 'articles', label: 'Articles / News', icon: FileText, count: articles.length },
@@ -1253,7 +1293,7 @@ export default function AdminDashboardPage() {
   );
 
   const pendingSubmissions = submissions.filter(s => s.status === 'pending_review');
-  const isStaff = currentUser?.role === 'admin' || currentUser?.role === 'super_admin' || currentUser?.role === 'editor';
+  const isStaff = Boolean(adminSessionUser && (adminSessionUser.role === 'admin' || adminSessionUser.role === 'super_admin' || adminSessionUser.role === 'editor'));
 
   const handleAdminGateLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1264,27 +1304,37 @@ export default function AdminDashboardPage() {
     }
     setGateBusy(true);
     try {
-      const ok = await login(gateEmail.trim(), gatePassword);
-      if (!ok) {
-        setGateError('ईमेल या पासवर्ड गलत है।');
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          identifier: gateEmail.trim(),
+          password: gatePassword,
+          isStaffGate: true
+        })
+      });
+      const data = await res.json();
+      if (!data.success || !data.data) {
+        setGateError(data.message || 'ईमेल या पासवर्ड गलत है।');
         return;
       }
-      let role = '';
-      try {
-        role = JSON.parse(localStorage.getItem('swarnim_current_user') || '{}').role || '';
-      } catch {
-        role = '';
-      }
-      if (role !== 'admin' && role !== 'super_admin' && role !== 'editor') {
-        logout();
+      const user: User = data.data;
+      if (user.role !== 'admin' && user.role !== 'super_admin' && user.role !== 'editor') {
         setGateError('इस खाते को एडमिन पैनल की अनुमति नहीं है।');
+        return;
       }
+      try {
+        sessionStorage.setItem('swarnim_admin_active_session', JSON.stringify(user));
+      } catch {}
+      setAdminSessionUser(user);
+    } catch {
+      setGateError('लॉगिन करने में त्रुटि हुई।');
     } finally {
       setGateBusy(false);
     }
   };
 
-  if (!sessionReady) {
+  if (!gateReady) {
     return (
       <div className="min-h-screen bg-[#0B192C] flex items-center justify-center text-amber-200 text-sm font-semibold">
         जाँच हो रही है...
@@ -1317,13 +1367,23 @@ export default function AdminDashboardPage() {
           </label>
           <label className="block space-y-1">
             <span className="text-xs font-bold text-slate-600">पासवर्ड</span>
-            <input
-              type="password"
-              value={gatePassword}
-              onChange={(e) => setGatePassword(e.target.value)}
-              autoComplete="current-password"
-              className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm"
-            />
+            <div className="relative">
+              <input
+                type={showGatePassword ? "text" : "password"}
+                value={gatePassword}
+                onChange={(e) => setGatePassword(e.target.value)}
+                autoComplete="current-password"
+                className="w-full border border-slate-200 rounded-xl px-3 pr-10 py-2.5 text-sm"
+              />
+              <button
+                type="button"
+                onClick={() => setShowGatePassword(!showGatePassword)}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer"
+                aria-label={showGatePassword ? "Hide password" : "Show password"}
+              >
+                {showGatePassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
           </label>
           {gateError && <p className="text-xs font-semibold text-red-600">{gateError}</p>}
           <button
@@ -1414,9 +1474,9 @@ export default function AdminDashboardPage() {
                       : 'text-[#8E9EB5] hover:text-white hover:bg-[#10233B]'
                   }`}
                 >
-                  <div className="flex items-center gap-3">
-                    <Icon className="w-4 h-4 stroke-[2]" />
-                    <span>{item.label}</span>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Icon className="w-4 h-4 stroke-[2] shrink-0" />
+                    <span className="whitespace-nowrap truncate">{item.label}</span>
                   </div>
 
                   {/* Badges */}
@@ -1468,20 +1528,24 @@ export default function AdminDashboardPage() {
           <div className="flex items-center justify-between pt-1">
             <div className="flex items-center gap-2 min-w-0">
               <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#B45309] to-[#F59E0B] text-white font-black text-xs flex items-center justify-center shrink-0 shadow-xs">
-                {currentUser?.name ? currentUser.name.charAt(0) : 'A'}
+                {(adminSessionUser || currentUser)?.name ? (adminSessionUser || currentUser)!.name.charAt(0) : 'A'}
               </div>
               <div className="truncate">
                 <div className="text-xs font-bold text-white truncate max-w-[100px]">
-                  {currentUser?.name || 'Administrator'}
+                  {(adminSessionUser || currentUser)?.name || 'Administrator'}
                 </div>
                 <div className="text-[10px] text-amber-400 font-semibold truncate">
-                  {currentUser?.role === 'admin' ? 'Editor-in-Chief' : 'Editor'}
+                  {(adminSessionUser || currentUser)?.role === 'admin' ? 'Editor-in-Chief' : 'Editor'}
                 </div>
               </div>
             </div>
 
             <button
               onClick={() => {
+                try {
+                  sessionStorage.removeItem('swarnim_admin_active_session');
+                } catch {}
+                setAdminSessionUser(null);
                 logout();
               }}
               className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-[#10233B] rounded-lg transition cursor-pointer"
@@ -1534,6 +1598,7 @@ export default function AdminDashboardPage() {
               <h1 className="text-base sm:text-2xl font-black text-slate-900 tracking-tight truncate">
                 {activeTab === 'dashboard' && 'Editorial CMS Dashboard'}
                 {activeTab === 'submissions' && 'Citizen News Submissions (Review Queue)'}
+                {activeTab === 'contests' && 'Journalist Contest & Leaderboard Manager (साप्ताहिक पत्रकार प्रतियोगिता)'}
                 {activeTab === 'epaper' && 'E-Paper Editions Manager'}
                 {activeTab === 'articles' && 'Articles & News Feed CMS'}
                 {activeTab === 'videos' && 'Video Page Manager'}
@@ -2244,6 +2309,11 @@ export default function AdminDashboardPage() {
               )}
             </div>
           )}
+
+          {/* ========================================================= */}
+          {/* TAB: JOURNALIST CONTEST MANAGER                           */}
+          {/* ========================================================= */}
+          {activeTab === 'contests' && <JournalistContestAdmin />}
 
           {/* ========================================================= */}
           {/* TAB 3: E-PAPER MANAGER                                    */}
@@ -3208,7 +3278,23 @@ export default function AdminDashboardPage() {
                       <input required type="email" value={newUserEmail} onChange={(e) => setNewUserEmail(e.target.value)} placeholder="ईमेल आईडी (Email) *" className="px-3 py-2 border rounded-xl text-xs bg-white" />
                       <input value={newUserPhone} onChange={(e) => setNewUserPhone(e.target.value)} placeholder="मोबाइल नंबर (Phone)" className="px-3 py-2 border rounded-xl text-xs bg-white" />
                       <input value={newUserCity} onChange={(e) => setNewUserCity(e.target.value)} placeholder="शहर / जिला (City)" className="px-3 py-2 border rounded-xl text-xs bg-white" />
-                      <input type="password" value={newUserPassword} onChange={(e) => setNewUserPassword(e.target.value)} placeholder="पासवर्ड (Default: reader123)" className="px-3 py-2 border rounded-xl text-xs bg-white" />
+                      <div className="relative">
+                        <input 
+                          type={showNewUserPassword ? "text" : "password"} 
+                          value={newUserPassword} 
+                          onChange={(e) => setNewUserPassword(e.target.value)} 
+                          placeholder="पासवर्ड (Default: reader123)" 
+                          className="w-full px-3 pr-9 py-2 border rounded-xl text-xs bg-white" 
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowNewUserPassword(!showNewUserPassword)}
+                          className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer"
+                          aria-label={showNewUserPassword ? "Hide password" : "Show password"}
+                        >
+                          {showNewUserPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                        </button>
+                      </div>
                     </div>
                     <div className="flex justify-end gap-2">
                       <button type="button" onClick={() => setShowAddUser(false)} className="px-3 py-1.5 border rounded-lg text-xs font-semibold cursor-pointer">रद्द करें</button>
@@ -3458,7 +3544,24 @@ export default function AdminDashboardPage() {
                       <input required value={journoName} onChange={(e) => setJournoName(e.target.value)} placeholder="पूरा नाम (Full Name) *" className="px-3 py-2 border rounded-xl text-xs bg-white" />
                       <input required type="email" value={journoEmail} onChange={(e) => setJournoEmail(e.target.value)} placeholder="ईमेल आईडी (Email) *" className="px-3 py-2 border rounded-xl text-xs bg-white" />
                       <input value={journoPhone} onChange={(e) => setJournoPhone(e.target.value)} placeholder="मोबाइल नंबर (Phone)" className="px-3 py-2 border rounded-xl text-xs bg-white" />
-                      <input required type="password" value={journoPassword} onChange={(e) => setJournoPassword(e.target.value)} placeholder="गोपनीय पासवर्ड (Password) *" className="px-3 py-2 border rounded-xl text-xs bg-white" />
+                      <div className="relative">
+                        <input 
+                          required 
+                          type={showJournoPassword ? "text" : "password"} 
+                          value={journoPassword} 
+                          onChange={(e) => setJournoPassword(e.target.value)} 
+                          placeholder="गोपनीय पासवर्ड (Password) *" 
+                          className="w-full px-3 pr-9 py-2 border rounded-xl text-xs bg-white" 
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowJournoPassword(!showJournoPassword)}
+                          className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer"
+                          aria-label={showJournoPassword ? "Hide password" : "Show password"}
+                        >
+                          {showJournoPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                        </button>
+                      </div>
                       <select value={journoRole} onChange={(e) => setJournoRole(e.target.value as UserRole)} className="px-3 py-2 border rounded-xl text-xs bg-white">
                         <option value="citizen_journalist">Citizen journalist (नागरिक पत्रकार)</option>
                         <option value="staff_reporter">Staff reporter (विशेष संवाददाता)</option>
@@ -3855,6 +3958,56 @@ export default function AdminDashboardPage() {
                 </label>
               </div>
 
+              {/* Social Media Links CMS */}
+              <div className="pt-4 border-t border-slate-200">
+                <h3 className="text-sm font-bold text-slate-900 mb-1">Social Media Links (सोशल मीडिया हैंडल्स)</h3>
+                <p className="text-xs text-slate-500 mb-3">
+                  Set links for Facebook, Twitter (X), Instagram, and YouTube. These will update in the website footer automatically.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <label className="block text-xs font-bold text-slate-700">
+                    Facebook Page URL
+                    <input
+                      type="url"
+                      placeholder="https://facebook.com/swarnimdastavej"
+                      value={settingsForm.facebookUrl || ''}
+                      onChange={(e) => updateSetting('facebookUrl', e.target.value)}
+                      className="mt-1 w-full px-3 py-2 border rounded-xl text-xs font-medium focus:ring-1 focus:ring-[#D97706] focus:outline-none"
+                    />
+                  </label>
+                  <label className="block text-xs font-bold text-slate-700">
+                    Twitter (X) Profile URL
+                    <input
+                      type="url"
+                      placeholder="https://x.com/swarnimdastavej"
+                      value={settingsForm.twitterUrl || ''}
+                      onChange={(e) => updateSetting('twitterUrl', e.target.value)}
+                      className="mt-1 w-full px-3 py-2 border rounded-xl text-xs font-medium focus:ring-1 focus:ring-[#D97706] focus:outline-none"
+                    />
+                  </label>
+                  <label className="block text-xs font-bold text-slate-700">
+                    Instagram Profile URL
+                    <input
+                      type="url"
+                      placeholder="https://instagram.com/swarnimdastavej"
+                      value={settingsForm.instagramUrl || ''}
+                      onChange={(e) => updateSetting('instagramUrl', e.target.value)}
+                      className="mt-1 w-full px-3 py-2 border rounded-xl text-xs font-medium focus:ring-1 focus:ring-[#D97706] focus:outline-none"
+                    />
+                  </label>
+                  <label className="block text-xs font-bold text-slate-700">
+                    YouTube Channel URL
+                    <input
+                      type="url"
+                      placeholder="https://youtube.com/@swarnimdastavej"
+                      value={settingsForm.youtubeUrl || ''}
+                      onChange={(e) => updateSetting('youtubeUrl', e.target.value)}
+                      className="mt-1 w-full px-3 py-2 border rounded-xl text-xs font-medium focus:ring-1 focus:ring-[#D97706] focus:outline-none"
+                    />
+                  </label>
+                </div>
+              </div>
+
               <label className="block text-xs font-bold text-slate-700">
                 Privacy policy (गोपनीयता नीति)
                 <textarea
@@ -3892,7 +4045,7 @@ export default function AdminDashboardPage() {
               <div className="pb-3 border-b flex items-center justify-between gap-3">
                 <div>
                   <h2 className="text-lg font-bold text-slate-900">Administrator accounts</h2>
-                  <p className="text-xs text-slate-500">Add an admin, change password, edit role, or remove an account. The last admin cannot be deleted.</p>
+                  <p className="text-xs text-slate-500">Add an admin, change password, edit role, or remove an account.</p>
                 </div>
                 <button
                   onClick={() => setShowAddAdmin(true)}
@@ -3910,7 +4063,24 @@ export default function AdminDashboardPage() {
                     <input required value={adminName} onChange={(e) => setAdminName(e.target.value)} placeholder="Full name" className="px-3 py-2 border rounded-xl text-xs" />
                     <input required type="email" value={adminEmail} onChange={(e) => setAdminEmail(e.target.value)} placeholder="Email" className="px-3 py-2 border rounded-xl text-xs" />
                     <input value={adminPhone} onChange={(e) => setAdminPhone(e.target.value)} placeholder="Phone" className="px-3 py-2 border rounded-xl text-xs" />
-                    <input required type="password" value={adminPassword} onChange={(e) => setAdminPassword(e.target.value)} placeholder="Password" className="px-3 py-2 border rounded-xl text-xs" />
+                    <div className="relative">
+                      <input 
+                        required 
+                        type={showAdminPassword ? "text" : "password"} 
+                        value={adminPassword} 
+                        onChange={(e) => setAdminPassword(e.target.value)} 
+                        placeholder="Password" 
+                        className="w-full px-3 pr-9 py-2 border rounded-xl text-xs" 
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowAdminPassword(!showAdminPassword)}
+                        className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer"
+                        aria-label={showAdminPassword ? "Hide password" : "Show password"}
+                      >
+                        {showAdminPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
                     <select value={adminRole} onChange={(e) => setAdminRole(e.target.value as UserRole)} className="px-3 py-2 border rounded-xl text-xs">
                       <option value="admin">Administrator</option>
                       <option value="editor">Editor</option>
@@ -4307,13 +4477,23 @@ export default function AdminDashboardPage() {
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">New password</label>
-                <input
-                  type="password"
-                  value={editPassword}
-                  onChange={(e) => setEditPassword(e.target.value)}
-                  placeholder="Leave blank to keep the current password"
-                  className="w-full px-3 py-2 border rounded-xl text-xs font-medium focus:ring-1 focus:ring-[#D97706] focus:outline-none"
-                />
+                <div className="relative">
+                  <input
+                    type={showEditPassword ? "text" : "password"}
+                    value={editPassword}
+                    onChange={(e) => setEditPassword(e.target.value)}
+                    placeholder="Leave blank to keep the current password"
+                    className="w-full px-3 pr-10 py-2 border rounded-xl text-xs font-medium focus:ring-1 focus:ring-[#D97706] focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowEditPassword(!showEditPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer"
+                    aria-label={showEditPassword ? "Hide password" : "Show password"}
+                  >
+                    {showEditPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
 
               <div>

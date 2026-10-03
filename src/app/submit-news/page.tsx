@@ -25,6 +25,7 @@ import {
   History,
   Send
 } from 'lucide-react';
+import { convertImageToWebP } from '@/lib/imageOptimization';
 
 export default function SubmitNewsPage() {
   const { currentUser, openAuthModal, switchRole } = useApp();
@@ -135,8 +136,12 @@ export default function SubmitNewsPage() {
     try {
       setUploadingKind(kind);
       setUploadError('');
+
+      // Automatically convert image to WebP with compression (handles big files smoothly)
+      const fileToUpload = kind === 'image' ? await convertImageToWebP(file) : file;
+
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', fileToUpload);
       const res = await fetch('/api/upload', { method: 'POST', body: formData });
       const data = await res.json();
       if (!data.success || !data.url) {
@@ -286,7 +291,7 @@ export default function SubmitNewsPage() {
               <div className="font-bold text-amber-300">वर्तमान प्रयोक्ता:</div>
               <div className="font-semibold text-white">{currentUser ? currentUser.name : 'अतिथि (लॉगिन नहीं)'}</div>
               <div className="text-[11px] text-amber-200">
-                भूमिका: {currentUser ? (currentUser.role === 'citizen_journalist' ? 'नागरिक पत्रकार' : currentUser.role === 'admin' ? 'एडमिन' : 'पाठक') : 'अतिथि'}
+                भूमिका: {currentUser ? (currentUser.role === 'citizen_journalist' ? 'नागरिक पत्रकार' : 'पाठक') : 'अतिथि'}
               </div>
             </div>
           </div>

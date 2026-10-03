@@ -19,7 +19,9 @@ import {
   CheckCircle, 
   LogIn, 
   UserPlus, 
-  AlertCircle
+  AlertCircle,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 
 export default function AuthModal() {
@@ -47,6 +49,7 @@ export default function AuthModal() {
   const [loginIdentifier, setLoginIdentifier] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState('');
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
 
   // Register form state
   const [regName, setRegName] = useState('');
@@ -57,6 +60,7 @@ export default function AuthModal() {
   const [regIdType, setRegIdType] = useState('Aadhaar Card');
   const [regIdNumber, setRegIdNumber] = useState('');
   const [regError, setRegError] = useState('');
+  const [showRegPassword, setShowRegPassword] = useState(false);
 
   // Sync modal props when opened
   React.useEffect(() => {
@@ -82,13 +86,13 @@ export default function AuthModal() {
       return;
     }
 
-    const success = await login(loginIdentifier.trim(), loginPassword.trim());
+    const success = await login(loginIdentifier.trim(), loginPassword.trim(), false);
     if (success) {
       addNotification('सफलतापूर्वक लॉगिन हो गए!');
       closeAuthModal();
       router.push('/dashboard');
     } else {
-      setLoginError('अमान्य विवरण। कृपया सही मोबाइल नंबर/ईमेल व पासवर्ड दर्ज करें।');
+      setLoginError('अमान्य विवरण या यह खाता मुख्य वेबसाइट पर मान्य नहीं है। कृपया सही मोबाइल/ईमेल दर्ज करें।');
     }
   };
 
@@ -205,7 +209,7 @@ export default function AuthModal() {
                 <span className="text-slate-500 block text-[10px]">वर्तमान में सक्रिय आईडी (Already Logged In):</span>
                 <span className="font-bold text-slate-900 dark:text-white text-sm">{currentUser.name}</span>
                 <span className="text-[11px] text-amber-700 dark:text-amber-300 font-semibold block">
-                  भूमिका: {currentUser.role === 'citizen_journalist' ? '✍️ नागरिक पत्रकार' : currentUser.role === 'admin' ? '🛡️ प्रधान संपादक / एडमिन' : '📖 सामान्य पाठक'}
+                  भूमिका: {currentUser.role === 'citizen_journalist' ? '✍️ नागरिक पत्रकार' : '📖 सामान्य पाठक'}
                 </span>
               </div>
               <div className="flex items-center gap-1.5 shrink-0">
@@ -271,13 +275,21 @@ export default function AuthModal() {
                     <Lock className="w-4 h-4" />
                   </div>
                   <input
-                    type="password"
+                    type={showLoginPassword ? "text" : "password"}
                     required
                     value={loginPassword}
                     onChange={(e) => setLoginPassword(e.target.value)}
                     placeholder="अपना पासवर्ड डालें"
-                    className="w-full pl-9 pr-3 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent"
+                    className="w-full pl-9 pr-10 py-2.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-red-600 focus:border-transparent"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowLoginPassword(!showLoginPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                    aria-label={showLoginPassword ? "Hide password" : "Show password"}
+                  >
+                    {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
                 </div>
               </div>
 
@@ -417,14 +429,24 @@ export default function AuthModal() {
                   <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
                     पासवर्ड (Password) *
                   </label>
-                  <input
-                    type="password"
-                    required
-                    value={regPassword}
-                    onChange={(e) => setRegPassword(e.target.value)}
-                    placeholder="गोपनीय पासवर्ड"
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-600"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showRegPassword ? "text" : "password"}
+                      required
+                      value={regPassword}
+                      onChange={(e) => setRegPassword(e.target.value)}
+                      placeholder="गोपनीय पासवर्ड"
+                      className="w-full px-3 pr-10 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-600"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowRegPassword(!showRegPassword)}
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                      aria-label={showRegPassword ? "Hide password" : "Show password"}
+                    >
+                      {showRegPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
                 </div>
               </div>
 

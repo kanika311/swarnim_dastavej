@@ -14,8 +14,17 @@ export async function POST(request: Request) {
       );
     }
 
+    const isStaffGate = Boolean(body.isStaffGate);
+
     const result = platformStore.authenticate(identifier, password);
     if (result.status === 'ok' && result.user) {
+      const isStaffUser = result.user.role === 'admin' || result.user.role === 'super_admin' || result.user.role === 'editor';
+      if (isStaffUser && !isStaffGate) {
+        return NextResponse.json(
+          { success: false, message: 'एडमिन लॉगिन मुख्य वेबसाइट पर उपलब्ध नहीं है।' },
+          { status: 403 }
+        );
+      }
       return NextResponse.json({ success: true, data: result.user });
     }
     if (result.status === 'not_found') {

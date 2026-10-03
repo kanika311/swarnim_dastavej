@@ -16,6 +16,12 @@ import {
   BookOpen, 
   ShieldAlert 
 } from 'lucide-react';
+import { 
+  RiFacebookFill, 
+  RiTwitterXFill, 
+  RiInstagramFill, 
+  RiYoutubeFill 
+} from 'react-icons/ri';
 import { SiteSettings } from '@/types';
 import { useApp } from '@/context/AppContext';
 import { getTranslation } from '@/lib/translations';
@@ -34,11 +40,15 @@ export default function Footer() {
     privacyPolicy: '',
     termsOfService: '',
     editorialPolicy: '',
-    updatedAt: ''
+    updatedAt: '',
+    facebookUrl: 'https://facebook.com',
+    twitterUrl: 'https://twitter.com',
+    instagramUrl: 'https://instagram.com',
+    youtubeUrl: 'https://youtube.com'
   });
 
   useEffect(() => {
-    fetch('/api/settings')
+    fetch('/api/settings', { cache: 'no-store' })
       .then(res => res.json())
       .then(data => {
         if (data.success && data.data) {
@@ -76,6 +86,54 @@ export default function Footer() {
             </p>
             <div className="inline-block bg-white dark:bg-[#12356B] border border-[#C9962A] rounded px-2.5 py-1 text-xs text-[#8A6410] dark:text-[#F0C14A] font-mono shadow-sm">
               {getTranslation(language, 'footer_registration')}: RNI No. {settings.registrationNo || 'UPHIN/26/A7984'}
+            </div>
+
+            {/* Social Media Links (Editable via Admin Panel) */}
+            <div className="pt-2">
+              <span className="block text-[11px] font-bold text-[#8A6410] dark:text-[#F0C14A] uppercase tracking-wider mb-2">
+                {language === 'en' ? 'Follow Us' : language === 'ur' ? 'ہمیں فالو کریں' : 'सोशल मीडिया पर जुड़ें'}
+              </span>
+              <div className="flex items-center gap-2">
+                <a
+                  href={settings.facebookUrl || 'https://facebook.com'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Facebook"
+                  className="w-8 h-8 rounded-lg bg-white dark:bg-[#12356B] border border-[#C9962A]/60 hover:border-[#1877F2] text-[#1877F2] hover:bg-[#1877F2] hover:text-white flex items-center justify-center transition-all shadow-xs group"
+                >
+                  <RiFacebookFill className="w-4 h-4 transition-transform group-hover:scale-110" />
+                </a>
+
+                <a
+                  href={settings.twitterUrl || 'https://twitter.com'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Twitter / X"
+                  className="w-8 h-8 rounded-lg bg-white dark:bg-[#12356B] border border-[#C9962A]/60 hover:border-slate-900 text-slate-800 dark:text-slate-200 hover:bg-black hover:text-white flex items-center justify-center transition-all shadow-xs group"
+                >
+                  <RiTwitterXFill className="w-3.5 h-3.5 transition-transform group-hover:scale-110" />
+                </a>
+
+                <a
+                  href={settings.instagramUrl || 'https://instagram.com'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Instagram"
+                  className="w-8 h-8 rounded-lg bg-white dark:bg-[#12356B] border border-[#C9962A]/60 hover:border-[#E4405F] text-[#E4405F] hover:bg-gradient-to-tr hover:from-amber-500 hover:via-[#E4405F] hover:to-purple-600 hover:text-white flex items-center justify-center transition-all shadow-xs group"
+                >
+                  <RiInstagramFill className="w-4 h-4 transition-transform group-hover:scale-110" />
+                </a>
+
+                <a
+                  href={settings.youtubeUrl || 'https://youtube.com'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="YouTube"
+                  className="w-8 h-8 rounded-lg bg-white dark:bg-[#12356B] border border-[#C9962A]/60 hover:border-[#FF0000] text-[#FF0000] hover:bg-[#FF0000] hover:text-white flex items-center justify-center transition-all shadow-xs group"
+                >
+                  <RiYoutubeFill className="w-4 h-4 transition-transform group-hover:scale-110" />
+                </a>
+              </div>
             </div>
           </div>
 

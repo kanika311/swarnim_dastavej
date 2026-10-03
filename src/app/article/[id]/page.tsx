@@ -23,114 +23,188 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
+import ShareModal from '@/components/ShareModal';
 
 export default function ArticleDetailPage() {
   const params = useParams();
   const articleId = params?.id as string;
-  const { fontSize, savedArticleIds, toggleSaveArticle } = useApp();
+  const { fontSize, savedArticleIds, toggleSaveArticle, currentUser, openAuthModal } = useApp();
 
   const [article, setArticle] = useState<Article | null>(null);
   const [likes, setLikes] = useState(0);
   const [hasLiked, setHasLiked] = useState(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
-  const [comments, setComments] = useState<Array<{ id: string; name: string; text: string; time: string }>>([
-    {
-      id: 'c-1',
-      name: 'सतीश चंद्र बाजपेयी',
-      text: 'यह सीतापुर और लखीमपुर क्षेत्र के लिए ऐतिहासिक फैसला है। व्यापार को बहुत गति मिलेगी।',
-      time: '2 घंटे पहले'
-    },
-    {
-      id: 'c-2',
-      name: 'डॉ. मनीष शुक्ला',
-      text: 'सरायन नदी के संरक्षण के लिए युवाओं की यह पहल प्रेरणादायक है। प्रशासन को बजट भी स्वीकृत करना चाहिए।',
-      time: '3 घंटे पहले'
-    }
-  ]);
+  const [comments, setComments] = useState<Array<{ id: string; name: string; text: string; time: string }>>([]);
   const [newComment, setNewComment] = useState('');
   const [commenterName, setCommenterName] = useState('');
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
+  // Load article & log view with deduplication
   useEffect(() => {
-    // Find from initial articles or fetch
-    const found = INITIAL_ARTICLES.find(a => a.id === articleId || a.slug === articleId);
-    if (found) {
-      setArticle(found);
-      setLikes(found.likesCount);
-    } else {
-      fetch(`/api/articles/${articleId}`)
-        .then(res => res.json())
-        .then(data => {
+    const fetchArticleData = async () => {
+      let currentArt: Article | null = null;
+      const found = INITIAL_ARTICLES.find(a => a.id === articleId || a.slug === articleId);
+      if (found) {
+        currentArt = found;
+        setArticle(found);
+        setLikes(found.likesCount);
+      } else {
+        try {
+          const res = await fetch(`/api/articles/${articleId}`);
+          const data = await res.json();
           if (data.success && data.data) {
+            currentArt = data.data;
             setArticle(data.data);
             setLikes(data.data.likesCount);
           }
-        })
-        .catch(() => {});
-    }
-  }, [articleId]);
+        } catch {}
+      }
 
-  const handleLike = async () => {
-    if (hasLiked || !article) return;
-    setLikes(prev => prev + 1);
-    setHasLiked(true);
-    try {
-      await fetch(`/api/articles/${article.id}`, {
+      const targetId = currentArt?.id || articleId;
+
+      // 1. Register View with server-side deduplication
+      fetch(`/api/articles/${targetId}/engagement`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'like' })
+        body: JSON.stringify({ action: 'view', userId: currentUser?.id }),
+      }).catch(() => {});
+
+      // 2. Fetch live engagement & user like status
+      fetch(`/api/articles/${targetId}/engagement?userId=${currentUser?.id || ''}`)
+        .then(r => r.json())
+        .then(d => {
+          if (d.success && d.data) {
+            setLikes(d.data.likesCount);
+            setHasLiked(d.data.userHasLiked);
+          }
+        })
+        .catch(() => {});
+
+      // 3. Fetch real comments
+      fetch(`/api/articles/${targetId}/comments`)
+        .then(r => r.json())
+        .then(d => {
+          if (d.success && Array.isArray(d.data)) {
+            setComments(d.data.map((c: any) => ({
+              id: c.id,
+              name: c.user?.name || 'पाठक',
+              text: c.text,
+              time: new Date(c.createdAt).toLocaleDateString('hi-IN', {
+                month: 'short',
+                day: 'numeric'
+              })
+            })));
+          }
+        })
+        .catch(() => {});
+    };
+
+    fetchArticleData();
+  }, [articleId, currentUser?.id]);
+
+  const handleLike = async () => {
+    if (!currentUser) {
+      openAuthModal('login');
+      return;
+    }
+    const targetId = article?.id || articleId;
+    const prevLiked = hasLiked;
+    const prevLikes = likes;
+
+    setHasLiked(!prevLiked);
+    setLikes(prevLiked ? Math.max(0, prevLikes - 1) : prevLikes + 1);
+
+    try {
+      const res = await fetch(`/api/articles/${targetId}/engagement`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'like', userId: currentUser.id }),
       });
-    } catch (e) {}
+      const data = await res.json();
+      if (data.success) {
+        setHasLiked(data.liked);
+        setLikes(data.likesCount);
+      }
+    } catch {
+      setHasLiked(prevLiked);
+      setLikes(prevLikes);
+    }
   };
 
   const handleShare = (platform?: string) => {
-    if (!article) return;
-    const url = window.location.href;
-    const text = `${article.headline} - स्वर्णिम दस्तावेज़`;
+    if (!platform) {
+      setIsShareModalOpen(true);
+      return;
+    }
+    const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
+    const shareText = encodeURIComponent(`${article?.headline || ''} - स्वर्णिम दस्तावेज़`);
+    const encUrl = encodeURIComponent(currentUrl);
 
     if (platform === 'whatsapp') {
-      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text + ' ' + url)}`, '_blank');
+      window.open(`https://api.whatsapp.com/send?text=${shareText}%20${encUrl}`, '_blank');
     } else if (platform === 'twitter') {
-      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank');
-    } else if (platform === 'facebook') {
-      window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+      window.open(`https://twitter.com/intent/tweet?text=${shareText}&url=${encUrl}`, '_blank');
     } else {
-      if (navigator.share) {
-        navigator.share({ title: article.headline, text: article.excerpt, url }).catch(() => {});
-      } else {
-        navigator.clipboard.writeText(url);
-        alert('खबर का लिंक कॉपी कर लिया गया है!');
-      }
+      setIsShareModalOpen(true);
     }
+  };
+
+  const handleAddComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newComment.trim()) return;
+
+    if (!currentUser) {
+      openAuthModal('login');
+      return;
+    }
+
+    const targetId = article?.id || articleId;
+    try {
+      const res = await fetch(`/api/articles/${targetId}/comments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: newComment.trim(),
+          user: {
+            id: currentUser.id,
+            name: currentUser.name || commenterName || 'पाठक',
+            email: currentUser.email,
+            avatarUrl: currentUser.avatarUrl,
+            role: currentUser.role,
+          },
+        }),
+      });
+      const data = await res.json();
+      if (data.success && data.data) {
+        setComments(prev => [
+          {
+            id: data.data.id,
+            name: data.data.user.name,
+            text: data.data.text,
+            time: 'अभी-अभी'
+          },
+          ...prev
+        ]);
+        setNewComment('');
+      }
+    } catch {}
   };
 
   const handleAudioListen = () => {
-    if (!article) return;
-    setIsPlayingAudio(!isPlayingAudio);
-    if ('speechSynthesis' in window) {
-      if (!isPlayingAudio) {
-        const textToRead = `${article.headline}. ${article.subHeadline || ''}. ${article.body}`;
-        const utterance = new SpeechSynthesisUtterance(textToRead);
-        utterance.lang = 'hi-IN';
-        window.speechSynthesis.speak(utterance);
-      } else {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window && article) {
+      if (isPlayingAudio) {
         window.speechSynthesis.cancel();
+        setIsPlayingAudio(false);
+      } else {
+        const textToSpeak = `${article.headline}. ${article.subHeadline || ''}. ${article.body}`;
+        const utterance = new SpeechSynthesisUtterance(textToSpeak);
+        utterance.lang = 'hi-IN';
+        utterance.onend = () => setIsPlayingAudio(false);
+        utterance.onerror = () => setIsPlayingAudio(false);
+        window.speechSynthesis.speak(utterance);
+        setIsPlayingAudio(true);
       }
     }
-  };
-
-  const handleAddComment = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newComment.trim() || !commenterName.trim()) return;
-    setComments(prev => [
-      {
-        id: `c-${Date.now()}`,
-        name: commenterName.trim(),
-        text: newComment.trim(),
-        time: 'अभी-अभी'
-      },
-      ...prev
-    ]);
-    setNewComment('');
   };
 
   if (!article) {
@@ -434,6 +508,22 @@ export default function ArticleDetailPage() {
         </section>
 
       </main>
+
+      {isShareModalOpen && article && (
+        <ShareModal
+          isOpen={isShareModalOpen}
+          onClose={() => setIsShareModalOpen(false)}
+          title={article.headline}
+          url={typeof window !== 'undefined' ? window.location.href : ''}
+          articleId={article.id}
+          userId={currentUser?.id}
+          onShareLogged={(newShares) => {
+            if (typeof newShares === 'number') {
+              setArticle(prev => prev ? { ...prev, sharesCount: newShares } : null);
+            }
+          }}
+        />
+      )}
 
       <Footer />
     </div>

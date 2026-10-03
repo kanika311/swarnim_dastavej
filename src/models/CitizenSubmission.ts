@@ -32,6 +32,12 @@ export interface ICitizenSubmission extends Document {
   reviewedAt?: string;
   submittedAt: string;
   updatedAt: string;
+  publishedArticleId?: string;
+  viewsCount?: number;
+  uniqueViews?: number;
+  likesCount?: number;
+  commentsCount?: number;
+  sharesCount?: number;
   createdAt: Date;
 }
 
@@ -45,7 +51,7 @@ const CitizenSubmissionSchema = new Schema<ICitizenSubmission>(
     city: { type: String, default: 'सीतापुर', index: true },
     language: { type: String, default: 'hi' },
     submittedBy: {
-      id: { type: String, required: true },
+      id: { type: String, required: true, index: true },
       name: { type: String, required: true },
       role: { type: String, default: 'citizen_journalist' },
       district: { type: String, default: 'सीतापुर' },
@@ -73,6 +79,12 @@ const CitizenSubmissionSchema = new Schema<ICitizenSubmission>(
     editorComments: { type: String },
     reviewedBy: { type: String },
     reviewedAt: { type: String },
+    publishedArticleId: { type: String, index: true },
+    viewsCount: { type: Number, default: 0 },
+    uniqueViews: { type: Number, default: 0 },
+    likesCount: { type: Number, default: 0 },
+    commentsCount: { type: Number, default: 0 },
+    sharesCount: { type: Number, default: 0 },
     submittedAt: { type: String, required: true },
     updatedAt: { type: String }
   },

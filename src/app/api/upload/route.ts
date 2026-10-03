@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server';
 import { spawn } from 'node:child_process';
-import { mkdir, unlink, writeFile } from 'node:fs/promises';
+import { mkdir, unlink, writeFile, readFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import os from 'node:os';
 import path from 'node:path';
 import sharp from 'sharp';
+import { connectToDatabase } from '@/lib/mongodb';
+import UploadedMediaModel from '@/models/UploadedMedia';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300;
@@ -37,7 +39,7 @@ async function toWebp(buffer: Buffer) {
   return sharp(buffer, { animated: true, failOn: 'none' })
     .rotate()
     .resize({ width: 1600, height: 1600, fit: 'inside', withoutEnlargement: true })
-    .webp({ quality: 78, effort: 4 })
+    .webp({ quality: 80, effort: 4 })
     .toBuffer();
 }
 
@@ -97,7 +99,14 @@ export async function POST(request: Request) {
 
     const bytes = Buffer.from(await file.arrayBuffer());
     const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
-    await mkdir(uploadsDir, { recursive: true });
+
+    // Attempt to create uploads directory on disk (fails gracefully on read-only Vercel)
+    try {
+      await mkdir(uploadsDir, { recursive: true });
+    } catch (fsErr: any) {
+      // EROFS or permission error on read-only environments
+      console.warn('Local uploads directory cannot be created (serverless/read-only):', fsErr?.code || fsErr?.message);
+    }
 
     const stamp = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
     let outputName = `${stamp}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
@@ -107,45 +116,71 @@ export async function POST(request: Request) {
 
     if (isPdf(file)) {
       format = 'original';
+      contentType = 'application/pdf';
     } else if (isImage(file)) {
-      output = Buffer.from(await toWebp(bytes));
-      outputName = `${stamp}.webp`;
-      format = 'webp';
-      contentType = 'image/webp';
+      // Automatically convert image to WebP with compression
+      try {
+        output = Buffer.from(await toWebp(bytes));
+        outputName = `${stamp}.webp`;
+        format = 'webp';
+        contentType = 'image/webp';
+      } catch (sharpErr) {
+        console.warn('Sharp WebP conversion warning, using original buffer:', sharpErr);
+      }
     } else if (isVideo(file)) {
       const inputPath = path.join(os.tmpdir(), `${stamp}${path.extname(file.name) || '.bin'}`);
-      const outputPath = path.join(uploadsDir, `${stamp}.mp4`);
-      tempPaths.push(inputPath);
-      await writeFile(inputPath, bytes);
-      await compressVideo(inputPath, outputPath);
+      const outputPath = path.join(os.tmpdir(), `${stamp}.mp4`);
+      tempPaths.push(inputPath, outputPath);
 
+      await writeFile(inputPath, bytes);
+      let videoBuffer = bytes;
+
+      try {
+        await compressVideo(inputPath, outputPath);
+        videoBuffer = await readFile(outputPath);
+      } catch (compErr) {
+        console.warn('Video compression skipped or unavailable, using raw video:', compErr);
+      }
+
+      output = videoBuffer;
       outputName = `${stamp}.mp4`;
       format = 'mp4';
       contentType = 'video/mp4';
-      const savedUrl = `/uploads/${outputName}`;
-
-      const { stat } = await import('node:fs/promises');
-      const saved = await stat(outputPath);
-
-      return NextResponse.json({
-        success: true,
-        url: savedUrl,
-        fileName: outputName,
-        originalName: file.name,
-        size: saved.size,
-        originalSize: file.size,
-        type: contentType,
-        format,
-        compressed: true,
-      });
     }
 
-    const filePath = path.join(uploadsDir, outputName);
-    await writeFile(filePath, output);
+    // 1. Try saving to local disk if writable
+    try {
+      const filePath = path.join(uploadsDir, outputName);
+      await writeFile(filePath, output);
+    } catch (writeErr: any) {
+      // In read-only serverless environments (Vercel /var/task), write fails with EROFS.
+      // This is expected and handled safely below by storing in MongoDB.
+      console.log('Filesystem write bypassed (serverless environment):', writeErr?.code || writeErr?.message);
+    }
+
+    // 2. Persist media to MongoDB Atlas (guaranteed durable storage across serverless functions)
+    try {
+      await connectToDatabase();
+      await UploadedMediaModel.findOneAndUpdate(
+        { filename: outputName },
+        {
+          filename: outputName,
+          contentType,
+          data: output,
+          size: output.length,
+          createdAt: new Date(),
+        },
+        { upsert: true, new: true }
+      );
+    } catch (dbErr) {
+      console.error('Failed to persist media to MongoDB:', dbErr);
+    }
+
+    const publicUrl = `/uploads/${outputName}`;
 
     return NextResponse.json({
       success: true,
-      url: `/uploads/${outputName}`,
+      url: publicUrl,
       fileName: outputName,
       originalName: file.name,
       size: output.length,

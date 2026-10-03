@@ -31,6 +31,10 @@ const DEFAULT_SETTINGS: SiteSettings = {
   registrationNo: 'UPHIN/26/A7984',
   editorInChief: 'रामेश्वर दयाल (Rameshwar Dayal)',
   publisher: 'स्वर्णिम दस्तावेज़ प्रकाशन, लखनऊ',
+  facebookUrl: 'https://facebook.com',
+  twitterUrl: 'https://twitter.com',
+  instagramUrl: 'https://instagram.com',
+  youtubeUrl: 'https://youtube.com',
   privacyPolicy: `## गोपनीयता नीति (Privacy Policy) - स्वर्णिम दस्तावेज़
 
 अंतिम अद्यतन: 2026 | पंजीयन संख्या: UPHIN/26/A7984
@@ -90,8 +94,10 @@ class PlatformStore {
   private users: User[] = [...INITIAL_USERS];
   private epaperEditions: EPaperEdition[] = [...INITIAL_EPAPER_EDITIONS];
   private deletedEpaperIds = new Set<string>();
+  private deletedUserIds = new Set<string>();
   private poll: Poll = { ...INITIAL_POLL };
   private ads: AdBanner[] = [...INITIAL_ADS];
+  private deletedAdIds = new Set<string>();
   private classifieds: ClassifiedItem[] = [...INITIAL_CLASSIFIEDS];
   private grievances: GrievanceComplaint[] = [...INITIAL_GRIEVANCES];
   private siteSettings: SiteSettings = { ...DEFAULT_SETTINGS };
@@ -355,11 +361,11 @@ class PlatformStore {
 
   // Users
   getUsers() {
-    return this.users;
+    return this.users.filter(u => !this.deletedUserIds.has(u.id));
   }
 
   updateUserRole(userId: string, newRole: UserRole) {
-    const u = this.users.find(x => x.id === userId);
+    const u = this.users.find(x => x.id === userId && !this.deletedUserIds.has(x.id));
     if (u) {
       u.role = newRole;
       if (newRole === 'citizen_journalist' || newRole === 'staff_reporter') {
@@ -371,7 +377,7 @@ class PlatformStore {
   }
 
   updateUser(userId: string, data: Partial<User>) {
-    const u = this.users.find(x => x.id === userId);
+    const u = this.users.find(x => x.id === userId && !this.deletedUserIds.has(x.id));
     if (u) {
       Object.assign(u, data);
       return u;
@@ -380,7 +386,7 @@ class PlatformStore {
   }
 
   toggleBanUser(userId: string) {
-    const u = this.users.find(x => x.id === userId);
+    const u = this.users.find(x => x.id === userId && !this.deletedUserIds.has(x.id));
     if (u) {
       u.isBanned = !u.isBanned;
       return u;
@@ -391,15 +397,11 @@ class PlatformStore {
   deleteUser(userId: string) {
     const user = this.users.find(x => x.id === userId);
     if (!user) return false;
-    const privileged = user.role === 'admin' || user.role === 'super_admin';
-    if (privileged) {
-      const remaining = this.users.filter(u =>
-        (u.role === 'admin' || u.role === 'super_admin') && u.id !== userId
-      );
-      if (remaining.length === 0) return false;
-    }
+    this.deletedUserIds.add(userId);
     const index = this.users.findIndex(x => x.id === userId);
-    this.users.splice(index, 1);
+    if (index !== -1) {
+      this.users.splice(index, 1);
+    }
     return true;
   }
 
@@ -407,8 +409,10 @@ class PlatformStore {
     const clean = identifier.trim().toLowerCase();
     const digits = clean.replace(/\D/g, '');
     const user = this.users.find(u =>
-      u.email.toLowerCase() === clean ||
-      (u.phone && digits.length >= 10 && u.phone.replace(/\D/g, '') === digits)
+      !this.deletedUserIds.has(u.id) && (
+        u.email.toLowerCase() === clean ||
+        (u.phone && digits.length >= 10 && u.phone.replace(/\D/g, '') === digits)
+      )
     );
     if (!user) return { status: 'not_found' };
     if (user.isBanned) return { status: 'banned' };
@@ -513,10 +517,15 @@ class PlatformStore {
   }
 
   deleteAd(id: string): boolean {
-    const index = this.ads.findIndex(a => a.id === id);
-    if (index === -1) return false;
-    this.ads.splice(index, 1);
+    this.deletedAdIds.add(id);
+    this.ads = this.ads.filter(a => a.id !== id);
     return true;
+  }
+
+  syncAds(ads: AdBanner[]) {
+    if (Array.isArray(ads) && ads.length > 0) {
+      this.ads = ads.filter(a => !this.deletedAdIds.has(a.id));
+    }
   }
 
   // Classifieds
@@ -574,7 +583,7 @@ class PlatformStore {
 
   // Site Settings & Legal Policies CMS
   getSettings(): SiteSettings {
-    return { ...this.siteSettings };
+    return { ...DEFAULT_SETTINGS, ...this.siteSettings };
   }
 
   updateSettings(data: Partial<SiteSettings>): SiteSettings {
@@ -588,7 +597,7 @@ class PlatformStore {
 
   // Admin Account & Credential Management
   getAdmins(): User[] {
-    return this.users.filter(u => u.role === 'admin' || u.role === 'super_admin' || u.role === 'editor');
+    return this.users.filter(u => !this.deletedUserIds.has(u.id) && (u.role === 'admin' || u.role === 'super_admin' || u.role === 'editor'));
   }
 
   createAdminUser(data: {
@@ -635,9 +644,28 @@ function getPlatformStore(): PlatformStore {
   const existing = global.__platformStore;
   if (existing) {
     Object.setPrototypeOf(existing, PlatformStore.prototype);
-    const record = existing as unknown as { siteSettings?: SiteSettings; articles?: Article[]; epaperEditions?: EPaperEdition[]; deletedEpaperIds?: Set<string> };
+    const record = existing as unknown as { 
+      siteSettings?: SiteSettings; 
+      articles?: Article[]; 
+      epaperEditions?: EPaperEdition[]; 
+      deletedEpaperIds?: Set<string>; 
+      users?: User[]; 
+      deletedUserIds?: Set<string>;
+      ads?: AdBanner[];
+      deletedAdIds?: Set<string>;
+    };
     if (!record.deletedEpaperIds) record.deletedEpaperIds = new Set<string>();
-    if (!record.siteSettings) {
+    if (!record.deletedUserIds) record.deletedUserIds = new Set<string>();
+    if (!record.deletedAdIds) record.deletedAdIds = new Set<string>();
+    if (record.ads) {
+      record.ads = record.ads.filter((a: AdBanner) => !record.deletedAdIds?.has(a.id));
+    }
+    if (record.users) {
+      record.users = record.users.filter((u: User) => !record.deletedUserIds?.has(u.id));
+    }
+    if (record.siteSettings) {
+      record.siteSettings = { ...DEFAULT_SETTINGS, ...record.siteSettings };
+    } else {
       record.siteSettings = { ...DEFAULT_SETTINGS };
     }
     if (record.articles) {
@@ -659,13 +687,9 @@ function getPlatformStore(): PlatformStore {
     return existing;
   }
   const created = new PlatformStore();
-  if (process.env.NODE_ENV !== 'production') {
-    global.__platformStore = created;
-  }
+  global.__platformStore = created;
   return created;
 }
 
 export const platformStore = getPlatformStore();
-if (process.env.NODE_ENV !== 'production') {
-  global.__platformStore = platformStore;
-}
+global.__platformStore = platformStore;
