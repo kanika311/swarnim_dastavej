@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useApp } from '@/context/AppContext';
@@ -179,6 +179,8 @@ export default function AdminDashboardPage() {
   const [newBody, setNewBody] = useState('');
   const [newIsBreaking, setNewIsBreaking] = useState(false);
   const [newCoverImage, setNewCoverImage] = useState('');
+  const coverImageRef = useRef('');
+  const photoUploadRef = useRef<Promise<string | null> | null>(null);
   const [newVideoUrl, setNewVideoUrl] = useState('');
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
@@ -195,7 +197,7 @@ export default function AdminDashboardPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    try {
+    const job = (async () => {
       setIsUploadingPhoto(true);
       setPhotoFileName(file.name);
       const fileToUpload = await convertImageToWebP(file);
@@ -204,15 +206,23 @@ export default function AdminDashboardPage() {
       const res = await fetch('/api/upload', { method: 'POST', body: formData });
       const data = await res.json();
       if (data.success && data.url) {
+        coverImageRef.current = data.url;
         setNewCoverImage(data.url);
         const kb = data.size ? `${Math.max(1, Math.round(data.size / 1024))} KB` : '';
         setPhotoFileName(kb ? `WebP · ${kb}` : 'WebP');
-      } else {
-        alert(data.message || 'Photo upload failed');
+        return data.url as string;
       }
-    } catch (err) {
+      alert(data.message || 'Photo upload failed');
+      return null;
+    })();
+
+    photoUploadRef.current = job;
+    try {
+      await job;
+    } catch {
       alert('Photo upload failed. You can paste an image URL instead.');
     } finally {
+      if (photoUploadRef.current === job) photoUploadRef.current = null;
       setIsUploadingPhoto(false);
     }
   };
@@ -490,7 +500,13 @@ export default function AdminDashboardPage() {
       return;
     }
 
+    if (isUploadingPhoto || photoUploadRef.current) {
+      alert('फोटो अपलोड हो रही है। पूरी होने के बाद खबर सेव करें।');
+      return;
+    }
+
     try {
+      const coverImage = (coverImageRef.current || newCoverImage).trim();
       const payload = {
         headline: newTitle.trim(),
         body: newBody.trim(),
@@ -498,9 +514,9 @@ export default function AdminDashboardPage() {
         city: newCity,
         language: newLanguage,
         isBreaking: newIsBreaking,
-        coverImage: newCoverImage || 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=1000&auto=format&fit=crop&q=80',
+        coverImage: coverImage || 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=1000&auto=format&fit=crop&q=80',
         mediaGallery: [
-          ...(newCoverImage ? [{ id: `img-${Date.now()}`, type: 'image' as const, url: newCoverImage, caption: newTitle }] : []),
+          ...(coverImage ? [{ id: `img-${Date.now()}`, type: 'image' as const, url: coverImage, caption: newTitle }] : []),
           ...(newVideoUrl ? [{ id: `vid-${Date.now()}`, type: 'video' as const, url: newVideoUrl, caption: 'News Video' }] : [])
         ],
         author: {
@@ -1027,6 +1043,7 @@ export default function AdminDashboardPage() {
     setNewLanguage(art.language || 'hi');
     setNewBody(art.body);
     setNewIsBreaking(!!art.isBreaking);
+    coverImageRef.current = art.coverImage || '';
     setNewCoverImage(art.coverImage || '');
     const video = art.mediaGallery?.find(item => item.type === 'video');
     setNewVideoUrl(video?.url || '');
@@ -1039,6 +1056,7 @@ export default function AdminDashboardPage() {
     setNewTitle('');
     setNewLanguage('hi');
     setNewBody('');
+    coverImageRef.current = '';
     setNewCoverImage('');
     setNewVideoUrl('');
     setPhotoFileName('');
@@ -4255,7 +4273,10 @@ export default function AdminDashboardPage() {
                       <input
                         type="text"
                         value={newCoverImage}
-                        onChange={(e) => setNewCoverImage(e.target.value)}
+                        onChange={(e) => {
+                          coverImageRef.current = e.target.value;
+                          setNewCoverImage(e.target.value);
+                        }}
                         placeholder="Or paste Image URL..."
                         className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs"
                       />
@@ -4275,6 +4296,7 @@ export default function AdminDashboardPage() {
                       <button
                         type="button"
                         onClick={() => {
+                          coverImageRef.current = '';
                           setNewCoverImage('');
                           setPhotoFileName('');
                         }}
@@ -4384,9 +4406,10 @@ export default function AdminDashboardPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-gradient-to-r from-[#B45309] via-[#D97706] to-[#F59E0B] text-white font-bold text-xs rounded-xl shadow-md shadow-amber-500/20 hover:opacity-95 cursor-pointer transition"
+                  disabled={isUploadingPhoto}
+                  className="px-5 py-2 bg-gradient-to-r from-[#B45309] via-[#D97706] to-[#F59E0B] text-white font-bold text-xs rounded-xl shadow-md shadow-amber-500/20 hover:opacity-95 cursor-pointer transition disabled:opacity-50"
                 >
-                  {editingArticleId ? 'Save changes' : 'Publish Now'}
+                  {isUploadingPhoto ? 'फोटो अपलोड हो रही है...' : editingArticleId ? 'Save changes' : 'Publish Now'}
                 </button>
               </div>
             </form>
