@@ -20,7 +20,6 @@ import {
   SubmissionStatus
 } from '@/types';
 import { 
-  INITIAL_ARTICLES, 
   INITIAL_SUBMISSIONS, 
   INITIAL_USERS, 
   INITIAL_ADS, 
@@ -140,7 +139,7 @@ export default function AdminDashboardPage() {
   
   // Data states
   const [submissions, setSubmissions] = useState<CitizenSubmission[]>(INITIAL_SUBMISSIONS);
-  const [articles, setArticles] = useState<Article[]>(INITIAL_ARTICLES);
+  const [articles, setArticles] = useState<Article[]>([]);
   const [users, setUsers] = useState<User[]>(INITIAL_USERS);
   const [ads, setAds] = useState<AdBanner[]>(INITIAL_ADS);
   const [showAdForm, setShowAdForm] = useState(false);

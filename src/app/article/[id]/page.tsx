@@ -5,7 +5,6 @@ import { useParams } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import BreakingTicker from '@/components/BreakingTicker';
-import { INITIAL_ARTICLES } from '@/lib/initialData';
 import { Article } from '@/types';
 import Link from 'next/link';
 import { 
@@ -31,6 +30,8 @@ export default function ArticleDetailPage() {
   const { fontSize, savedArticleIds, toggleSaveArticle, currentUser, openAuthModal } = useApp();
 
   const [article, setArticle] = useState<Article | null>(null);
+  const [relatedArticles, setRelatedArticles] = useState<Article[]>([]);
+  const [articleMissing, setArticleMissing] = useState(false);
   const [likes, setLikes] = useState(0);
   const [hasLiked, setHasLiked] = useState(false);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
@@ -43,21 +44,21 @@ export default function ArticleDetailPage() {
   useEffect(() => {
     const fetchArticleData = async () => {
       let currentArt: Article | null = null;
-      const found = INITIAL_ARTICLES.find(a => a.id === articleId || a.slug === articleId);
-      if (found) {
-        currentArt = found;
-        setArticle(found);
-        setLikes(found.likesCount);
-      } else {
-        try {
-          const res = await fetch(`/api/articles/${articleId}`);
-          const data = await res.json();
-          if (data.success && data.data) {
-            currentArt = data.data;
-            setArticle(data.data);
-            setLikes(data.data.likesCount);
-          }
-        } catch {}
+      try {
+        const res = await fetch(`/api/articles/${articleId}`);
+        const data = await res.json();
+        if (data.success && data.data) {
+          currentArt = data.data;
+          setArticle(data.data);
+          setLikes(data.data.likesCount);
+          setArticleMissing(false);
+        } else {
+          setArticle(null);
+          setArticleMissing(true);
+        }
+      } catch {
+        setArticle(null);
+        setArticleMissing(true);
       }
 
       const targetId = currentArt?.id || articleId;
@@ -207,19 +208,28 @@ export default function ArticleDetailPage() {
     }
   };
 
+  useEffect(() => {
+    if (!article) return;
+    fetch(`/api/articles?lang=${article.language || 'hi'}`)
+      .then((res) => res.json())
+      .then((data) => {
+        const list: Article[] = data.success && Array.isArray(data.data) ? data.data : [];
+        setRelatedArticles(list.filter((item) => item.id !== article.id).slice(0, 3));
+      })
+      .catch(() => setRelatedArticles([]));
+  }, [article]);
+
   if (!article) {
     return (
       <div className="min-h-screen flex flex-col">
         <Header />
         <main className="flex-1 max-w-4xl mx-auto px-4 py-12 text-center">
-          <p className="text-slate-500">खबर लोड हो रही है...</p>
+          <p className="text-slate-500">{articleMissing ? 'यह खबर उपलब्ध नहीं है।' : 'खबर लोड हो रही है...'}</p>
         </main>
         <Footer />
       </div>
     );
   }
-
-  const relatedArticles = INITIAL_ARTICLES.filter(a => a.id !== article.id).slice(0, 3);
   const fontClass = fontSize === 'lg' ? 'text-lg leading-relaxed' : fontSize === 'sm' ? 'text-sm leading-normal' : 'text-base leading-relaxed';
 
   return (

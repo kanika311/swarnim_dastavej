@@ -4,7 +4,7 @@ import ArticleModel from '@/models/Article';
 import CitizenSubmissionModel from '@/models/CitizenSubmission';
 import UserModel from '@/models/User';
 import EPaperEditionModel from '@/models/EPaperEdition';
-import { INITIAL_ARTICLES, INITIAL_SUBMISSIONS, INITIAL_USERS, INITIAL_EPAPER_EDITIONS } from '@/lib/initialData';
+import { INITIAL_SUBMISSIONS, INITIAL_USERS, INITIAL_EPAPER_EDITIONS } from '@/lib/initialData';
 
 export async function GET() {
   try {
@@ -33,7 +33,7 @@ export async function GET() {
         success: true,
         source: 'mongodb',
         data: {
-          articlesCount: totalArticles || INITIAL_ARTICLES.length,
+          articlesCount: totalArticles,
           pendingSubmissionsCount: pendingSubmissions,
           approvedSubmissionsCount: approvedSubmissions,
           readersCount: totalReaders || 1,
@@ -52,7 +52,7 @@ export async function GET() {
     success: true,
     source: 'memory_fallback',
     data: {
-      articlesCount: INITIAL_ARTICLES.length,
+      articlesCount: 0,
       pendingSubmissionsCount: INITIAL_SUBMISSIONS.filter(s => s.status === 'pending_review').length,
       approvedSubmissionsCount: INITIAL_SUBMISSIONS.filter(s => s.status === 'approved').length,
       readersCount: INITIAL_USERS.filter(u => u.role === 'reader').length,

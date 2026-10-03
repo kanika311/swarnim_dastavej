@@ -12,7 +12,7 @@ import {
   SiteSettings
 } from '@/types';
 import { 
-  INITIAL_ARTICLES, 
+  isSeedArticle,
   INITIAL_SUBMISSIONS, 
   INITIAL_USERS, 
   INITIAL_EPAPER_EDITIONS, 
@@ -89,7 +89,8 @@ const DEFAULT_SETTINGS: SiteSettings = {
 
 // Global singleton in-memory state for API routes and SSR
 class PlatformStore {
-  private articles: Article[] = [...INITIAL_ARTICLES];
+  private articles: Article[] = [];
+  private deletedArticleIds = new Set<string>();
   private submissions: CitizenSubmission[] = [...INITIAL_SUBMISSIONS];
   private users: User[] = [...INITIAL_USERS];
   private epaperEditions: EPaperEdition[] = [...INITIAL_EPAPER_EDITIONS];
@@ -105,7 +106,7 @@ class PlatformStore {
 
   // Articles
   getArticles(filter?: { category?: string; city?: string; search?: string; language?: string }) {
-    let list = [...this.articles];
+    let list = this.articles.filter((article) => !this.deletedArticleIds.has(article.id) && !isSeedArticle(article));
     if (filter?.language && filter.language !== 'all') {
       list = list.filter(a => (a.language || 'hi') === filter.language);
     }
@@ -127,7 +128,7 @@ class PlatformStore {
   }
 
   getArticleById(id: string) {
-    return this.articles.find(a => a.id === id || a.slug === id);
+    return this.articles.find(a => (a.id === id || a.slug === id) && !this.deletedArticleIds.has(a.id));
   }
 
   createArticle(data: Partial<Article>): Article {
@@ -197,8 +198,10 @@ class PlatformStore {
   }
 
   deleteArticle(id: string): boolean {
-    const index = this.articles.findIndex(a => a.id === id);
+    this.deletedArticleIds.add(id);
+    const index = this.articles.findIndex(a => a.id === id || a.slug === id);
     if (index === -1) return false;
+    this.deletedArticleIds.add(this.articles[index].id);
     this.articles.splice(index, 1);
     return true;
   }
@@ -647,6 +650,7 @@ function getPlatformStore(): PlatformStore {
     const record = existing as unknown as { 
       siteSettings?: SiteSettings; 
       articles?: Article[]; 
+      deletedArticleIds?: Set<string>;
       epaperEditions?: EPaperEdition[]; 
       deletedEpaperIds?: Set<string>; 
       users?: User[]; 
@@ -654,6 +658,7 @@ function getPlatformStore(): PlatformStore {
       ads?: AdBanner[];
       deletedAdIds?: Set<string>;
     };
+    if (!record.deletedArticleIds) record.deletedArticleIds = new Set<string>();
     if (!record.deletedEpaperIds) record.deletedEpaperIds = new Set<string>();
     if (!record.deletedUserIds) record.deletedUserIds = new Set<string>();
     if (!record.deletedAdIds) record.deletedAdIds = new Set<string>();
@@ -669,11 +674,7 @@ function getPlatformStore(): PlatformStore {
       record.siteSettings = { ...DEFAULT_SETTINGS };
     }
     if (record.articles) {
-      for (const art of INITIAL_ARTICLES) {
-        if (!record.articles.some((a: Article) => a.id === art.id)) {
-          record.articles.push(art);
-        }
-      }
+      record.articles = record.articles.filter((article: Article) => !record.deletedArticleIds?.has(article.id) && !isSeedArticle(article));
     }
     if (record.epaperEditions) {
       record.epaperEditions = record.epaperEditions.filter((e: EPaperEdition) => !record.deletedEpaperIds?.has(e.id));

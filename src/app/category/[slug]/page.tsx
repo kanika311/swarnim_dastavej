@@ -5,7 +5,6 @@ import { useParams } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import BreakingTicker from '@/components/BreakingTicker';
-import { INITIAL_ARTICLES } from '@/lib/initialData';
 import { Article } from '@/types';
 import Link from 'next/link';
 import { Clock, Eye, MapPin, ChevronRight, ArrowLeft, Play } from 'lucide-react';
@@ -18,25 +17,16 @@ export default function CategoryListingPage() {
   const { language } = useApp();
   const [playingId, setPlayingId] = useState<string | null>(null);
 
-  const [articles, setArticles] = useState<Article[]>(() => {
-    const matching = INITIAL_ARTICLES.filter(a => (a.language || 'hi') === language);
-    return matching.length > 0 ? matching : INITIAL_ARTICLES;
-  });
+  const [articles, setArticles] = useState<Article[]>([]);
 
   useEffect(() => {
     fetch(`/api/articles?lang=${language}`)
       .then(res => res.json())
       .then(data => {
-        if (data.success && data.data && data.data.length > 0) {
-          setArticles(data.data);
-        } else {
-          const matching = INITIAL_ARTICLES.filter(a => (a.language || 'hi') === language);
-          setArticles(matching.length > 0 ? matching : INITIAL_ARTICLES);
-        }
+        setArticles(data.success && Array.isArray(data.data) ? data.data : []);
       })
       .catch(() => {
-        const matching = INITIAL_ARTICLES.filter(a => (a.language || 'hi') === language);
-        setArticles(matching.length > 0 ? matching : INITIAL_ARTICLES);
+        setArticles([]);
       });
   }, [language]);
 

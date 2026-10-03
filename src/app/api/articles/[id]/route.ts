@@ -2,14 +2,32 @@ import { NextResponse } from 'next/server';
 import { platformStore } from '@/lib/store';
 import { connectToDatabase } from '@/lib/mongodb';
 import ArticleModel from '@/models/Article';
+import { isSeedArticle, SEED_ARTICLE_IDS } from '@/lib/initialData';
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  if (SEED_ARTICLE_IDS.has(id)) {
+    return NextResponse.json({ success: false, message: 'Article not found' }, { status: 404 });
+  }
+  try {
+    const conn = await connectToDatabase();
+    if (conn) {
+      const doc = await ArticleModel.findOne({ $or: [{ id }, { slug: id }] }).lean().exec();
+      if (doc) {
+        if (isSeedArticle(doc)) {
+          return NextResponse.json({ success: false, message: 'Article not found' }, { status: 404 });
+        }
+        return NextResponse.json({ success: true, data: doc });
+      }
+    }
+  } catch {
+    // Fall through to the in-memory article.
+  }
   const article = platformStore.getArticleById(id);
-  if (!article) {
+  if (!article || isSeedArticle(article)) {
     return NextResponse.json({ success: false, message: 'Article not found' }, { status: 404 });
   }
   platformStore.incrementArticleViews(article.id);
@@ -65,11 +83,12 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  let removed = platformStore.deleteArticle(id);
+  const removedFromStore = platformStore.deleteArticle(id);
+  let removed = removedFromStore || SEED_ARTICLE_IDS.has(id);
   try {
     const conn = await connectToDatabase();
     if (conn) {
-      const result = await ArticleModel.deleteOne({ id }).exec();
+      const result = await ArticleModel.deleteOne({ $or: [{ id }, { slug: id }] }).exec();
       if (result.deletedCount) removed = true;
     }
   } catch {

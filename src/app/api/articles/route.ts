@@ -2,6 +2,20 @@ import { NextResponse } from 'next/server';
 import { platformStore } from '@/lib/store';
 import { connectToDatabase } from '@/lib/mongodb';
 import ArticleModel from '@/models/Article';
+import { isSeedArticle, SEED_ARTICLE_HEADLINES, SEED_ARTICLE_IDS } from '@/lib/initialData';
+
+let seedArticlesPurged = false;
+
+async function purgeSeedArticles() {
+  if (seedArticlesPurged) return;
+  seedArticlesPurged = true;
+  await ArticleModel.deleteMany({
+    $or: [
+      { id: { $in: [...SEED_ARTICLE_IDS] } },
+      { headline: { $in: [...SEED_ARTICLE_HEADLINES] } },
+    ],
+  }).exec();
+}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -34,6 +48,13 @@ export async function GET(request: Request) {
         ];
       }
 
+      try {
+        await purgeSeedArticles();
+      } catch (purgeError: unknown) {
+        seedArticlesPurged = false;
+        const message = purgeError instanceof Error ? purgeError.message : 'Seed article purge failed';
+        console.warn(message);
+      }
       dbArticles = await ArticleModel.find(query).sort({ publishedAt: -1 }).lean().exec() as typeof storeArticles;
     }
   } catch (e: unknown) {
@@ -45,8 +66,10 @@ export async function GET(request: Request) {
   const articles = [
     ...dbArticles,
     ...storeArticles.filter((article) => !seen.has(article.id)),
-  ];
-  return NextResponse.json({ success: true, count: articles.length, source: dbArticles.length ? 'merged' : 'store', data: articles });
+  ]
+    .filter((article) => !isSeedArticle(article))
+    .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+  return NextResponse.json({ success: true, count: articles.length, source: dbArticles.length ? 'mongodb' : 'store', data: articles });
 }
 
 export async function POST(request: Request) {

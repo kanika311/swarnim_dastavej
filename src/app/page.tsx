@@ -7,17 +7,13 @@ import TopicsSidebar, { MobileTopicsDrawer } from '@/components/TopicsSidebar';
 import DainikNewsFeed from '@/components/DainikNewsFeed';
 import RightSponsoredSidebar from '@/components/RightSponsoredSidebar';
 import TodayNewspaperReader from '@/components/TodayNewspaperReader';
-import { INITIAL_ARTICLES } from '@/lib/initialData';
 import { Article } from '@/types';
 import { useApp } from '@/context/AppContext';
 import { MapPin, X } from 'lucide-react';
 
 export default function HomePage() {
   const { selectedCity, setSelectedCity, fontSize, homeViewMode, language } = useApp();
-  const [articles, setArticles] = useState<Article[]>(() => {
-    const matching = INITIAL_ARTICLES.filter(a => (a.language || 'hi') === language);
-    return matching.length > 0 ? matching : INITIAL_ARTICLES;
-  });
+  const [articles, setArticles] = useState<Article[]>([]);
   const [activeTopic, setActiveTopic] = useState<string>('all');
   const [showMobileTopicsDrawer, setShowMobileTopicsDrawer] = useState<boolean>(false);
 
@@ -27,17 +23,10 @@ export default function HomePage() {
       .then((res) => res.json())
       .then((data) => {
         const incoming: Article[] = data.success && Array.isArray(data.data) ? data.data : [];
-        const base = INITIAL_ARTICLES.filter(a => (a.language || 'hi') === language);
-        const seen = new Set(incoming.map(a => a.id));
-        const merged = [
-          ...incoming.filter(a => !a.language || a.language === language),
-          ...base.filter(a => !seen.has(a.id)),
-        ];
-        setArticles(merged.length > 0 ? merged : (base.length > 0 ? base : INITIAL_ARTICLES));
+        setArticles(incoming.filter(a => !a.language || a.language === language));
       })
       .catch(() => {
-        const filtered = INITIAL_ARTICLES.filter(a => (a.language || 'hi') === language);
-        setArticles(filtered.length > 0 ? filtered : INITIAL_ARTICLES);
+        setArticles([]);
       });
   }, [language]);
 

@@ -673,6 +673,15 @@ Farmers across Uttar Pradesh can now drastically cut their irrigation costs with
   }
 ];
 
+export const SEED_ARTICLE_IDS = new Set(INITIAL_ARTICLES.map((article) => article.id));
+export const SEED_ARTICLE_HEADLINES = new Set(INITIAL_ARTICLES.map((article) => article.headline.trim()));
+
+export function isSeedArticle(article: { id?: string; headline?: string }) {
+  if (article.id && SEED_ARTICLE_IDS.has(article.id)) return true;
+  if (article.headline && SEED_ARTICLE_HEADLINES.has(article.headline.trim())) return true;
+  return false;
+}
+
 export const INITIAL_SUBMISSIONS: CitizenSubmission[] = [
   {
     id: 'sub-101',
