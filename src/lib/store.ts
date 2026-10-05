@@ -249,14 +249,14 @@ class PlatformStore {
       headline: data.headline || '',
       subHeadline: data.subHeadline || '',
       body: data.body || '',
-      category: data.category || 'sitapur',
-      city: data.city || 'सीतापुर',
+      category: data.category || 'sultanpur',
+      city: data.city || 'सुल्तानपुर',
       language: data.language || 'hi',
       submittedBy: data.submittedBy || {
         id: 'user_citizen_1',
         name: 'विकास शुक्ला (नागरिक पत्रकार)',
         role: 'citizen_journalist',
-        district: 'सीतापुर'
+        district: 'सुल्तानपुर'
       },
       media: data.media || [],
       hasRecordedVideo: data.hasRecordedVideo || false,

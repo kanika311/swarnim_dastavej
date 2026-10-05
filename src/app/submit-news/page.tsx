@@ -38,7 +38,7 @@ export default function SubmitNewsPage() {
   const [subHeadline, setSubHeadline] = useState('');
   const [category, setCategory] = useState<ArticleCategory>('state-city');
   const [selectedState, setSelectedState] = useState<string>('Uttar Pradesh');
-  const [city, setCity] = useState(currentUser?.city || 'सीतापुर');
+  const [city, setCity] = useState(currentUser?.city || 'सुल्तानपुर');
   const [isCustomCity, setIsCustomCity] = useState(false);
   const [customCity, setCustomCity] = useState('');
   const [locationName, setLocationName] = useState('कलेक्ट्रेट परिसर');
@@ -67,7 +67,7 @@ export default function SubmitNewsPage() {
     setSubHeadline(sub.subHeadline || '');
     setBodyText(sub.body || '');
     setCategory(sub.category || 'state-city');
-    setCity(sub.city || 'सीतापुर');
+    setCity(sub.city || 'सुल्तानपुर');
     setLocationName(sub.geoTag?.locationName || '');
     setPhotos(sub.media || []);
     setActiveTab('submit');
@@ -408,7 +408,7 @@ export default function SubmitNewsPage() {
                   type="text"
                   value={headline}
                   onChange={(e) => setHeadline(e.target.value)}
-                  placeholder="उदा: सीतापुर-लहरपुर मार्ग पर पुलिया धंसने से 20 गांवों का संपर्क टूटा"
+                  placeholder="उदा: सुल्तानपुर-कुड़वार मार्ग पर पुलिया धंसने से 20 गांवों का संपर्क टूटा"
                   className="w-full p-3 rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-sm focus:ring-2 focus:ring-red-600 focus:outline-none font-medium"
                   required
                 />

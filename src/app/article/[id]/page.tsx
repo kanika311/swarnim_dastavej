@@ -247,7 +247,7 @@ export default function ArticleDetailPage() {
           </Link>
           <span>/</span>
           <Link href={`/category/${article.category}`} className="hover:text-red-700 capitalize">
-            {article.category === 'sitapur' ? 'सीतापुर' : article.category === 'lucknow' ? 'लखनऊ' : article.category === 'state' ? 'उत्तर प्रदेश' : article.category}
+            {article.category === 'sultanpur' || article.category === 'sitapur' ? 'सुल्तानपुर' : article.category === 'lucknow' ? 'लखनऊ' : article.category === 'state' ? 'उत्तर प्रदेश' : article.category}
           </Link>
           <span>/</span>
           <span className="text-slate-800 dark:text-slate-200 font-medium truncate max-w-xs">
@@ -261,7 +261,7 @@ export default function ArticleDetailPage() {
           {/* Category & Location Badges */}
           <div className="flex flex-wrap items-center gap-2 mb-3">
             <span className="bg-red-700 text-white font-bold text-xs px-2.5 py-1 rounded shadow">
-              {article.category === 'sitapur' ? 'सीतापुर विशेष' : article.category === 'lucknow' ? 'लखनऊ हलचल' : article.category === 'state' ? 'उत्तर प्रदेश' : article.category}
+              {article.category === 'sultanpur' || article.category === 'sitapur' ? 'सुल्तानपुर विशेष' : article.category === 'lucknow' ? 'लखनऊ हलचल' : article.category === 'state' ? 'उत्तर प्रदेश' : article.category}
             </span>
             <span className="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-semibold px-2.5 py-1 rounded flex items-center gap-1 border border-slate-200 dark:border-slate-600">
               <MapPin className="w-3.5 h-3.5 text-red-600" />

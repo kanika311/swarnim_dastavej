@@ -148,8 +148,8 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/category/sitapur" className="hover:text-[#A37B12] dark:hover:text-[#F0C14A] transition">
-                  {language === 'en' ? 'Sitapur Spotlight' : language === 'ur' ? 'سیتاپور خصوصی' : 'सीतापुर विशेष'}
+                <Link href="/category/sultanpur" className="hover:text-[#A37B12] dark:hover:text-[#F0C14A] transition">
+                  {language === 'en' ? 'Sultanpur Spotlight' : language === 'ur' ? 'سلطان پور خصوصی' : 'सुल्तानपुर विशेष'}
                 </Link>
               </li>
               <li>

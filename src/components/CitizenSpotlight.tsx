@@ -14,6 +14,7 @@ export default function CitizenSpotlight({ articles }: CitizenSpotlightProps) {
   const citizenStories = articles.filter(a => 
     a.author.role === 'citizen_journalist' || 
     a.tags.includes('नागरिक पत्रकार') || 
+    a.category === 'sultanpur' ||
     a.category === 'sitapur'
   ).slice(0, 3);
 
@@ -39,7 +40,7 @@ export default function CitizenSpotlight({ articles }: CitizenSpotlightProps) {
             नागरिक पत्रकारिता: आपकी गली, आपका मोहल्ला, आपकी आवाज़
           </h3>
           <p className="text-xs text-slate-600 dark:text-slate-400">
-            सीतापुर, लखनऊ एवं अवध के जागरूक नागरिकों द्वारा सीधे मौके से भेजी गई जमीनी पड़ताल
+            सुल्तानपुर, लखनऊ एवं अवध के जागरूक नागरिकों द्वारा सीधे मौके से भेजी गई जमीनी पड़ताल
           </p>
         </div>
 

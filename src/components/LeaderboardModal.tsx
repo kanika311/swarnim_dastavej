@@ -205,7 +205,7 @@ export default function LeaderboardModal({
 
                         {/* District */}
                         <td className="py-3 px-3 sm:px-4 text-center text-slate-600 dark:text-slate-400 font-medium">
-                          {entry.district || 'सीतापुर'}
+                          {entry.district || 'सुल्तानपुर'}
                         </td>
 
                         {/* Stats */}

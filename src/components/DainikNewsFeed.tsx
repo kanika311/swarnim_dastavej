@@ -44,7 +44,7 @@ export default function DainikNewsFeed({
     'Asian Games 2026',
     'UN General Debate',
     'Monsoon Alert',
-    'Lucknow-Sitapur Expressway',
+    'Lucknow-Sultanpur Expressway',
     'Gaganyaan Mission',
     'Bank Strike'
   ] : language === 'ur' ? [
@@ -52,7 +52,7 @@ export default function DainikNewsFeed({
     'ایشین گیمز',
     'اقوام متحدہ بحث',
     'بارش الرٹ',
-    'لکھنؤ ایکسپریس وے',
+    'لکھنؤ-سلطان پور ایکسپریس وے',
     'گگن یان مشن',
     'بینک ہڑتال'
   ] : [
@@ -60,7 +60,7 @@ export default function DainikNewsFeed({
     'एशियन गेम्स',
     'UN जनरल डिबेट',
     'बारिश अलर्ट',
-    'लखनऊ-सीतापुर एक्सप्रेसवे',
+    'लखनऊ-सुल्तानपुर एक्सप्रेसवे',
     'गगनयान मिशन',
     'बैंक हड़ताल'
   ];
@@ -84,6 +84,8 @@ export default function DainikNewsFeed({
         (cityQuery.includes('lucknow') && artCity.includes('लखनऊ')) ||
         (cityQuery.includes('सीतापुर') && artCity.includes('sitapur')) ||
         (cityQuery.includes('sitapur') && artCity.includes('सीतापुर')) ||
+        (cityQuery.includes('सुल्तानपुर') && artCity.includes('sultanpur')) ||
+        (cityQuery.includes('sultanpur') && artCity.includes('सुल्तानपुर')) ||
         art.tags.some(t => t.toLowerCase().includes(cityQuery)) ||
         art.headline.toLowerCase().includes(cityQuery);
       if (!matchCity) {
@@ -101,7 +103,7 @@ export default function DainikNewsFeed({
 
     if (activeTopic === 'all') return true;
     if (activeTopic === 'state-city') {
-      return art.category === 'state-city' || art.category === 'state' || art.category === 'lucknow' || art.category === 'sitapur';
+      return art.category === 'state-city' || art.category === 'state' || art.category === 'lucknow' || art.category === 'sultanpur' || art.category === 'sitapur';
     }
     if (activeTopic === 'sports') return art.category === 'sports' || art.category === 'cricket';
     if (activeTopic === 'cricket') return art.category === 'cricket' || art.category === 'sports';
@@ -381,7 +383,7 @@ export default function DainikNewsFeed({
 
           const getCategoryDisplay = () => {
             if (language === 'en') {
-              if (art.category === 'sitapur') return 'Sitapur Local';
+              if (art.category === 'sultanpur' || art.category === 'sitapur') return 'Sultanpur Local';
               if (art.category === 'lucknow') return 'Lucknow Daily';
               if (art.category === 'sports') return 'Sports Arena';
               if (art.category === 'business') return 'Business & Economy';
@@ -389,14 +391,14 @@ export default function DainikNewsFeed({
               return art.category.toUpperCase();
             }
             if (language === 'ur') {
-              if (art.category === 'sitapur') return 'سیتاپور خبریں';
+              if (art.category === 'sultanpur' || art.category === 'sitapur') return 'سلطان پور خبریں';
               if (art.category === 'lucknow') return 'لکھنؤ نامہ';
               if (art.category === 'sports') return 'کھیل کود';
               if (art.category === 'business') return 'کاروبار';
               if (art.category === 'state') return 'ریاستی خبریں';
               return art.category;
             }
-            if (art.category === 'sitapur') return 'सीतापुर हलचल';
+            if (art.category === 'sultanpur' || art.category === 'sitapur') return 'सुल्तानपुर हलचल';
             if (art.category === 'lucknow') return 'लखनऊ दैनिक';
             if (art.category === 'sports') return 'खेल जगत';
             if (art.category === 'business') return 'व्यापार';

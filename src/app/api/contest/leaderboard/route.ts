@@ -53,7 +53,7 @@ export async function GET(request: Request) {
       const existing = authorMap.get(uId) || {
         userId: uId,
         userName: sub.submittedBy.name || 'नागरिक पत्रकार',
-        district: sub.submittedBy.district || sub.city || 'सीतापुर',
+        district: sub.submittedBy.district || sub.city || 'सुल्तानपुर',
         publishedReports: 0,
         views: 0,
         likes: 0,
@@ -86,7 +86,7 @@ export async function GET(request: Request) {
         authorMap.set(uId, {
           userId: uId,
           userName: art.author.name || 'पत्रकार',
-          district: art.city || 'सीतापुर',
+          district: art.city || 'सुल्तानपुर',
           avatarUrl: art.author.avatarUrl,
           publishedReports: 1,
           views: art.viewsCount || 0,

@@ -172,8 +172,8 @@ export async function PUT(request: Request) {
                 subHeadline: subDoc.subHeadline || '',
                 body: subDoc.body,
                 excerpt: subDoc.body.slice(0, 150) + '...',
-                category: subDoc.category || 'sitapur',
-                city: subDoc.city || 'सीतापुर',
+                category: subDoc.category || 'sultanpur',
+                city: subDoc.city || 'सुल्तानपुर',
                 language: subDoc.language || 'hi',
                 coverImage: subDoc.media?.[0]?.url || 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=1000&auto=format&fit=crop&q=80',
                 mediaGallery: subDoc.media,
@@ -190,7 +190,7 @@ export async function PUT(request: Request) {
                 likesCount: 0,
                 commentsCount: 0,
                 sharesCount: 0,
-                tags: ['नागरिक पत्रकारिता', subDoc.city || 'सीतापुर'],
+                tags: ['नागरिक पत्रकारिता', subDoc.city || 'सुल्तानपुर'],
                 readingTimeMinutes: Math.max(1, Math.ceil(subDoc.body.length / 400)),
                 status: 'published'
               });
@@ -273,8 +273,8 @@ export async function PUT(request: Request) {
               subHeadline: subDoc.subHeadline || '',
               body: subDoc.body,
               excerpt: subDoc.body.slice(0, 150) + '...',
-              category: subDoc.category || 'sitapur',
-              city: subDoc.city || 'सीतापुर',
+              category: subDoc.category || 'sultanpur',
+              city: subDoc.city || 'सुल्तानपुर',
               language: subDoc.language || 'hi',
               coverImage: subDoc.media?.[0]?.url || 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=1000&auto=format&fit=crop&q=80',
               mediaGallery: subDoc.media,
@@ -291,7 +291,7 @@ export async function PUT(request: Request) {
               likesCount: 0,
               commentsCount: 0,
               sharesCount: 0,
-              tags: ['नागरिक पत्रकारिता', subDoc.city || 'सीतापुर'],
+              tags: ['नागरिक पत्रकारिता', subDoc.city || 'सुल्तानपुर'],
               readingTimeMinutes: Math.max(1, Math.ceil(subDoc.body.length / 400)),
               status: 'published'
             });

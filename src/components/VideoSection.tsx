@@ -17,10 +17,10 @@ export default function VideoSection() {
     },
     {
       id: 'vid-2',
-      title: 'सरायन नदी सीतापुर: 300 युवाओं ने कैसे 5 घंटे में बदल दी तस्वीर',
+      title: 'गोमती नदी सुल्तानपुर: 300 युवाओं ने कैसे 5 घंटे में बदल दी तस्वीर',
       duration: '03:12',
       views: '28.9K',
-      city: 'सीतापुर',
+      city: 'सुल्तानपुर',
       thumbnail: 'https://images.unsplash.com/photo-1618477461853-cf6ed80faba5?w=600&auto=format&fit=crop&q=80',
       category: 'ग्राउंड रिपोर्ट'
     },

@@ -84,7 +84,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [themeReady, setThemeReady] = useState(false);
   const [savedArticleIds, setSavedArticleIds] = useState<string[]>([]);
   const [notifications, setNotifications] = useState<string[]>([
-    'लखनऊ-सीतापुर एक्सप्रेसवे को कैबिनेट मंजूरी: बड़ी खबर',
+    'लखनऊ-सुल्तानपुर एक्सप्रेसवे को कैबिनेट मंजूरी: बड़ी खबर',
     'स्वर्णिम दस्तावेज़ डिजिटल पोर्टल पर आपका स्वागत है।'
   ]);
 
@@ -355,7 +355,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       email: identifier.includes('@') ? identifier : `${identifier}@swarnim.local`,
       phone: identifier.includes('@') ? undefined : identifier,
       role: 'reader',
-      city: 'सीतापुर',
+      city: 'सुल्तानपुर',
       preferredLanguage: 'hi'
     };
     setCurrentUser(fallbackUser);
@@ -381,7 +381,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       phone: userData.phone,
       password: userData.password,
       role: userData.role || 'reader',
-      city: userData.city || 'सीतापुर',
+      city: userData.city || 'सुल्तानपुर',
       preferredLanguage: userData.preferredLanguage || 'hi',
       kycStatus: userData.kycStatus || (userData.role === 'citizen_journalist' ? 'verified' : 'not_submitted'),
       kycDetails: userData.kycDetails

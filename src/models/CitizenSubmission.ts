@@ -47,14 +47,14 @@ const CitizenSubmissionSchema = new Schema<ICitizenSubmission>(
     headline: { type: String, required: true },
     subHeadline: { type: String },
     body: { type: String, required: true },
-    category: { type: String, default: 'sitapur', index: true },
-    city: { type: String, default: 'सीतापुर', index: true },
+    category: { type: String, default: 'sultanpur', index: true },
+    city: { type: String, default: 'सुल्तानपुर', index: true },
     language: { type: String, default: 'hi' },
     submittedBy: {
       id: { type: String, required: true, index: true },
       name: { type: String, required: true },
       role: { type: String, default: 'citizen_journalist' },
-      district: { type: String, default: 'सीतापुर' },
+      district: { type: String, default: 'सुल्तानपुर' },
       phone: String,
     },
     media: [

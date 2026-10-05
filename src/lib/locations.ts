@@ -10,7 +10,7 @@ export const ALL_INDIA_LOCATIONS: StateLocation[] = [
     nameHi: 'उत्तर प्रदेश',
     cities: [
       { name: 'Lucknow', nameHi: 'लखनऊ' },
-      { name: 'Sitapur', nameHi: 'सीतापुर' },
+      { name: 'Sultanpur', nameHi: 'सुल्तानपुर' },
       { name: 'Kanpur', nameHi: 'कानपुर' },
       { name: 'Ayodhya', nameHi: 'अयोध्या' },
       { name: 'Varanasi', nameHi: 'वाराणसी' },
@@ -435,7 +435,7 @@ export const ALL_INDIAN_CITIES: string[] = ALL_INDIA_LOCATIONS.flatMap(s => s.ci
 export const TOP_FEATURED_CITIES = [
   { name: 'सभी शहर', nameEn: 'All Cities' },
   { name: 'लखनऊ', nameEn: 'Lucknow' },
-  { name: 'सीतापुर', nameEn: 'Sitapur' },
+  { name: 'सुल्तानपुर', nameEn: 'Sultanpur' },
   { name: 'कानपुर', nameEn: 'Kanpur' },
   { name: 'अयोध्या', nameEn: 'Ayodhya' },
   { name: 'वाराणसी', nameEn: 'Varanasi' },

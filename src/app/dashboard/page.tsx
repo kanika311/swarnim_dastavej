@@ -90,7 +90,7 @@ function JournalistDashboardContent() {
   const [subHeadline, setSubHeadline] = useState('');
   const [category, setCategory] = useState<ArticleCategory>('state-city');
   const [selectedState, setSelectedState] = useState<string>('Uttar Pradesh');
-  const [city, setCity] = useState(currentUser?.city || 'सीतापुर');
+  const [city, setCity] = useState(currentUser?.city || 'सुल्तानपुर');
   const [locationName, setLocationName] = useState('');
   const [bodyText, setBodyText] = useState('');
   const [photos, setPhotos] = useState<MediaItem[]>([]);
@@ -266,7 +266,7 @@ function JournalistDashboardContent() {
             id: currentUser.id,
             name: currentUser.name,
             role: currentUser.role === 'citizen_journalist' ? 'नागरिक पत्रकार' : 'पत्रकार',
-            city: currentUser.city || 'सीतापुर',
+            city: currentUser.city || 'सुल्तानपुर',
             avatarUrl: currentUser.avatarUrl
           }
         })
@@ -542,7 +542,7 @@ function JournalistDashboardContent() {
       headline: headline.trim(),
       subHeadline: subHeadline.trim() || undefined,
       category,
-      city: city.trim() || 'सीतापुर',
+      city: city.trim() || 'सुल्तानपुर',
       language: 'hi',
       body: bodyText.trim(),
       media: photos,
@@ -697,7 +697,7 @@ function JournalistDashboardContent() {
                     {language === 'en' ? 'District' : language === 'ur' ? 'ضلع' : 'ज़िला'}
                   </span>
                   <span className="font-bold text-slate-800 dark:text-slate-100 truncate block">
-                    {currentUser?.city || 'सीतापुर'}
+                    {currentUser?.city || 'सुल्तानपुर'}
                   </span>
                 </div>
                 <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-700/60">
@@ -1168,7 +1168,7 @@ function JournalistDashboardContent() {
                       required
                       value={headline}
                       onChange={(e) => setHeadline(e.target.value)}
-                      placeholder={language === 'en' ? 'E.g.: New medical center inaugurated in district with 50 beds...' : 'उदा: सीतापुर में नए अस्पताल का लोकार्पण, 50 बेड की सुविधा शुरू...'}
+                      placeholder={language === 'en' ? 'E.g.: New medical center inaugurated in district with 50 beds...' : 'उदा: सुल्तानपुर में नए अस्पताल का लोकार्पण, 50 बेड की सुविधा शुरू...'}
                       className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
                     />
                   </div>
@@ -1199,7 +1199,7 @@ function JournalistDashboardContent() {
                         className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
                       >
                         <option value="state-city">{language === 'en' ? 'State / City' : 'राज्य / शहर विशेष'}</option>
-                        <option value="sitapur">{language === 'en' ? 'Sitapur News' : 'सीतापुर हलचल'}</option>
+                        <option value="sultanpur">{language === 'en' ? 'Sultanpur News' : 'सुल्तानपुर हलचल'}</option>
                         <option value="lucknow">{language === 'en' ? 'Lucknow News' : 'लखनऊ राजधानी'}</option>
                         <option value="politics">{language === 'en' ? 'Politics' : 'राजनीति'}</option>
                         <option value="national">{language === 'en' ? 'National' : 'राष्ट्रीय'}</option>
@@ -1216,7 +1216,7 @@ function JournalistDashboardContent() {
                         type="text"
                         value={city}
                         onChange={(e) => setCity(e.target.value)}
-                        placeholder="उदा: सीतापुर, लखनऊ, दिल्ली..."
+                        placeholder="उदा: सुल्तानपुर, लखनऊ, दिल्ली..."
                         className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
                       />
                     </div>
@@ -2020,7 +2020,7 @@ function JournalistDashboardContent() {
                       {language === 'en' ? 'Assigned District:' : language === 'ur' ? 'ضلع / علاقہ:' : 'अधिकार क्षेत्र / ज़िला:'}
                     </span>
                     <span className="font-bold text-sm text-slate-900 dark:text-white block mt-0.5">
-                      {currentUser?.city || (language === 'en' ? 'Sitapur (UP)' : 'सीतापुर (उत्तर प्रदेश)')}
+                      {currentUser?.city || (language === 'en' ? 'Sultanpur (UP)' : 'सुल्तानपुर (उत्तर प्रदेश)')}
                     </span>
                   </div>
                 </div>
@@ -2221,7 +2221,7 @@ function JournalistDashboardContent() {
                 </span>
               </div>
               <div className="flex flex-wrap gap-1.5 text-[11px]">
-                {['#सीतापुर_जलभराव', '#लखनऊ_एक्सप्रेसवे', '#किसान_एमएसपी', '#स्वास्थ्य_मिशन', '#स्मार्ट_सिटी'].map((tag) => (
+                {['#सुल्तानपुर_जलभराव', '#लखनऊ_एक्सप्रेसवे', '#किसान_एमएसपी', '#स्वास्थ्य_मिशन', '#स्मार्ट_सिटी'].map((tag) => (
                   <span
                     key={tag}
                     className="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium hover:text-amber-600 cursor-pointer transition"

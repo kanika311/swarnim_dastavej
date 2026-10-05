@@ -15,12 +15,12 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: 'स्वर्णिम दस्तावेज़ (Swarnim Dastavej) | डिजिटल न्यूज़, नागरिक पत्रकारिता एवं ई-पेपर',
-  description: 'स्वर्णिम दस्तावेज़ - उत्तर प्रदेश का अग्रणी दैनिक समाचार पत्र (RNI No. UPHIN/26/A7984)। लखनऊ, सीतापुर और अवध की प्रामाणिक जमीनी खबरें, नागरिक पत्रकारिता मंच एवं डिजिटल ई-पेपर।',
+  description: 'स्वर्णिम दस्तावेज़ - उत्तर प्रदेश का अग्रणी दैनिक समाचार पत्र (RNI No. UPHIN/26/A7984)। लखनऊ, सुल्तानपुर और अवध की प्रामाणिक जमीनी खबरें, नागरिक पत्रकारिता मंच एवं डिजिटल ई-पेपर।',
   keywords: [
     'स्वर्णिम दस्तावेज़',
     'Swarnim Dastavej',
     'UP News',
-    'Sitapur News',
+    'Sultanpur News',
     'Lucknow Daily',
     'Citizen Journalism',
     'Hindi Daily Samachar Patra',
@@ -38,7 +38,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: 'स्वर्णिम दस्तावेज़ | सत्य, साहस और स्वर्णिम सरोकार',
-    description: 'लखनऊ एवं सीतापुर का अग्रणी हिंदी दैनिक समाचार पत्र एवं नागरिक पत्रकारिता नेटवर्क।',
+    description: 'लखनऊ एवं सुल्तानपुर का अग्रणी हिंदी दैनिक समाचार पत्र एवं नागरिक पत्रकारिता नेटवर्क।',
     locale: 'hi_IN',
     type: 'website',
     images: ['/image.png?v=3'],

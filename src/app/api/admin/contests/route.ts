@@ -135,7 +135,7 @@ export async function PUT(request: Request) {
         const ex = authorMap.get(uId) || {
           userId: uId,
           userName: sub.submittedBy.name,
-          district: sub.submittedBy.district || sub.city || 'सीतापुर',
+          district: sub.submittedBy.district || sub.city || 'सुल्तानपुर',
           publishedReports: 0,
           views: 0,
           likes: 0,
@@ -163,7 +163,7 @@ export async function PUT(request: Request) {
           authorMap.set(uId, {
             userId: uId,
             userName: art.author.name,
-            district: art.city || 'सीतापुर',
+            district: art.city || 'सुल्तानपुर',
             publishedReports: 1,
             views: art.viewsCount || 0,
             likes: art.likesCount || 0,
@@ -186,7 +186,7 @@ export async function PUT(request: Request) {
           rank: prize.rank,
           userId: winnerEntry?.userId || 'unknown',
           userName: winnerEntry?.userName || 'अघोषित',
-          district: winnerEntry?.district || 'सीतापुर',
+          district: winnerEntry?.district || 'सुल्तानपुर',
           score: winnerEntry?.score || 0,
           prizeTitle: prize.title,
           prizeAmount: prize.amount || 0,

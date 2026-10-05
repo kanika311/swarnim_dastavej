@@ -106,7 +106,7 @@ export default function Header() {
     };
   }, [showLanguageMenu, showRoleMenu, showMobileLang]);
 
-  const cities = ['सभी शहर', 'लखनऊ', 'सीतापुर', 'कानपुर', 'अयोध्या', 'वाराणसी', 'प्रयागराज', 'दिल्ली'];
+  const cities = ['सभी शहर', 'लखनऊ', 'सुल्तानपुर', 'कानपुर', 'अयोध्या', 'वाराणसी', 'प्रयागराज', 'दिल्ली'];
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -429,7 +429,7 @@ export default function Header() {
                       {currentUser.role === 'citizen_journalist' ? (
                         <>
                           <PenTool className="w-3 h-3 text-red-600" />
-                          <span>{getLocalizedUserRole('citizen_journalist', language)} ({currentUser.city || (language === 'en' ? 'Sitapur' : 'सीतापुर')})</span>
+                          <span>{getLocalizedUserRole('citizen_journalist', language)} ({currentUser.city || (language === 'en' ? 'Sultanpur' : 'सुल्तानपुर')})</span>
                         </>
                       ) : (
                         <>
@@ -549,7 +549,7 @@ export default function Header() {
                 <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
               </div>
               <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
-                <span>ट्रेंडिंग: सीतापुर हाईवे, गगनयान, सरायन नदी, ई-पेपर</span>
+                <span>ट्रेंडिंग: सुल्तानपुर हाईवे, गगनयान, गोमती सफाई, ई-पेपर</span>
                 <button
                   type="submit"
                   className="bg-red-700 text-white font-bold px-4 py-1.5 rounded-lg hover:bg-red-800"
@@ -874,7 +874,7 @@ export default function Header() {
                   autoFocus
                   value={locationSearchQuery}
                   onChange={(e) => setLocationSearchQuery(e.target.value)}
-                  placeholder="राज्य या शहर खोजें (उदा: Lucknow, Patna, Jaipur, Sitapur, Kanpur, Mumbai)..."
+                  placeholder="राज्य या शहर खोजें (उदा: Lucknow, Patna, Jaipur, Sultanpur, Kanpur, Mumbai)..."
                   className="w-full pl-9 pr-8 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
                 />
                 {locationSearchQuery && (

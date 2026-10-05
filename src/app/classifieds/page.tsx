@@ -25,7 +25,7 @@ export default function ClassifiedsPage() {
   // Form State
   const [title, setTitle] = useState('');
   const [type, setType] = useState<any>('public_notice');
-  const [city, setCity] = useState('सीतापुर');
+  const [city, setCity] = useState('सुल्तानपुर');
   const [content, setContent] = useState('');
   const [contact, setContact] = useState('');
   const [successMsg, setSuccessMsg] = useState(false);
@@ -89,7 +89,7 @@ export default function ClassifiedsPage() {
               क्लासिफाइड, निविदाएं एवं सार्वजनिक सूचनाएं
             </h1>
             <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-2xl leading-relaxed">
-              सीतापुर, लखनऊ एवं अवध मंडल की अधिकृत नगर पालिका सूचनाएं, अल्पकालिक निविदाएं, शोक संदेश और व्यावसायिक विज्ञापन।
+              सुल्तानपुर, लखनऊ एवं अवध मंडल की अधिकृत नगर पालिका सूचनाएं, अल्पकालिक निविदाएं, शोक संदेश और व्यावसायिक विज्ञापन।
             </p>
           </div>
 

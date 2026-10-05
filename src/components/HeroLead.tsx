@@ -148,7 +148,7 @@ export default function HeroLead({ leadArticle, sideArticles }: HeroLeadProps) {
               <span className="w-2 h-2 rounded-full bg-amber-300 animate-ping"></span>
               प्रमुख खबरें (Top Headlines)
             </span>
-            <span className="text-[10px] text-red-200">लखनऊ - सीतापुर</span>
+            <span className="text-[10px] text-red-200">लखनऊ - सुल्तानपुर</span>
           </div>
 
           <div className="flex-1 flex flex-col justify-between space-y-3">
@@ -173,7 +173,7 @@ export default function HeroLead({ leadArticle, sideArticles }: HeroLeadProps) {
                     {art.headline}
                   </h3>
                   <div className="flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 mt-1">
-                    <span>{art.category === 'sitapur' ? 'सीतापुर' : art.category === 'state' ? 'उत्तर प्रदेश' : art.category}</span>
+                    <span>{art.category === 'sultanpur' || art.category === 'sitapur' ? 'सुल्तानपुर' : art.category === 'state' ? 'उत्तर प्रदेश' : art.category}</span>
                     <span className="flex items-center gap-0.5">
                       <Eye className="w-3 h-3" />
                       {art.viewsCount}

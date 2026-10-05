@@ -73,7 +73,7 @@ export async function GET(request: Request) {
       const ex = authorMap.get(uId) || {
         userId: uId,
         userName: sub.submittedBy.name || 'नागरिक पत्रकार',
-        district: sub.submittedBy.district || sub.city || 'सीतापुर',
+        district: sub.submittedBy.district || sub.city || 'सुल्तानपुर',
         publishedReports: 0,
         views: 0,
         likes: 0,

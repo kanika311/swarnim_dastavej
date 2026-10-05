@@ -9,6 +9,7 @@ export type ArticleCategory =
   | 'state' 
   | 'state-city'
   | 'lucknow' 
+  | 'sultanpur'
   | 'sitapur' 
   | 'politics' 
   | 'business' 

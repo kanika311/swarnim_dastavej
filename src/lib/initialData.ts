@@ -36,7 +36,7 @@ export const INITIAL_USERS: User[] = [
     email: 'sunil.reporter@swarnimdastavej.com',
     phone: '+91 91234 56789',
     role: 'staff_reporter',
-    city: 'सीतापुर',
+    city: 'सुल्तानपुर',
     preferredLanguage: 'hi',
     avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
     kycStatus: 'verified',
@@ -46,11 +46,11 @@ export const INITIAL_USERS: User[] = [
   },
   {
     id: 'user_citizen_1',
-    name: 'विकास शुक्ला (नागरिक पत्रकार - सीतापुर)',
+    name: 'विकास शुक्ला (नागरिक पत्रकार - सुल्तानपुर)',
     email: 'vikas.citizen@gmail.com',
     phone: '+91 99182 34567',
     role: 'citizen_journalist',
-    city: 'सीतापुर',
+    city: 'सुल्तानपुर',
     preferredLanguage: 'hi',
     avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
     kycStatus: 'verified',
@@ -58,7 +58,7 @@ export const INITIAL_USERS: User[] = [
       idProofType: 'Aadhaar Card',
       idNumber: 'XXXX-XXXX-4589',
       submittedAt: '2026-09-10T10:00:00Z',
-      district: 'सीतापुर'
+      district: 'सुल्तानपुर'
     },
     isActive: true,
     createdAt: '2026-09-10T09:30:00Z',
@@ -124,7 +124,7 @@ export const INITIAL_USERS: User[] = [
     email: 'priyanka.mishra24@gmail.com',
     phone: '+91 94150 77621',
     role: 'reader',
-    city: 'सीतापुर',
+    city: 'सुल्तानपुर',
     preferredLanguage: 'hi',
     avatarUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80',
     kycStatus: 'not_submitted',
@@ -165,16 +165,16 @@ export const INITIAL_USERS: User[] = [
 export const INITIAL_ARTICLES: Article[] = [
   {
     id: 'art-1',
-    slug: 'up-expressway-network-expansion-sitapur-lucknow',
-    headline: 'यूपी में हाईवे नेटवर्क का महा-विस्तार: लखनऊ-सीतापुर-लखीमपुर 6 लेन कॉरिडोर को मंजूरी, यात्रा समय आधा होगा',
+    slug: 'up-expressway-network-expansion-sultanpur-lucknow',
+    headline: 'यूपी में हाईवे नेटवर्क का महा-विस्तार: लखनऊ-सुल्तानपुर 6 लेन कॉरिडोर को मंजूरी, यात्रा समय आधा होगा',
     subHeadline: 'कैबिनेट बैठक में 4,200 करोड़ रुपये की परियोजना पर मुहर, औद्योगिक गलियारे को मिलेगी नई रफ्तार',
-    excerpt: 'उत्तर प्रदेश सरकार ने राजधानी लखनऊ से सीतापुर होते हुए लखीमपुर खीरी तक 6 लेन ग्रीनफील्ड एक्सेस-कंट्रोल्ड हाईवे के निर्माण को हरी झंडी दे दी है।',
-    body: `उत्तर प्रदेश कैबिनेट की अहम बैठक में राज्य के बुनियादी ढांचे को नई ऊंचाई देने वाला बड़ा फैसला लिया गया है। मुख्यमंत्री की अध्यक्षता में हुई बैठक में लखनऊ-सीतापुर-लखीमपुर 6 लेन कॉरिडोर परियोजना को अंतिम स्वीकृति प्रदान की गई।
+    excerpt: 'उत्तर प्रदेश सरकार ने राजधानी लखनऊ से सुल्तानपुर तक 6 लेन ग्रीनफील्ड एक्सेस-कंट्रोल्ड हाईवे के निर्माण को हरी झंडी दे दी है।',
+    body: `उत्तर प्रदेश कैबिनेट की अहम बैठक में राज्य के बुनियादी ढांचे को नई ऊंचाई देने वाला बड़ा फैसला लिया गया है। मुख्यमंत्री की अध्यक्षता में हुई बैठक में लखनऊ-सुल्तानपुर 6 लेन कॉरिडोर परियोजना को अंतिम स्वीकृति प्रदान की गई।
 
 परियोजना की मुख्य विशेषताएं:
 • 4,200 करोड़ रुपये की अनुमानित लागत से 138 किलोमीटर लंबा आधुनिक एक्सप्रेसवे बनेगा।
-• सीतापुर और महोली के पास लॉजिस्टिक्स हब और एग्री-प्रोसेसिंग क्लस्टर स्थापित होंगे।
-• लखनऊ से सीतापुर की दूरी अब महज 45 मिनट और लखीमपुर 1 घंटा 15 मिनट में तय होगी।
+• सुल्तानपुर और कूरेभार के पास लॉजिस्टिक्स हब और एग्री-प्रोसेसिंग क्लस्टर स्थापित होंगे।
+• लखनऊ से सुल्तानपुर की दूरी अब मात्र 1 घंटे में तय होगी।
 • स्थानीय किसानों को अपनी उपज लखनऊ व दिल्ली मंडियों तक तीव्र गति से पहुंचाने की सुगम सुविधा मिलेगी।
 
 पीडब्ल्यूडी और यूपीडा के अधिकारियों के अनुसार, भूमि अधिग्रहण की प्रक्रिया अगले माह से शुरू होगी और वर्ष 2028 तक कॉरिडोर को आम जनता के लिए खोलने का लक्ष्य तय किया गया है।`,
@@ -194,26 +194,26 @@ export const INITIAL_ARTICLES: Article[] = [
     likesCount: 924,
     commentsCount: 68,
     sharesCount: 312,
-    tags: ['उत्तर प्रदेश', 'लखनऊ', 'सीतापुर', 'एक्सप्रेसवे', 'बुनियादी ढांचा', 'कैबिनेट'],
+    tags: ['उत्तर प्रदेश', 'लखनऊ', 'सुल्तानपुर', 'एक्सप्रेसवे', 'बुनियादी ढांचा', 'कैबिनेट'],
     readingTimeMinutes: 3,
     status: 'published'
   },
   {
     id: 'art-2',
-    slug: 'sitapur-sarayan-river-cleanliness-drive-citizen-initiative',
-    headline: 'सीतापुर में सरायन नदी को पुनर्जीवित करने आगे आए युवा: श्रमदान से निकाला 10 टन कचरा, प्रशासन ने भी दिया साथ',
+    slug: 'sultanpur-gomti-river-cleanliness-drive-citizen-initiative',
+    headline: 'सुल्तानपुर में गोमती नदी को पुनर्जीवित करने आगे आए युवा: श्रमदान से निकाला 10 टन कचरा, प्रशासन ने भी दिया साथ',
     subHeadline: 'स्वर्णिम दूत ग्राउंड रिपोर्ट: स्थानीय नागरिकों और स्वयंसेवकों की मुहिम रंग लाई',
-    excerpt: 'सीतापुर की ऐतिहासिक सरायन नदी को प्लास्टिक मुक्त बनाने के लिए 300 से अधिक युवाओं ने रविवार सुबह विशाल स्वच्छता अभियान चलाया।',
-    body: `सीतापुर की पहचान कही जाने वाली सरायन नदी के अस्तित्व को बचाने के लिए शहर के जागरूक नागरिकों और युवाओं ने मिसाल पेश की है। रविवार सुबह 6 बजे से ही लालबाग और वैदेही वाटिका घाट पर युवाओं, व्यापारियों और सेवानिवृत्त अधिकारियों का हुजूम उमड़ पड़ा।
+    excerpt: 'सुल्तानपुर की ऐतिहासिक गोमती नदी को प्लास्टिक मुक्त बनाने के लिए 300 से अधिक युवाओं ने रविवार सुबह विशाल स्वच्छता अभियान चलाया।',
+    body: `सुल्तानपुर की पहचान कही जाने वाली गोमती नदी के अस्तित्व को बचाने के लिए शहर के जागरूक नागरिकों और युवाओं ने मिसाल पेश की है। रविवार सुबह 6 बजे से ही लालबाग और वैदेही वाटिका घाट पर युवाओं, व्यापारियों और सेवानिवृत्त अधिकारियों का हुजूम उमड़ पड़ा।
 
 अभियान के मुख्य बिंदु:
 1. पांच घंटे के निरंतर श्रमदान से नदी की धारा से लगभग 10 टन जलकुंभी, प्लास्टिक कचरा और सिल्ट हटाया गया।
-2. नगर पालिका परिषद सीतापुर ने कचरा उठाने के लिए 6 ट्रैक्टर-ट्रॉली और 2 जेसीबी मशीनें मौके पर उपलब्ध कराईं।
+2. नगर पालिका परिषद सुल्तानपुर ने कचरा उठाने के लिए 6 ट्रैक्टर-ट्रॉली और 2 जेसीबी मशीनें मौके पर उपलब्ध कराईं।
 3. युवाओं ने नदी के दोनों किनारों पर 500 औषधीय व छायादार पौधे रोपने का संकल्प लिया।
 
 स्थानीय समाजसेवी विकास शुक्ला ने बताया कि यह अभियान हर रविवार को निरंतर जारी रहेगा जब तक कि सरायन नदी का जल दोबारा आचमन योग्य नहीं हो जाता।`,
-    category: 'sitapur',
-    city: 'सीतापुर',
+    category: 'sultanpur',
+    city: 'सुल्तानपुर',
     language: 'hi',
     coverImage: 'https://images.unsplash.com/photo-1618477461853-cf6ed80faba5?w=1000&auto=format&fit=crop&q=80',
     author: {
@@ -228,7 +228,7 @@ export const INITIAL_ARTICLES: Article[] = [
     likesCount: 1240,
     commentsCount: 94,
     sharesCount: 520,
-    tags: ['सीतापुर', 'सरायन नदी', 'स्वच्छता', 'नागरिक पत्रकार', 'पर्यावरण'],
+    tags: ['सुल्तानपुर', 'गोमती नदी', 'स्वच्छता', 'नागरिक पत्रकार', 'पर्यावरण'],
     readingTimeMinutes: 4,
     status: 'published'
   },
@@ -403,16 +403,16 @@ export const INITIAL_ARTICLES: Article[] = [
   // ENGLISH ARTICLES
   {
     id: 'art-en-1',
-    slug: 'up-expressway-network-expansion-lucknow-sitapur',
-    headline: 'Mega Expansion of UP Highway Network: Lucknow-Sitapur-Lakhimpur 6-Lane Corridor Approved, Travel Time Halved',
+    slug: 'up-expressway-network-expansion-lucknow-sultanpur',
+    headline: 'Mega Expansion of UP Highway Network: Lucknow-Sultanpur 6-Lane Corridor Approved, Travel Time Halved',
     subHeadline: 'Cabinet approves ₹4,200 crore high-speed greenfield project to accelerate industrial corridors and agribusiness',
-    excerpt: 'Uttar Pradesh government gives green signal to the 138-km 6-lane access-controlled greenfield expressway connecting capital Lucknow with Lakhimpur Kheri via Sitapur.',
-    body: `In a landmark cabinet meeting chaired by the Chief Minister, the Uttar Pradesh government approved the major high-speed Lucknow-Sitapur-Lakhimpur 6-lane expressway project.
+    excerpt: 'Uttar Pradesh government gives green signal to the 138-km 6-lane access-controlled greenfield expressway connecting capital Lucknow with Sultanpur.',
+    body: `In a landmark cabinet meeting chaired by the Chief Minister, the Uttar Pradesh government approved the major high-speed Lucknow-Sultanpur 6-lane expressway project.
 
 Key Highlights of the Project:
 • Constructed at an estimated cost of ₹4,200 crore spanning 138 kilometers of modern greenfield expressway.
-• Dedicated logistics hub and agro-processing clusters to be established near Sitapur and Maholi.
-• Commuting time between Lucknow and Sitapur slashed to just 45 minutes, and Lakhimpur within 1 hour 15 minutes.
+• Dedicated logistics hub and agro-processing clusters to be established near Sultanpur and Kurebhar.
+• Commuting time between Lucknow and Sultanpur slashed to just 1 hour.
 • Direct, high-speed freight access for regional sugarcane and grain farmers to major agricultural mandis in Lucknow and Delhi NCR.
 
 Officials from PWD and UPEIDA confirmed that land acquisition will commence next month, with target commissioning slated for 2028.`,
@@ -432,26 +432,26 @@ Officials from PWD and UPEIDA confirmed that land acquisition will commence next
     likesCount: 1120,
     commentsCount: 84,
     sharesCount: 420,
-    tags: ['Uttar Pradesh', 'Lucknow', 'Sitapur', 'Expressway', 'Infrastructure', 'Cabinet'],
+    tags: ['Uttar Pradesh', 'Lucknow', 'Sultanpur', 'Expressway', 'Infrastructure', 'Cabinet'],
     readingTimeMinutes: 3,
     status: 'published'
   },
   {
     id: 'art-en-2',
-    slug: 'sitapur-sarayan-river-cleanliness-drive-citizen-initiative',
-    headline: 'Youth Step Forward to Revitalize Sarayan River in Sitapur: 10 Tons of Waste Removed with Citizen Action',
+    slug: 'sultanpur-gomti-river-cleanliness-drive-citizen-initiative',
+    headline: 'Youth Step Forward to Revitalize Gomti River in Sultanpur: 10 Tons of Waste Removed with Citizen Action',
     subHeadline: 'Swarnim Dastavej Ground Report: Community-driven environmental action inspires civic authorities',
-    excerpt: 'Over 300 passionate volunteers and young citizens gathered early Sunday morning at Sitapur ghats to clean the historic Sarayan river.',
-    body: `Demonstrating exemplary civic consciousness, citizens and youths in Sitapur spearheaded a massive cleanup movement along the banks of the Sarayan river.
+    excerpt: 'Over 300 passionate volunteers and young citizens gathered early Sunday morning at Sultanpur ghats to clean the historic Gomti river.',
+    body: `Demonstrating exemplary civic consciousness, citizens and youths in Sultanpur spearheaded a massive cleanup movement along the banks of the Gomti river.
 
 Key Milestones:
 1. Five hours of volunteer manual labor retrieved over 10 tons of water hyacinth, plastics, and debris.
-2. Sitapur Municipal Council assisted by providing 6 tractor-trolleys and earthmoving machinery.
+2. Sultanpur Municipal Council assisted by providing 6 tractor-trolleys and earthmoving machinery.
 3. Volunteers took a pledge to plant 500 indigenous shade and medicinal trees along both river banks.
 
 Local social activist Vikas Shukla stated that the weekend drives will continue until the historic waterbody achieves clean ecological balance.`,
-    category: 'sitapur',
-    city: 'Sitapur',
+    category: 'sultanpur',
+    city: 'Sultanpur',
     language: 'en',
     coverImage: 'https://images.unsplash.com/photo-1618477461853-cf6ed80faba5?w=1000&auto=format&fit=crop&q=80',
     author: {
@@ -466,7 +466,7 @@ Local social activist Vikas Shukla stated that the weekend drives will continue 
     likesCount: 1350,
     commentsCount: 105,
     sharesCount: 580,
-    tags: ['Sitapur', 'Sarayan River', 'Cleanliness', 'Environment', 'Citizen Journalism'],
+    tags: ['Sultanpur', 'Gomti River', 'Cleanliness', 'Environment', 'Citizen Journalism'],
     readingTimeMinutes: 3,
     status: 'published'
   },
@@ -619,11 +619,11 @@ Farmers across Uttar Pradesh can now drastically cut their irrigation costs with
   // URDU ARTICLES
   {
     id: 'art-ur-1',
-    slug: 'up-expressway-network-expansion-lucknow-sitapur-ur',
-    headline: 'یوپی میں ہائی وے نیٹ ورک کی بڑی توسیع: لکھنؤ-سیتاپور-لکھیم پور 6 لین کوریڈور کی منظوری، سفری وقت آدھا ہوگا',
+    slug: 'up-expressway-network-expansion-lucknow-sultanpur-ur',
+    headline: 'یوپی میں ہائی وے نیٹ ورک کی بڑی توسیع: لکھنؤ-سلطان پور 6 لین کوریڈور کی منظوری، سفری وقت آدھا ہوگا',
     subHeadline: 'کابینہ میٹنگ میں 4,200 کروڑ روپے کے منصوبے پر مہر، صنعتی کوریڈور کو نئی رفتار ملے گی',
-    excerpt: 'اتر پردیش حکومت نے راجدھانی لکھنؤ سے سیتاپور ہوتے ہوئے لکھیم پور کھیری تک 6 لین ایکسپریس وے کی تعمیر کو منظوری دے دی ہے۔',
-    body: `اتر پردیش کابینہ کی اہم میٹنگ میں ریاست کے بنیادی ڈھانچے کو نئی بلندی دینے والا بڑا فیصلہ لیا گیا ہے۔ لکھنؤ-سیتاپور-لکھیم پور 6 لین کوریڈور منصوبے کو حتمی منظوری مل گئی ہے۔`,
+    excerpt: 'اتر پردیش حکومت نے راجدھانی لکھنؤ سے سلطان پور تک 6 لین ایکسپریس وے کی تعمیر کو منظوری دے دی ہے۔',
+    body: `اتر پردیش کابینہ کی اہم میٹنگ میں ریاست کے بنیادی ڈھانچے کو نئی بلندی دینے والا بڑا فیصلہ لیا گیا ہے۔ لکھنؤ-سلطان پور 6 لین کوریڈور منصوبے کو حتمی منظوری مل گئی ہے۔`,
     category: 'state',
     city: 'لکھنؤ',
     language: 'ur',
@@ -640,7 +640,7 @@ Farmers across Uttar Pradesh can now drastically cut their irrigation costs with
     likesCount: 420,
     commentsCount: 38,
     sharesCount: 180,
-    tags: ['اتر پردیش', 'لکھنؤ', 'سیتاپور', 'ایکسپریس وے'],
+    tags: ['اتر پردیش', 'لکھنؤ', 'سلطان پور', 'ایکسپریس وے'],
     readingTimeMinutes: 3,
     status: 'published'
   },
@@ -685,18 +685,18 @@ export function isSeedArticle(article: { id?: string; headline?: string }) {
 export const INITIAL_SUBMISSIONS: CitizenSubmission[] = [
   {
     id: 'sub-101',
-    headline: 'सीतापुर-लहरपुर मार्ग पर पुलिया टूटने से 20 गांवों का संपर्क कटा, स्कूल जाने वाले बच्चे परेशान',
+    headline: 'सुल्तानपुर-कुड़वार मार्ग पर पुलिया टूटने से 20 गांवों का संपर्क कटा, स्कूल जाने वाले बच्चे परेशान',
     subHeadline: 'बारिश के बाद धंसी पुलिया, ग्रामीणों ने खुद बांस-बल्ली लगाकर बनाया कामचलाऊ रास्ता',
-    body: 'सीतापुर जिले के लहरपुर तहसील अंतर्गत ग्राम पंचायत मानपुर के पास मुख्य मार्ग की पुलिया धंस जाने से दो दर्जन गांवों का आवागमन पूरी तरह ठप हो गया है। प्राथमिक विद्यालय और कन्या इंटर कॉलेज जाने वाली छात्राओं को प्रतिदिन जान जोखिम में डालकर नाला पार करना पड़ रहा है। ग्रामीणों का आरोप है कि पिछले छह माह से लोक निर्माण विभाग को लगातार प्रार्थना पत्र दिए गए, परंतु कोई ठोस कार्रवाई नहीं हुई।',
-    category: 'sitapur',
-    city: 'सीतापुर',
+    body: 'सुल्तानपुर जिले के कुड़वार तहसील अंतर्गत ग्राम पंचायत के पास मुख्य मार्ग की पुलिया धंस जाने से दो दर्जन गांवों का आवागमन पूरी तरह ठप हो गया है। प्राथमिक विद्यालय और कन्या इंटर कॉलेज जाने वाली छात्राओं को प्रतिदिन जान जोखिम में डालकर नाला पार करना पड़ रहा है। ग्रामीणों का आरोप है कि पिछले छह माह से लोक निर्माण विभाग को लगातार प्रार्थना पत्र दिए गए, परंतु कोई ठोस कार्रवाई नहीं हुई।',
+    category: 'sultanpur',
+    city: 'सुल्तानपुर',
     language: 'hi',
     submittedBy: {
       id: 'user_citizen_1',
       name: 'विकास शुक्ला',
       role: 'citizen_journalist',
       phone: '+91 99182 34567',
-      district: 'सीतापुर'
+      district: 'सुल्तानपुर'
     },
     media: [
       {
@@ -708,7 +708,7 @@ export const INITIAL_SUBMISSIONS: CitizenSubmission[] = [
     ],
     hasRecordedVideo: true,
     geoTag: {
-      locationName: 'मानपुर चौराहा, लहरपुर रोड, सीतापुर',
+      locationName: 'कुड़वार चौराहा, मुख्य मार्ग, सुल्तानपुर',
       coordinates: '27.7123, 80.8912'
     },
     status: 'pending_review',
@@ -760,17 +760,17 @@ export const INITIAL_SUBMISSIONS: CitizenSubmission[] = [
   },
   {
     id: 'sub-103',
-    headline: 'महमूदाबाद सीतापुर: सामुदायिक स्वास्थ्य केंद्र में डॉक्टरों की कमी, मरीज 40 किमी दूर जिला अस्पताल रेफर होने को विवश',
+    headline: 'कादीपुर सुल्तानपुर: सामुदायिक स्वास्थ्य केंद्र में डॉक्टरों की कमी, मरीज 40 किमी दूर जिला अस्पताल रेफर होने को विवश',
     subHeadline: 'अल्ट्रासाउंड और डिजिटल एक्स-रे मशीनें धूल फांक रहीं, टेक्नीशियन के पद 3 वर्षों से रिक्त',
     body: 'महमूदाबाद ब्लॉक के सामुदायिक स्वास्थ्य केंद्र में चिकित्सा सुविधाओं की बदहाली चरम पर है। तीन लाख से अधिक ग्रामीण आबादी वाले इस क्षेत्र में 5 स्वीकृत डॉक्टरों के सापेक्ष केवल 1 संविदा चिकित्सक तैनात हैं।',
-    category: 'sitapur',
-    city: 'सीतापुर',
+    category: 'sultanpur',
+    city: 'सुल्तानपुर',
     language: 'hi',
     submittedBy: {
       id: 'user_citizen_1',
       name: 'विकास शुक्ला',
       role: 'citizen_journalist',
-      district: 'सीतापुर'
+      district: 'सुल्तानपुर'
     },
     media: [],
     status: 'sent_back',
@@ -808,7 +808,7 @@ export const INITIAL_EPAPER_EDITIONS: EPaperEdition[] = [
     pages: [
       {
         pageNumber: 1,
-        title: 'मुख्य पृष्ठ (Front Page) - लखनऊ-सीतापुर एक्सप्रेसवे, गगनयान टेस्ट',
+        title: 'मुख्य पृष्ठ (Front Page) - लखनऊ-सुल्तानपुर एक्सप्रेसवे, गगनयान टेस्ट',
         imageUrl: 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=1200&auto=format&fit=crop&q=80'
       },
       {
@@ -818,7 +818,7 @@ export const INITIAL_EPAPER_EDITIONS: EPaperEdition[] = [
       },
       {
         pageNumber: 3,
-        title: 'अवध परिक्रमा (लखनऊ व सीतापुर नगर विशेष)',
+        title: 'अवध परिक्रमा (लखनऊ व सुल्तानपुर नगर विशेष)',
         imageUrl: 'https://images.unsplash.com/photo-1586339949916-3e9457bef6d3?w=1200&auto=format&fit=crop&q=80'
       },
       {
@@ -860,7 +860,7 @@ export const INITIAL_EPAPER_EDITIONS: EPaperEdition[] = [
       },
       {
         pageNumber: 3,
-        title: 'Awadh & City Chronicle - Lucknow, Sitapur & Ayodhya Spotlight',
+        title: 'Awadh & City Chronicle - Lucknow, Sultanpur & Ayodhya Spotlight',
         imageUrl: 'https://images.unsplash.com/photo-1586339949916-3e9457bef6d3?w=1200&auto=format&fit=crop&q=80'
       },
       {
@@ -892,7 +892,7 @@ export const INITIAL_EPAPER_EDITIONS: EPaperEdition[] = [
     pages: [
       {
         pageNumber: 1,
-        title: 'صفحہ اول - لکھنؤ-سیتاپور ایکسپریس وے، گگن یان مشن کی شاندار کامیابی',
+        title: 'صفحہ اول - لکھنؤ-سلطان پور ایکسپریس وے، گگن یان مشن کی شاندار کامیابی',
         imageUrl: 'https://images.unsplash.com/photo-1586339949916-3e9457bef6d3?w=1200&auto=format&fit=crop&q=80'
       },
       {
@@ -1000,10 +1000,10 @@ export const INITIAL_CLASSIFIEDS: ClassifiedItem[] = [
   {
     id: 'clf-1',
     type: 'public_notice',
-    title: 'सार्वजनिक सूचना: नगर पालिका परिषद सीतापुर',
-    content: 'सर्वसाधारण को सूचित किया जाता है कि वार्ड संख्या 14 एवं 15 में पाइपलाइन इंटरकनेक्शन कार्य हेतु 28 एवं 29 सितम्बर को प्रातः 10 से सायं 4 बजे तक जलापूर्ति बाधित रहेगी। नागरिक पर्याप्त जल भंडारण कर लें। - अधिशासी अधिकारी, नपाप सीतापुर।',
+    title: 'सार्वजनिक सूचना: नगर पालिका परिषद सुल्तानपुर',
+    content: 'सर्वसाधारण को सूचित किया जाता है कि वार्ड संख्या 14 एवं 15 में पाइपलाइन इंटरकनेक्शन कार्य हेतु 28 एवं 29 सितम्बर को प्रातः 10 से सायं 4 बजे तक जलापूर्ति बाधित रहेगी। नागरिक पर्याप्त जल भंडारण कर लें। - अधिशासी अधिकारी, नपाप सुल्तानपुर।',
     contact: '05862-242100',
-    city: 'सीतापुर',
+    city: 'सुल्तानपुर',
     publishedDate: '2026-09-27'
   },
   {
@@ -1011,8 +1011,8 @@ export const INITIAL_CLASSIFIEDS: ClassifiedItem[] = [
     type: 'tender',
     title: 'अल्पकालिक निविदा आमंत्रण सूचना (PCC रोड निर्माण)',
     content: 'ग्राम पंचायत रायपुर कलां अंतर्गत 400 मीटर सीसी रोड एवं नाली निर्माण कार्य हेतु पंजीकृत ठेकेदारों से मुहरबंद निविदाएं आमंत्रित की जाती हैं। अनुमानित लागत रु 8.50 लाख। निविदा प्रपत्र जमा करने की अंतिम तिथि 05 अक्टूबर 2026।',
-    contact: 'ग्राम विकास अधिकारी, ब्लॉक सिधौली (सीतापुर)',
-    city: 'सीतापुर',
+    contact: 'ग्राम विकास अधिकारी, ब्लॉक लंभुआ (सुल्तानपुर)',
+    city: 'सुल्तानपुर',
     publishedDate: '2026-09-27'
   },
   {
@@ -1027,10 +1027,10 @@ export const INITIAL_CLASSIFIEDS: ClassifiedItem[] = [
   {
     id: 'clf-4',
     type: 'property',
-    title: 'व्यावसायिक भूमि विक्रय हेतु उपलब्ध: सीतापुर बाईपास',
-    content: 'सीतापुर बाईपास नेशनल हाईवे-24 पर 12,000 वर्ग फुट व्यावसायिक भूखंड गोदाम / मैरिज लॉन हेतु तत्काल बिक्री के लिए उपलब्ध। स्पष्ट दाखिल-खारिज और चौड़ा फ्रंट।',
+    title: 'व्यावसायिक भूमि विक्रय हेतु उपलब्ध: सुल्तानपुर बाईपास',
+    content: 'सुल्तानपुर बाईपास लखनऊ-वाराणसी हाईवे पर 12,000 वर्ग फुट व्यावसायिक भूखंड गोदाम / मैरिज लॉन हेतु तत्काल बिक्री के लिए उपलब्ध। स्पष्ट दाखिल-खारिज और चौड़ा फ्रंट।',
     contact: '+91 98390 11223',
-    city: 'सीतापुर',
+    city: 'सुल्तानपुर',
     publishedDate: '2026-09-26'
   }
 ];
@@ -1057,7 +1057,7 @@ export const INITIAL_GRIEVANCES: GrievanceComplaint[] = [
     complainantEmail: 'suresh.maurya@yahoo.com',
     complainantPhone: '+91 98380 44556',
     category: 'defamation',
-    complaintDetails: 'सीतापुर व्यापार मंडल की बैठक से संबंधित पूर्व प्रकाशित एक समाचार में व्यक्त किए गए कथन पर आपत्ति है।',
+    complaintDetails: 'सुल्तानपुर व्यापार मंडल की बैठक से संबंधित पूर्व प्रकाशित एक समाचार में व्यक्त किए गए कथन पर आपत्ति है।',
     status: 'under_review',
     submittedAt: '2026-09-26T16:00:00Z'
   }
@@ -1093,8 +1093,8 @@ export const INITIAL_PRICING_PLANS: EPaperPricingPlan[] = [
     duration: 'monthly',
     durationLabel: '1 माह (30 दिन)',
     durationLabelEn: '1 Month (30 Days)',
-    description: '30 दिनों तक लखनऊ, सीतापुर एवं सभी क्षेत्रीय दैनिक ई-पेपर का असीमित वाचन।',
-    descriptionEn: 'Unlimited daily reading for 30 days across Lucknow, Sitapur & all editions.',
+    description: '30 दिनों तक लखनऊ, सुल्तानपुर एवं सभी क्षेत्रीय दैनिक ई-पेपर का असीमित वाचन।',
+    descriptionEn: 'Unlimited daily reading for 30 days across Lucknow, Sultanpur & all editions.',
     features: [
       '30 दिन असीमित ई-पेपर एक्सेस',
       'सभी जिलों के संस्करण',

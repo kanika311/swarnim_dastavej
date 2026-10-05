@@ -43,7 +43,7 @@ const DEFAULT_FALLBACK_ADS: AdBanner[] = [
     clicks: 39
   },
   {
-    id: 'ad_sitapur_agro',
+    id: 'ad_sultanpur_agro',
     title: 'किसान समृद्धि सोलर पंप योजना: 75% तक की सरकारी सब्सिडी के साथ अपने खेतों में लगाएं आधुनिक सोलर पंप।',
     advertiser: 'राष्ट्रीय कृषि एवं सौर ऊर्जा मिशन',
     imageUrl: 'https://images.unsplash.com/photo-1509391365360-2e959784a276?w=800&auto=format&fit=crop&q=80',

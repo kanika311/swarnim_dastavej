@@ -41,7 +41,7 @@ import {
 const NEWSPAPER_CONTENT = {
   hi: {
     mastheadTitle: 'स्वर्णिम दस्तावेज़',
-    mastheadMotto: 'सत्य, निष्पक्षता एवं स्वर्णिम सरोकार | लखनऊ एवं सीतापुर का अग्रणी दैनिक',
+    mastheadMotto: 'सत्य, निष्पक्षता एवं स्वर्णिम सरोकार | लखनऊ एवं सुल्तानपुर का अग्रणी दैनिक',
     dayName: 'रविवार',
     price: 'मूल्य: ₹4.00',
     yearIssue: 'वर्ष 12 | अंक 245',
@@ -51,13 +51,13 @@ const NEWSPAPER_CONTENT = {
     fullPageRead: 'फुल स्क्रीन पढ़ें',
     page1: {
       badge: 'बड़ी खबर • कैबिनेट फैसला',
-      headline: 'यूपी में हाईवे नेटवर्क का महा-विस्तार: लखनऊ-सीतापुर-लखीमपुर 6 लेन कॉरिडोर को मंजूरी, यात्रा समय आधा होगा',
-      excerpt: '4,200 करोड़ की लागत से 138 किमी लंबा आधुनिक ग्रीनफील्ड एक्सप्रेसवे बनेगा। सीतापुर से लखनऊ अब मात्र 45 मिनट में।',
-      photoCaption: 'लखनऊ-सीतापुर एक्सप्रेसवे रूट एवं औद्योगिक गलियारा योजना',
+      headline: 'यूपी में हाईवे नेटवर्क का महा-विस्तार: लखनऊ-सुल्तानपुर 6 लेन कॉरिडोर को मंजूरी, यात्रा समय आधा होगा',
+      excerpt: '4,200 करोड़ की लागत से 138 किमी लंबा आधुनिक ग्रीनफील्ड एक्सप्रेसवे बनेगा। सुल्तानपुर से लखनऊ अब मात्र 45 मिनट में।',
+      photoCaption: 'लखनऊ-सुल्तानपुर एक्सप्रेसवे रूट एवं औद्योगिक गलियारा योजना',
       side1Tag: 'अंतरिक्ष • इसरो',
       side1Title: 'गगनयान मानवरहित मिशन की सफल लैंडिंग, अंतरिक्ष में भारत का दबदबा',
-      side2Tag: 'सीतापुर विशेष',
-      side2Title: 'सरायन नदी को पुनर्जीवित करने आगे आए युवा, निकाला 10 टन कचरा',
+      side2Tag: 'सुल्तानपुर विशेष',
+      side2Title: 'गोमती नदी को पुनर्जीवित करने आगे आए युवा, निकाला 10 टन कचरा',
       schemeTag: 'पीएम कुसुम योजना:',
       schemeText: 'किसानों को सोलर पंप पर 70% सब्सिडी, ऑनलाइन आवेदन जारी।',
       schemeDept: 'कृषि विभाग'
@@ -78,17 +78,17 @@ const NEWSPAPER_CONTENT = {
       footer: 'स्वर्णिम दस्तावेज़ • उत्तर प्रदेश संस्करण'
     },
     page3: {
-      header: 'अवध परिक्रमा (लखनऊ व सीतापुर नगर)',
+      header: 'अवध परिक्रमा (लखनऊ व सुल्तानपुर नगर)',
       leadTag: 'लखनऊ मेट्रो',
       leadTitle: 'लखनऊ मेट्रो फेज-2: चारबाग से वसंत कुंज 11.8 किमी रूट की डीपीआर मंजूर, 12 स्टेशनों को कनेक्टिविटी',
       leadExcerpt: 'अमीनाबाद, चौक, ठाकुरगंज और मेडिकल कॉलेज के लाखों व्यापारियों व मरीजों को जाम से मुक्ति मिलेगी।',
-      col1Tag: 'सीतापुर नवीन मंडी',
+      col1Tag: 'सुल्तानपुर नवीन मंडी',
       col1Title: 'गेहूं और सरसों की रिकॉर्ड आवक, किसानों को मिले ₹2,425 प्रति क्विंटल',
-      col2Tag: 'नैमिषारण्य धाम',
-      col2Title: 'चक्रतीर्थ सौंदर्यीकरण हेतु 120 करोड़ की परियोजना को अंतिम मंजूरी',
+      col2Tag: 'विजेथुआ महावीरन धाम',
+      col2Title: 'धाम सौंदर्यीकरण हेतु 120 करोड़ की परियोजना को अंतिम मंजूरी',
       bannerTag: 'जनसमस्या व समाधान',
-      bannerTitle: 'सीतापुर-लहरपुर मार्ग पर टूटी पुलिया की मरम्मत शुरू, ग्रामीणों की मांग पर प्रशासन ने लिया संज्ञान',
-      footer: 'सीतापुर एवं लखनऊ जिला संवाद ब्यूरो'
+      bannerTitle: 'सुल्तानपुर-कुड़वार मार्ग पर टूटी पुलिया की मरम्मत शुरू, ग्रामीणों की मांग पर प्रशासन ने लिया संज्ञान',
+      footer: 'सुल्तानपुर एवं लखनऊ जिला संवाद ब्यूरो'
     },
     page4: {
       header: 'संपादकीय एवं विचार मंच (Editorial & Op-Ed)',
@@ -122,7 +122,7 @@ const NEWSPAPER_CONTENT = {
       jobsTitle: 'रोजगार सूचना:',
       jobsText: 'स्वर्णिम दस्तावेज़ डिजिटल डेस्क हेतु उप-संपादक व अनुवादक की आवश्यकता। बायोडाटा भेजें।',
       weatherTitle: 'मौसम पूर्वानुमान:',
-      weatherText: 'लखनऊ व सीतापुर: अधिकतम 30°C, न्यूनतम 22°C। आंशिक बादल छाए रहने की संभावना।',
+      weatherText: 'लखनऊ व सुल्तानपुर: अधिकतम 30°C, न्यूनतम 22°C। आंशिक बादल छाए रहने की संभावना।',
       footer: 'स्वर्णिम दस्तावेज़ दैनिक समाचार पत्र • मुद्रित एवं डिजिटल संस्करण • समापन पृष्ठ'
     }
   },
@@ -138,13 +138,13 @@ const NEWSPAPER_CONTENT = {
     fullPageRead: 'Read Fullscreen',
     page1: {
       badge: 'BREAKING • CABINET DECISION',
-      headline: 'Major Highway Expansion in UP: Lucknow-Sitapur-Lakhimpur 6-Lane Corridor Approved, Travel Time Halved',
-      excerpt: 'Modern 138-km greenfield expressway to be built at a cost of ₹4,200 Cr. Sitapur to Lucknow commute now in just 45 minutes.',
-      photoCaption: 'Lucknow-Sitapur Expressway Route & Industrial Corridor Plan',
+      headline: 'Major Highway Expansion in UP: Lucknow-Sultanpur 6-Lane Corridor Approved, Travel Time Halved',
+      excerpt: 'Modern 138-km greenfield expressway to be built at a cost of ₹4,200 Cr. Sultanpur to Lucknow commute now in just 45 minutes.',
+      photoCaption: 'Lucknow-Sultanpur Expressway Route & Industrial Corridor Plan',
       side1Tag: 'Space • ISRO',
       side1Title: 'Successful Unmanned Gaganyaan Touchdown, India Solidifies Space Dominance',
-      side2Tag: 'Sitapur Focus',
-      side2Title: 'Youth Step Forward to Rejuvenate Sarayan River, Remove 10 Tons of Waste',
+      side2Tag: 'Sultanpur Focus',
+      side2Title: 'Youth Step Forward to Rejuvenate Gomti River, Remove 10 Tons of Waste',
       schemeTag: 'PM-KUSUM Scheme:',
       schemeText: '70% subsidy for farmers on solar agricultural pumps, online portal open.',
       schemeDept: 'Dept of Agriculture'
@@ -165,17 +165,17 @@ const NEWSPAPER_CONTENT = {
       footer: 'Swarnim Dastavej • Uttar Pradesh Edition'
     },
     page3: {
-      header: 'Awadh Circuit (Lucknow & Sitapur Metropolitan)',
+      header: 'Awadh Circuit (Lucknow & Sultanpur Metropolitan)',
       leadTag: 'Lucknow Metro',
       leadTitle: 'Lucknow Metro Phase-2: DPR Approved for 11.8 km Charbagh-Vasant Kunj Route, 12 Stations Added',
       leadExcerpt: 'Key decongestion relief for Aminabad, Chowk, Thakurganj trade hubs and King George Medical University patients.',
-      col1Tag: 'Sitapur Grain Market',
+      col1Tag: 'Sultanpur Grain Market',
       col1Title: 'Record Arrivals for Wheat & Mustard, Farmers Receive ₹2,425/Quintal MSP',
-      col2Tag: 'Naimisharanya Dham',
-      col2Title: 'Final Clearance for ₹120 Cr Sacred Chakra Teerth Rejuvenation Project',
+      col2Tag: 'Vijethua Mahaviran Dham',
+      col2Title: 'Final Clearance for ₹120 Cr Sacred Shrine Rejuvenation Project',
       bannerTag: 'Civic Grievance Resolution',
-      bannerTitle: 'Emergency Culvert Repairs Begin on Sitapur-Laharpur Highway Following Resident Representations',
-      footer: 'Sitapur & Lucknow District News Bureau'
+      bannerTitle: 'Emergency Culvert Repairs Begin on Sultanpur-Kurwar Highway Following Resident Representations',
+      footer: 'Sultanpur & Lucknow District News Bureau'
     },
     page4: {
       header: 'Editorial & Opinion Forum (Op-Ed)',
@@ -205,11 +205,11 @@ const NEWSPAPER_CONTENT = {
     page6: {
       header: 'Classifieds, Public Tenders & Weather Outlook',
       noticeTag: 'Public Notice',
-      noticeTitle: 'Sitapur Municipal Council: Final Reminder for Property Tax & Water Cess Arrears',
+      noticeTitle: 'Sultanpur Municipal Council: Final Reminder for Property Tax & Water Cess Arrears',
       jobsTitle: 'Employment Opportunity:',
       jobsText: 'Swarnim Dastavej Digital Desk invites applications for Sub-Editors & Translators. Email CV.',
       weatherTitle: 'Regional Forecast:',
-      weatherText: 'Lucknow & Sitapur: High 30°C, Low 22°C. Partly cloudy sky with pleasant evening breeze.',
+      weatherText: 'Lucknow & Sultanpur: High 30°C, Low 22°C. Partly cloudy sky with pleasant evening breeze.',
       footer: 'Swarnim Dastavej Daily • Print & Digital Edition • Concluding Page'
     }
   },
@@ -225,13 +225,13 @@ const NEWSPAPER_CONTENT = {
     fullPageRead: 'مکمل اسکرین پڑھیں',
     page1: {
       badge: 'اہم خبر • کابینہ فیصلہ',
-      headline: 'یوپی میں شاہراہوں کی عظیم توسیع: لکھنؤ-سیتاپور-لکھیم پور 6 لین کوریڈور منظور، سفری وقت آدھا',
-      excerpt: '4,200 کروڑ روپے کی لاگت سے 138 کلومیٹر طویل جدید گرین فیلڈ ایکسپریس وے تعمیر ہوگا۔ سیتاپور تا لکھنؤ اب صرف 45 منٹ۔',
-      photoCaption: 'لکھنؤ-سیتاپور ایکسپریس وے روٹ اور انڈسٹریل کوریڈور منصوبہ',
+      headline: 'یوپی میں شاہراہوں کی عظیم توسیع: لکھنؤ-سلطان پور 6 لین کوریڈور منظور، سفری وقت آدھا',
+      excerpt: '4,200 کروڑ روپے کی لاگت سے 138 کلومیٹر طویل جدید گرین فیلڈ ایکسپریس وے تعمیر ہوگا۔ سلطان پور تا لکھنؤ اب صرف 45 منٹ۔',
+      photoCaption: 'لکھنؤ-سلطان پور ایکسپریس وے روٹ اور انڈسٹریل کوریڈور منصوبہ',
       side1Tag: 'خلائی سائنس • اسرو',
       side1Title: 'گگن یان بغیر عملے والے مشن کی کامیاب لینڈنگ، خلا میں بھارت کا پرچم بلند',
-      side2Tag: 'سیتاپور خاص',
-      side2Title: 'سرایان ندی کی بحالی کے لیے نوجوانوں کا جذبہ، 10 ٹن کچرا صاف کیا',
+      side2Tag: 'سلطان پور خاص',
+      side2Title: 'گومتی ندی کی بحالی کے لیے نوجوانوں کا جذبہ، 10 ٹن کچرا صاف کیا',
       schemeTag: 'پی ایم کسم اسکیم:',
       schemeText: 'کسانوں کو سولر زرعی پمپوں پر 70% سبسیڈی، آن لائن درخواستیں جاری۔',
       schemeDept: 'محکمہ زراعت'
@@ -252,17 +252,17 @@ const NEWSPAPER_CONTENT = {
       footer: 'سورنم دستاویز • اتر پردیش ایڈیشن'
     },
     page3: {
-      header: 'اودھ نامہ (لکھنؤ و سیتاپور ڈسٹرکٹ)',
+      header: 'اودھ نامہ (لکھنؤ و سلطان پور ڈسٹرکٹ)',
       leadTag: 'لکھنؤ میٹرو',
       leadTitle: 'لکھنؤ میٹرو فیز 2: چارباغ تا وسنت کنج 11.8 کلومیٹر روٹ منظور، 12 نئے اسٹیشنز',
       leadExcerpt: 'امینہ آباد، چوک، ٹھاکر گنج اور میڈیکل کالج کے لاکھوں شہریوں کو ٹریفک جام سے نجات ملے گی۔',
-      col1Tag: 'سیتاپور اناج منڈی',
+      col1Tag: 'سلطان پور اناج منڈی',
       col1Title: 'گندم اور سرسوں کی ریکارڈ آمد، کسانوں کو مناسب قیمتیں فراہم',
       col2Tag: 'نیمشارنیا تیرتھ',
       col2Title: 'مقدس چکر تیرتھ کی تزئین و آرائش کے لیے 120 کروڑ کے منصوبے کی منظوری',
       bannerTag: 'عوامی مسائل اور حل',
-      bannerTitle: 'سیتاپور-لہرپور روڈ پر خستہ حال پلیا کی فوری مرمت کا آغاز',
-      footer: 'سیتاپور و لکھنؤ بیورو'
+      bannerTitle: 'سلطان پور روڈ پر خستہ حال پلیا کی فوری مرمت کا آغاز',
+      footer: 'سلطان پور و لکھنؤ بیورو'
     },
     page4: {
       header: 'اداریہ اور مضامین (Editorial & Op-Ed)',
@@ -296,7 +296,7 @@ const NEWSPAPER_CONTENT = {
       jobsTitle: 'ملازمت کی خبر:',
       jobsText: 'سورنم دستاویز ڈیجیٹل ڈیسک کے لیے سب ایڈیٹرز اور مترجمین کی ضرورت ہے۔',
       weatherTitle: 'موسم کا حال:',
-      weatherText: 'لکھنؤ و سیتاپور: زیادہ سے زیادہ 30°C، کم سے کم 22°C۔ مطلع جزوی ابر آلود رہے گا۔',
+      weatherText: 'لکھنؤ و سلطان پور: زیادہ سے زیادہ 30°C، کم سے کم 22°C۔ مطلع جزوی ابر آلود رہے گا۔',
       footer: 'سورنم دستاویز روزنامہ • اختتامی صفحہ'
     }
   }
@@ -323,8 +323,8 @@ export default function TodayNewspaperReader() {
     if (c1 === c2 || c1.includes(c2) || c2.includes(c1)) return true;
     if ((c1.includes('lucknow') || c1.includes('लखनऊ') || c1.includes('لکھنؤ')) && 
         (c2.includes('lucknow') || c2.includes('लखनऊ') || c2.includes('لکھنؤ'))) return true;
-    if ((c1.includes('sitapur') || c1.includes('सीतापुर') || c1.includes('سیتاپور')) && 
-        (c2.includes('sitapur') || c2.includes('सीतापुर') || c2.includes('سیتاپور'))) return true;
+    if ((c1.includes('sultanpur') || c1.includes('सुल्तानपुर') || c1.includes('سلطان پور') || c1.includes('sitapur') || c1.includes('सीतापुर') || c1.includes('سیتاپور')) && 
+        (c2.includes('sultanpur') || c2.includes('सुल्तानपुर') || c2.includes('سلطان پور') || c2.includes('sitapur') || c2.includes('सीतापुर') || c2.includes('سیتاپور'))) return true;
     if ((c1.includes('delhi') || c1.includes('दिल्ली') || c1.includes('دہلی')) && 
         (c2.includes('delhi') || c2.includes('दिल्ली') || c2.includes('دہلی'))) return true;
     return false;
@@ -374,10 +374,10 @@ export default function TodayNewspaperReader() {
 
   const localizedCity = 
     language === 'en' 
-      ? (selectedCity === 'लखनऊ' || selectedCity === 'Lucknow' ? 'Lucknow' : selectedCity === 'सीतापुर' || selectedCity === 'Sitapur' ? 'Sitapur' : selectedCity)
+      ? (selectedCity === 'लखनऊ' || selectedCity === 'Lucknow' ? 'Lucknow' : selectedCity === 'सुल्तानपुर' || selectedCity === 'Sultanpur' || selectedCity === 'सीतापुर' || selectedCity === 'Sitapur' ? 'Sultanpur' : selectedCity)
       : language === 'ur'
-      ? (selectedCity === 'لکھنؤ' || selectedCity === 'लखनऊ' || selectedCity === 'Lucknow' ? 'لکھنؤ' : selectedCity === 'سیتاپور' || selectedCity === 'सीतापुर' || selectedCity === 'Sitapur' ? 'سیتاپور' : selectedCity)
-      : (selectedCity === 'Lucknow' || selectedCity === 'لکھنؤ' ? 'लखनऊ' : selectedCity === 'Sitapur' || selectedCity === 'سیتاپور' ? 'सीतापुर' : selectedCity);
+      ? (selectedCity === 'لکھنؤ' || selectedCity === 'लखनऊ' || selectedCity === 'Lucknow' ? 'لکھنؤ' : selectedCity === 'سلطان پور' || selectedCity === 'सुल्तानपुर' || selectedCity === 'Sultanpur' || selectedCity === 'سیتاپور' || selectedCity === 'सीतापुर' ? 'سلطان پور' : selectedCity)
+      : (selectedCity === 'Lucknow' || selectedCity === 'لکھنؤ' ? 'लखनऊ' : selectedCity === 'Sultanpur' || selectedCity === 'سلطان پور' || selectedCity === 'Sitapur' || selectedCity === 'سیتاپور' ? 'सुल्तानपुर' : selectedCity);
 
   useEffect(() => {
     fetch('/api/settings')
@@ -578,7 +578,7 @@ export default function TodayNewspaperReader() {
                 className="bg-transparent font-bold text-slate-800 dark:text-slate-200 text-xs outline-none cursor-pointer"
               >
                 <option value="लखनऊ" className="dark:bg-slate-900">{language === 'en' ? 'Lucknow Main Edition' : language === 'ur' ? 'لکھنؤ مرکزی ایڈیشن' : 'लखनऊ मुख्य संस्करण'}</option>
-                <option value="सीतापुर" className="dark:bg-slate-900">{language === 'en' ? 'Sitapur District Edition' : language === 'ur' ? 'سیتاپور ضلعی ایڈیشن' : 'सीतापुर जिला संस्करण'}</option>
+                <option value="सुल्तानपुर" className="dark:bg-slate-900">{language === 'en' ? 'Sultanpur District Edition' : language === 'ur' ? 'سلطان پور ضلعی ایڈیشن' : 'सुल्तानपुर जिला संस्करण'}</option>
                 <option value="दिल्ली" className="dark:bg-slate-900">{language === 'en' ? 'Delhi-NCR' : language === 'ur' ? 'دہلی این سی آر' : 'दिल्ली-एनसीआर'}</option>
               </select>
             </div>

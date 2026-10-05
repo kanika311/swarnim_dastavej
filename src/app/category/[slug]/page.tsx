@@ -32,8 +32,9 @@ export default function CategoryListingPage() {
 
   const getCategoryTitle = (s: string) => {
     switch (s) {
-      case 'state': return { title: 'उत्तर प्रदेश समाचार', subtitle: 'राजधानी लखनऊ, सीतापुर एवं प्रदेश भर की बड़ी खबरें' };
-      case 'sitapur': return { title: 'सीतापुर विशेष (Sitapur Local)', subtitle: 'लहरपुर, महोली, सिधौली, महमूदाबाद व नगर क्षेत्र की जमीनी खबरें' };
+      case 'state': return { title: 'उत्तर प्रदेश समाचार', subtitle: 'राजधानी लखनऊ, सुल्तानपुर एवं प्रदेश भर की बड़ी खबरें' };
+      case 'sultanpur':
+      case 'sitapur': return { title: 'सुल्तानपुर विशेष (Sultanpur Local)', subtitle: 'कादीपुर, लंभुआ, जयसिंहपुर, इसौली व नगर क्षेत्र की जमीनी खबरें' };
       case 'lucknow': return { title: 'लखनऊ दैनिक (Lucknow Daily)', subtitle: 'चारबाग, हजरतगंज, गोमती नगर, चौक व प्रशासनिक अपडेट' };
       case 'national': return { title: 'देश / राष्ट्रीय समाचार', subtitle: 'संसद, केंद्र सरकार, इसरो एवं प्रमुख राष्ट्रीय घटनाक्रम' };
       case 'politics': return { title: 'राजनीति हलचल', subtitle: 'चुनावी समीकरण, दल-बदल व राजनीतिक विश्लेषण' };
@@ -50,7 +51,7 @@ export default function CategoryListingPage() {
     if ((a.language || 'hi') !== language) return false;
     if (slug === 'all') return true;
     if (slug === 'videos') return a.showOnVideos === true;
-    if (slug === 'sitapur') return a.category === 'sitapur' || a.city === 'सीतापुर' || a.city === 'Sitapur';
+    if (slug === 'sultanpur' || slug === 'sitapur') return a.category === 'sultanpur' || a.category === 'sitapur' || a.city === 'सुल्तानपुर' || a.city === 'Sultanpur' || a.city === 'सीतापुर' || a.city === 'Sitapur';
     if (slug === 'lucknow') return a.category === 'lucknow' || a.city === 'लखनऊ' || a.city === 'Lucknow';
     return a.category.toLowerCase() === slug.toLowerCase();
   });

@@ -163,8 +163,8 @@ export default function AdminDashboardPage() {
   const [editSubHeadline, setEditSubHeadline] = useState('');
   const [editSubSubHeadline, setEditSubSubHeadline] = useState('');
   const [editSubBody, setEditSubBody] = useState('');
-  const [editSubCategory, setEditSubCategory] = useState<ArticleCategory>('sitapur');
-  const [editSubCity, setEditSubCity] = useState('सीतापुर');
+  const [editSubCategory, setEditSubCategory] = useState<ArticleCategory>('sultanpur');
+  const [editSubCity, setEditSubCity] = useState('सुल्तानपुर');
   const [editSubStatus, setEditSubStatus] = useState<SubmissionStatus>('pending_review');
   const [editSubComments, setEditSubComments] = useState('');
   const [isSavingSub, setIsSavingSub] = useState(false);
@@ -374,8 +374,8 @@ export default function AdminDashboardPage() {
     setEditSubHeadline(sub.headline || '');
     setEditSubSubHeadline(sub.subHeadline || '');
     setEditSubBody(sub.body || '');
-    setEditSubCategory(sub.category || 'sitapur');
-    setEditSubCity(sub.city || 'सीतापुर');
+    setEditSubCategory(sub.category || 'sultanpur');
+    setEditSubCity(sub.city || 'सुल्तानपुर');
     setEditSubStatus(sub.status || 'pending_review');
     setEditSubComments(sub.editorComments || '');
   };
@@ -1749,13 +1749,13 @@ export default function AdminDashboardPage() {
             <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs">
               <div className="flex items-center justify-between mb-1">
                 <h3 className="font-extrabold text-sm text-slate-900">Journalist Productivity</h3>
-                <span className="text-xs text-slate-400">Sitapur / Lucknow</span>
+                <span className="text-xs text-slate-400">Sultanpur / Lucknow</span>
               </div>
               <p className="text-xs text-slate-500 mb-4">Stories assigned & submitted per reporter</p>
               
               <div className="space-y-2.5">
                 {[
-                  { name: 'Vikas Shukla (Sitapur)', count: 5, max: 6 },
+                  { name: 'Vikas Shukla (Sultanpur)', count: 5, max: 6 },
                   { name: 'Sunil Verma (Special)', count: 3, max: 6 },
                   { name: 'Anuradha Awasthi (Sr)', count: 2, max: 6 },
                   { name: 'Citizen Reports (Pool)', count: 3, max: 6 }
@@ -2232,7 +2232,7 @@ export default function AdminDashboardPage() {
                             onChange={(e) => setEditSubCategory(e.target.value as any)}
                             className="w-full text-xs font-bold p-2.5 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-[#D97706]/40 focus:border-[#D97706] bg-white cursor-pointer"
                           >
-                            <option value="sitapur">सीतापुर (Sitapur)</option>
+                            <option value="sultanpur">सुल्तानपुर (Sultanpur)</option>
                             <option value="lucknow">लखनऊ (Lucknow)</option>
                             <option value="state">उत्तर प्रदेश (State)</option>
                             <option value="national">राष्ट्रीय (National)</option>
@@ -2393,7 +2393,7 @@ export default function AdminDashboardPage() {
                           <option value={epCity}>{epCity} (Selected)</option>
                         )}
                         <option value="Lucknow">Lucknow (Main / लखनऊ मुख्य)</option>
-                        <option value="Sitapur">Sitapur District (सीतापुर जिला)</option>
+                        <option value="Sultanpur">Sultanpur District (सुल्तानपुर जिला)</option>
                         <option value="National">🇮🇳 All India National Edition (अखिल भारतीय राष्ट्रीय संस्करण)</option>
                         {ALL_INDIA_LOCATIONS.map((state) => (
                           <optgroup key={state.name} label={`${state.name} (${state.nameHi})`}>
@@ -4200,7 +4200,7 @@ export default function AdminDashboardPage() {
                       <option value={newCity}>{newCity} (Selected)</option>
                     )}
                     <option value="Lucknow">Lucknow (लखनऊ)</option>
-                    <option value="Sitapur">Sitapur (सीतापुर)</option>
+                    <option value="Sultanpur">Sultanpur (सुल्तानपुर)</option>
                     <option value="National">🇮🇳 All India / National (राष्ट्रीय)</option>
                     {ALL_INDIA_LOCATIONS.map((state) => (
                       <optgroup key={state.name} label={`${state.name} (${state.nameHi})`}>

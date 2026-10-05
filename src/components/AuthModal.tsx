@@ -56,7 +56,7 @@ export default function AuthModal() {
   const [regPhone, setRegPhone] = useState('');
   const [regEmail, setRegEmail] = useState('');
   const [regPassword, setRegPassword] = useState('');
-  const [regCity, setRegCity] = useState('सीतापुर');
+  const [regCity, setRegCity] = useState('सुल्तानपुर');
   const [regIdType, setRegIdType] = useState('Aadhaar Card');
   const [regIdNumber, setRegIdNumber] = useState('');
   const [regError, setRegError] = useState('');
@@ -460,7 +460,7 @@ export default function AuthModal() {
                   className="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs sm:text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-600"
                 >
                   <optgroup label="प्रमुख शहर (Featured Cities)">
-                    <option value="सीतापुर">सीतापुर (Sitapur)</option>
+                    <option value="सुल्तानपुर">सुल्तानपुर (Sultanpur)</option>
                     <option value="लखनऊ">लखनऊ (Lucknow)</option>
                     <option value="कानपुर">कानपुर (Kanpur)</option>
                     <option value="अयोध्या">अयोध्या (Ayodhya)</option>

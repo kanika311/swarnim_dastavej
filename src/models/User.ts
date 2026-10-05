@@ -34,7 +34,7 @@ const UserSchema = new Schema<IUser>(
       default: 'reader',
       index: true
     },
-    city: { type: String, default: 'सीतापुर' },
+    city: { type: String, default: 'सुल्तानपुर' },
     avatarUrl: { type: String },
     preferredLanguage: { type: String, default: 'hi' },
     kycStatus: { 
