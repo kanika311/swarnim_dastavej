@@ -20,7 +20,8 @@ import {
   RiFacebookFill, 
   RiTwitterXFill, 
   RiInstagramFill, 
-  RiYoutubeFill 
+  RiYoutubeFill,
+  RiWhatsappFill 
 } from 'react-icons/ri';
 import { SiteSettings } from '@/types';
 import { useApp } from '@/context/AppContext';
@@ -44,7 +45,8 @@ export default function Footer() {
     facebookUrl: 'https://facebook.com',
     twitterUrl: 'https://twitter.com',
     instagramUrl: 'https://instagram.com',
-    youtubeUrl: 'https://youtube.com'
+    youtubeUrl: 'https://youtube.com',
+    whatsappUrl: 'https://whatsapp.com/channel/0029Vb9Vh4s3rZZlaVJwQq15'
   });
 
   useEffect(() => {
@@ -93,7 +95,7 @@ export default function Footer() {
               <span className="block text-[11px] font-bold text-[#8A6410] dark:text-[#F0C14A] uppercase tracking-wider mb-2">
                 {language === 'en' ? 'Follow Us' : language === 'ur' ? 'ہمیں فالو کریں' : 'सोशल मीडिया पर जुड़ें'}
               </span>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <a
                   href={settings.facebookUrl || 'https://facebook.com'}
                   target="_blank"
@@ -132,6 +134,32 @@ export default function Footer() {
                   className="w-8 h-8 rounded-lg bg-white dark:bg-[#12356B] border border-[#C9962A]/60 hover:border-[#FF0000] text-[#FF0000] hover:bg-[#FF0000] hover:text-white flex items-center justify-center transition-all shadow-xs group"
                 >
                   <RiYoutubeFill className="w-4 h-4 transition-transform group-hover:scale-110" />
+                </a>
+
+                <a
+                  href={settings.whatsappUrl || 'https://whatsapp.com/channel/0029Vb9Vh4s3rZZlaVJwQq15'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="WhatsApp Community"
+                  title="WhatsApp Community / Channel"
+                  className="w-8 h-8 rounded-lg bg-white dark:bg-[#12356B] border border-[#C9962A]/60 hover:border-[#25D366] text-[#25D366] hover:bg-[#25D366] hover:text-white flex items-center justify-center transition-all shadow-xs group"
+                >
+                  <RiWhatsappFill className="w-4 h-4 transition-transform group-hover:scale-110" />
+                </a>
+              </div>
+
+              {/* Follow WhatsApp Community Button */}
+              <div className="pt-2.5">
+                <a
+                  href={settings.whatsappUrl || 'https://whatsapp.com/channel/0029Vb9Vh4s3rZZlaVJwQq15'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-xs transition-all shadow-sm hover:shadow-md group"
+                >
+                  <RiWhatsappFill className="w-4 h-4 shrink-0 transition-transform group-hover:scale-110" />
+                  <span>
+                    {language === 'en' ? 'Follow WhatsApp Community' : language === 'ur' ? 'واٹس ایپ کمیونٹی فالو کریں' : 'व्हाट्सएप कम्युनिटी फॉलो करें'}
+                  </span>
                 </a>
               </div>
             </div>

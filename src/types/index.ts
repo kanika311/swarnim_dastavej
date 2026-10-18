@@ -323,6 +323,8 @@ export interface SiteSettings {
   twitterUrl?: string;
   instagramUrl?: string;
   youtubeUrl?: string;
+  whatsappUrl?: string;
+  whatsappNumber?: string;
 }
 
 export interface EPaperPricingPlan {

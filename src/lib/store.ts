@@ -35,6 +35,8 @@ const DEFAULT_SETTINGS: SiteSettings = {
   twitterUrl: 'https://twitter.com',
   instagramUrl: 'https://instagram.com',
   youtubeUrl: 'https://youtube.com',
+  whatsappUrl: 'https://whatsapp.com/channel/0029Vb9Vh4s3rZZlaVJwQq15',
+  whatsappNumber: '+91 95196 231111',
   privacyPolicy: `## गोपनीयता नीति (Privacy Policy) - स्वर्णिम दस्तावेज़
 
 अंतिम अद्यतन: 2026 | पंजीयन संख्या: UPHIN/26/A7984
@@ -526,7 +528,7 @@ class PlatformStore {
   }
 
   syncAds(ads: AdBanner[]) {
-    if (Array.isArray(ads) && ads.length > 0) {
+    if (Array.isArray(ads)) {
       this.ads = ads.filter(a => !this.deletedAdIds.has(a.id));
     }
   }

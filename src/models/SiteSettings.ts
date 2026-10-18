@@ -16,6 +16,8 @@ export interface ISiteSettings extends Document {
   twitterUrl?: string;
   instagramUrl?: string;
   youtubeUrl?: string;
+  whatsappUrl?: string;
+  whatsappNumber?: string;
   updatedAt: Date;
 }
 
@@ -35,7 +37,9 @@ const SiteSettingsSchema = new Schema<ISiteSettings>(
     facebookUrl: { type: String, default: 'https://facebook.com' },
     twitterUrl: { type: String, default: 'https://twitter.com' },
     instagramUrl: { type: String, default: 'https://instagram.com' },
-    youtubeUrl: { type: String, default: 'https://youtube.com' }
+    youtubeUrl: { type: String, default: 'https://youtube.com' },
+    whatsappUrl: { type: String, default: 'https://whatsapp.com/channel/0029Vb9Vh4s3rZZlaVJwQq15' },
+    whatsappNumber: { type: String, default: '+91 95196 231111' }
   },
   { timestamps: true }
 );

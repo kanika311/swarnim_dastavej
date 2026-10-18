@@ -1,15 +1,9 @@
 import type { Metadata, Viewport } from 'next';
 import Script from 'next/script';
-import { Inter } from 'next/font/google';
 import './globals.css';
 import { AppProvider } from '@/context/AppContext';
 import { GA_TRACKING_ID } from '@/lib/gtag';
-
-
-const inter = Inter({
-  subsets: ['latin'],
-  display: 'swap',
-});
+import WhatsAppFloatingWidget from '@/components/WhatsAppFloatingWidget';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -64,7 +58,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700;800;900&family=Rozha+One&display=swap" rel="stylesheet" />
       </head>
-      <body className={`${inter.className} min-h-screen flex flex-col overflow-x-clip antialiased selection:bg-red-600 selection:text-white`}>
+      <body className="min-h-screen flex flex-col overflow-x-clip antialiased selection:bg-red-600 selection:text-white">
         {/* Google Analytics (gtag.js) */}
         <Script
           strategy="afterInteractive"
@@ -91,6 +85,7 @@ export default function RootLayout({
         />
         <AppProvider>
           {children}
+          <WhatsAppFloatingWidget />
         </AppProvider>
       </body>
     </html>

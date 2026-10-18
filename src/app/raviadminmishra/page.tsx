@@ -141,7 +141,7 @@ export default function AdminDashboardPage() {
   const [submissions, setSubmissions] = useState<CitizenSubmission[]>(INITIAL_SUBMISSIONS);
   const [articles, setArticles] = useState<Article[]>([]);
   const [users, setUsers] = useState<User[]>(INITIAL_USERS);
-  const [ads, setAds] = useState<AdBanner[]>(INITIAL_ADS);
+  const [ads, setAds] = useState<AdBanner[]>([]);
   const [showAdForm, setShowAdForm] = useState(false);
   const [editingAdId, setEditingAdId] = useState<string | null>(null);
   const [adTitle, setAdTitle] = useState('');
@@ -331,7 +331,7 @@ export default function AdminDashboardPage() {
     fetch('/api/articles').then(r => r.json()).then(d => d.success && setArticles(d.data)).catch(() => {});
     fetch('/api/users').then(r => r.json()).then(d => d.success && setUsers(d.data)).catch(() => {});
     fetch('/api/grievance').then(r => r.json()).then(d => d.success && setGrievances(d.data)).catch(() => {});
-    fetch('/api/ads', { cache: 'no-store' }).then(r => r.json()).then(d => d.success && setAds(d.data)).catch(() => {});
+    fetch('/api/ads', { cache: 'no-store' }).then(r => r.json()).then(d => d.success && setAds(Array.isArray(d.data) ? d.data : [])).catch(() => {});
   }, []);
 
   // Review Actions: Approve / Reject / Send Back
@@ -753,6 +753,8 @@ export default function AdminDashboardPage() {
     twitterUrl: 'https://twitter.com',
     instagramUrl: 'https://instagram.com',
     youtubeUrl: 'https://youtube.com',
+    whatsappUrl: 'https://whatsapp.com/channel/0029Vb9Vh4s3rZZlaVJwQq15',
+    whatsappNumber: '+91 95196 231111',
     privacyPolicy: '',
     termsOfService: '',
     editorialPolicy: '',
@@ -1181,20 +1183,45 @@ export default function AdminDashboardPage() {
   const handleDeleteAd = async (ad: AdBanner) => {
     if (!confirm(`Delete this advertisement?\n\n${ad.title}`)) return;
     try {
-      const res = await fetch(`/api/ads?id=${encodeURIComponent(ad.id)}`, { 
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: ad.id })
+      // 1. Send clean DELETE request without request body (to avoid RFC/proxy issues)
+      let res = await fetch(`/api/ads?id=${encodeURIComponent(ad.id)}`, { 
+        method: 'DELETE'
       });
-      const data = await res.json().catch(() => ({ success: res.ok }));
-      if (res.ok || data.success) {
-        setAds(prev => prev.filter(a => a.id !== ad.id));
-      } else {
-        alert(data.message || 'Could not delete advertisement');
+      let data = await res.json().catch(() => null);
+
+      // 2. If DELETE method was blocked by browser/proxy/adblocker, fallback to POST action: 'delete'
+      if (!res.ok || !data?.success) {
+        res = await fetch('/api/ads', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'delete', id: ad.id })
+        });
+        data = await res.json().catch(() => null);
       }
-    } catch {
-      // If network succeeded or local deletion needed
-      setAds(prev => prev.filter(a => a.id !== ad.id));
+
+      if (res.ok && data?.success) {
+        setAds(prev => prev.filter(a => a.id !== ad.id));
+        alert('विज्ञापन सफलतापूर्वक हटा दिया गया। (Advertisement deleted successfully)');
+      } else {
+        alert(data?.message || 'विज्ञापन हटाने में विफल (Could not delete advertisement)');
+      }
+    } catch (err: any) {
+      console.warn('Delete ad attempt 1 failed, trying fallback:', err);
+      // Attempt fallback POST in catch block (e.g. if network or adblocker threw TypeError)
+      try {
+        const fbRes = await fetch('/api/ads', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'delete', id: ad.id })
+        });
+        const fbData = await fbRes.json().catch(() => null);
+        if (fbRes.ok && fbData?.success) {
+          setAds(prev => prev.filter(a => a.id !== ad.id));
+          alert('विज्ञापन सफलतापूर्वक हटा दिया गया।');
+          return;
+        }
+      } catch {}
+      alert('विज्ञापन हटाने में त्रुटि हुई। कृपया नेटवर्क या AdBlocker की जांच करें।');
     }
   };
 
@@ -4021,6 +4048,27 @@ export default function AdminDashboardPage() {
                       onChange={(e) => updateSetting('youtubeUrl', e.target.value)}
                       className="mt-1 w-full px-3 py-2 border rounded-xl text-xs font-medium focus:ring-1 focus:ring-[#D97706] focus:outline-none"
                     />
+                  </label>
+                  <label className="block text-xs font-bold text-slate-700">
+                    WhatsApp Channel / Community URL
+                    <input
+                      type="url"
+                      placeholder="https://whatsapp.com/channel/..."
+                      value={settingsForm.whatsappUrl || ''}
+                      onChange={(e) => updateSetting('whatsappUrl', e.target.value)}
+                      className="mt-1 w-full px-3 py-2 border rounded-xl text-xs font-medium focus:ring-1 focus:ring-[#D97706] focus:outline-none"
+                    />
+                  </label>
+                  <label className="block text-xs font-bold text-slate-700">
+                    WhatsApp Direct Message Number (सीधा संदेश नंबर)
+                    <input
+                      type="text"
+                      placeholder="+91 95196 231111"
+                      value={settingsForm.whatsappNumber || ''}
+                      onChange={(e) => updateSetting('whatsappNumber', e.target.value)}
+                      className="mt-1 w-full px-3 py-2 border rounded-xl text-xs font-medium focus:ring-1 focus:ring-[#D97706] focus:outline-none"
+                    />
+                    <span className="text-[10px] text-slate-400 font-normal">इस नंबर पर साइट विज़िटर्स सीधे व्हाट्सएप पर संदेश भेज सकेंगे।</span>
                   </label>
                 </div>
               </div>

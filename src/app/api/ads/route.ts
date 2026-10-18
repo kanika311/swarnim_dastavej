@@ -21,33 +21,6 @@ export async function GET(request: Request) {
 
       let dbAds = await AdModel.find(query).sort({ createdAt: -1 }).lean().exec();
 
-      // Seed initial ads if collection is completely empty
-      if (!dbAds || dbAds.length === 0) {
-        const totalCount = await AdModel.countDocuments();
-        if (totalCount === 0) {
-          try {
-            await AdModel.insertMany(
-              INITIAL_ADS.map((ad) => ({
-                id: ad.id,
-                title: ad.title,
-                advertiser: ad.advertiser,
-                imageUrl: ad.imageUrl,
-                targetUrl: ad.targetUrl,
-                placement: ad.placement,
-                impressions: ad.impressions || 0,
-                clicks: ad.clicks || 0,
-                isActive: ad.isActive !== false,
-                isSponsoredPost: Boolean(ad.isSponsoredPost),
-                isDeleted: false
-              }))
-            );
-            dbAds = await AdModel.find(query).sort({ createdAt: -1 }).lean().exec();
-          } catch (seedErr) {
-            console.warn('Could not seed initial ads to MongoDB:', seedErr);
-          }
-        }
-      }
-
       if (dbAds && dbAds.length > 0) {
         const normalized = dbAds.map((ad: any) => ({
           id: ad.id,
@@ -69,12 +42,19 @@ export async function GET(request: Request) {
           { headers: { 'Cache-Control': 'no-store, max-age=0' } }
         );
       }
+
+      // If connected to MongoDB and 0 ads exist (e.g. user deleted all ads), return empty array
+      platformStore.syncAds([]);
+      return NextResponse.json(
+        { success: true, count: 0, source: 'mongodb', data: [] },
+        { headers: { 'Cache-Control': 'no-store, max-age=0' } }
+      );
     }
   } catch (error: any) {
     console.warn('MongoDB ads GET error:', error?.message);
   }
 
-  // Store fallback
+  // Store fallback (only if MongoDB connection is unavailable)
   let ads = platformStore.getAds();
   if (placement && placement !== 'all') {
     ads = ads.filter((ad) => ad.placement === placement);
@@ -89,6 +69,30 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
+
+    // Support deletion via POST fallback for environments/browsers/ad-blockers that block DELETE
+    if (body.action === 'delete' || body.event === 'delete') {
+      const id = body.id || body.adId;
+      if (!id) {
+        return NextResponse.json({ success: false, message: 'Ad id is required' }, { status: 400 });
+      }
+
+      platformStore.deleteAd(id);
+
+      try {
+        const conn = await connectToDatabase();
+        if (conn) {
+          const isObjectId = /^[0-9a-fA-F]{24}$/.test(id);
+          const filter = isObjectId ? { $or: [{ id }, { _id: id }] } : { id };
+          await AdModel.deleteMany(filter);
+        }
+      } catch (err: any) {
+        console.warn('MongoDB ad delete error:', err?.message);
+        return NextResponse.json({ success: false, message: err?.message || 'Database delete failed' }, { status: 500 });
+      }
+
+      return NextResponse.json({ success: true, message: 'Ad deleted successfully' });
+    }
 
     if (body.event === 'click') {
       platformStore.recordAdClick(body.adId);
@@ -168,7 +172,9 @@ export async function PUT(request: Request) {
     try {
       const conn = await connectToDatabase();
       if (conn) {
-        await AdModel.findOneAndUpdate({ id: body.id }, { $set: body }, { new: true });
+        const isObjectId = /^[0-9a-fA-F]{24}$/.test(body.id);
+        const filter = isObjectId ? { $or: [{ id: body.id }, { _id: body.id }] } : { id: body.id };
+        await AdModel.findOneAndUpdate(filter, { $set: body }, { new: true });
       }
     } catch (err: any) {
       console.warn('MongoDB ad update error:', err?.message);
@@ -204,11 +210,13 @@ export async function DELETE(request: Request) {
   try {
     const conn = await connectToDatabase();
     if (conn) {
-      await AdModel.deleteMany({ id });
-      await AdModel.updateMany({ id }, { $set: { isDeleted: true } });
+      const isObjectId = /^[0-9a-fA-F]{24}$/.test(id);
+      const filter = isObjectId ? { $or: [{ id }, { _id: id }] } : { id };
+      await AdModel.deleteMany(filter);
     }
   } catch (err: any) {
     console.warn('MongoDB ad delete error:', err?.message);
+    return NextResponse.json({ success: false, message: err?.message || 'Database delete failed' }, { status: 500 });
   }
 
   return NextResponse.json({ success: true, message: 'Ad deleted successfully' });
