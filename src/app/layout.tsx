@@ -25,6 +25,9 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: 'Swarnim Dastavej Editorial Board' }],
   metadataBase: new URL('https://swarnimdastavej.com'),
+  verification: {
+    google: 'google0c2695956c6a1d21',
+  },
   icons: {
     icon: [
       { url: '/image.png?v=3', type: 'image/png' },
