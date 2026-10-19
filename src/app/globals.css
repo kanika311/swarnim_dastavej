@@ -57,3 +57,142 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* ==========================================================================
+   WYSIWYG Live Editor (.visual-news-editor) & Article Body (.rich-article-content)
+   Ensures Tailwind Preflight does not strip font-weight, headings, lists, or quotes
+   ========================================================================== */
+.visual-news-editor,
+.rich-article-content {
+  line-height: 1.75;
+}
+
+.visual-news-editor b,
+.visual-news-editor strong,
+.rich-article-content b,
+.rich-article-content strong {
+  font-weight: 800 !important;
+  color: inherit;
+}
+
+.visual-news-editor i,
+.visual-news-editor em,
+.rich-article-content i,
+.rich-article-content em {
+  font-style: italic !important;
+}
+
+.visual-news-editor u,
+.rich-article-content u {
+  text-decoration: underline !important;
+  text-underline-offset: 4px;
+}
+
+.visual-news-editor h1,
+.rich-article-content h1 {
+  font-size: 1.65rem !important;
+  font-weight: 800 !important;
+  line-height: 1.3 !important;
+  margin-top: 1.25rem !important;
+  margin-bottom: 0.5rem !important;
+  color: #0f172a !important;
+}
+:where(.dark) .visual-news-editor h1,
+:where(.dark) .rich-article-content h1 {
+  color: #f8fafc !important;
+}
+
+.visual-news-editor h2,
+.rich-article-content h2 {
+  font-size: 1.35rem !important;
+  font-weight: 800 !important;
+  line-height: 1.35 !important;
+  margin-top: 1.25rem !important;
+  margin-bottom: 0.5rem !important;
+  color: #b45309 !important;
+}
+:where(.dark) .visual-news-editor h2,
+:where(.dark) .rich-article-content h2 {
+  color: #fbbf24 !important;
+}
+
+.visual-news-editor h3,
+.rich-article-content h3 {
+  font-size: 1.15rem !important;
+  font-weight: 700 !important;
+  line-height: 1.4 !important;
+  margin-top: 1rem !important;
+  margin-bottom: 0.35rem !important;
+  color: #dc2626 !important;
+}
+:where(.dark) .visual-news-editor h3,
+:where(.dark) .rich-article-content h3 {
+  color: #f87171 !important;
+}
+
+.visual-news-editor p,
+.rich-article-content p {
+  margin-top: 0 !important;
+  margin-bottom: 0.875rem !important;
+  min-height: 1.35em !important;
+}
+
+.visual-news-editor ul,
+.rich-article-content ul {
+  list-style-type: disc !important;
+  padding-left: 1.5rem !important;
+  margin-top: 0.35rem !important;
+  margin-bottom: 0.875rem !important;
+}
+
+.visual-news-editor ol,
+.rich-article-content ol {
+  list-style-type: decimal !important;
+  padding-left: 1.5rem !important;
+  margin-top: 0.35rem !important;
+  margin-bottom: 0.875rem !important;
+}
+
+.visual-news-editor li,
+.rich-article-content li {
+  display: list-item !important;
+  margin-bottom: 0.35rem !important;
+  line-height: 1.6 !important;
+}
+
+.visual-news-editor blockquote,
+.rich-article-content blockquote {
+  border-left: 4px solid #d97706 !important;
+  padding: 0.5rem 1rem !important;
+  margin: 0.875rem 0 !important;
+  font-style: italic !important;
+  color: #334155 !important;
+  background-color: rgba(217, 119, 6, 0.08) !important;
+  border-radius: 0 0.5rem 0.5rem 0 !important;
+}
+:where(.dark) .visual-news-editor blockquote,
+:where(.dark) .rich-article-content blockquote {
+  color: #cbd5e1 !important;
+  background-color: rgba(217, 119, 6, 0.15) !important;
+}
+
+.visual-news-editor mark,
+.rich-article-content mark {
+  background-color: #fef08a !important;
+  color: #0f172a !important;
+  padding: 0.1em 0.35em !important;
+  border-radius: 0.25rem !important;
+  font-weight: 600 !important;
+}
+
+.visual-news-editor hr,
+.rich-article-content hr {
+  border: none !important;
+  border-top: 2px dashed #cbd5e1 !important;
+  margin: 1.25rem 0 !important;
+}
+:where(.dark) .visual-news-editor hr,
+:where(.dark) .rich-article-content hr {
+  border-top-color: #475569 !important;
+}
+

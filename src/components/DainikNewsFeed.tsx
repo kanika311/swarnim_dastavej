@@ -247,10 +247,20 @@ export default function DainikNewsFeed({
                     />
                   ) : (
                     <>
+                      {/* Ambient blurred backdrop for edge-to-edge fill */}
+                      <img
+                        src={leadArticle.coverImage}
+                        alt=""
+                        aria-hidden="true"
+                        className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-40 scale-125 pointer-events-none"
+                      />
+                      <div className="absolute inset-0 bg-black/25 pointer-events-none" />
+
+                      {/* Main Full Image: object-contain guarantees 100% of photo is visible without cutting */}
                       <img
                         src={leadArticle.coverImage}
                         alt={leadArticle.headline}
-                        className="w-full h-full object-cover"
+                        className="relative max-w-full max-h-full w-auto h-auto object-contain z-10 transition-transform duration-300 group-hover:scale-105"
                       />
                       {leadVideo && (
                         <button
@@ -412,17 +422,27 @@ export default function DainikNewsFeed({
               className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 sm:p-5 hover:border-slate-300 dark:hover:border-slate-700 shadow-xs transition group flex flex-col md:flex-row gap-4 md:gap-6 min-w-0"
             >
               {/* Thumbnail */}
-              <div className="relative w-full md:w-56 aspect-[16/10] shrink-0 rounded-xl overflow-hidden bg-slate-950">
+              <div className="relative w-full md:w-56 aspect-[16/10] shrink-0 rounded-xl overflow-hidden bg-slate-950 flex items-center justify-center shadow-xs">
+                {/* Ambient blurred backdrop for seamless edge-to-edge fill */}
+                <img
+                  src={art.coverImage}
+                  alt=""
+                  aria-hidden="true"
+                  className="absolute inset-0 w-full h-full object-cover blur-xl opacity-40 scale-125 pointer-events-none"
+                />
+                <div className="absolute inset-0 bg-black/20 pointer-events-none" />
+
+                {/* Main Full Image: object-contain guarantees 100% of photo is visible without cutting */}
                 <img
                   src={art.coverImage}
                   alt={art.headline}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  className="relative max-w-full max-h-full w-auto h-auto object-contain z-10 transition-transform duration-300 group-hover:scale-105"
                 />
-                <span className="absolute top-2 left-2 bg-slate-950/80 text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded backdrop-blur-xs">
+                <span className="absolute top-2 left-2 bg-slate-950/85 text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded backdrop-blur-xs z-20">
                   {art.city}
                 </span>
                 {art.isSponsored && (
-                  <span className="absolute bottom-2 left-2 bg-purple-700 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">
+                  <span className="absolute bottom-2 left-2 bg-purple-700 text-white text-[9px] font-bold px-1.5 py-0.5 rounded z-20">
                     {language === 'en' ? 'Sponsored' : language === 'ur' ? 'سپانسر شدہ' : 'प्रायोजित'}
                   </span>
                 )}

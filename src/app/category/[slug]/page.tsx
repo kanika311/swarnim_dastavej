@@ -115,8 +115,15 @@ export default function CategoryListingPage() {
                       <>
                         <img
                           src={art.coverImage}
+                          alt=""
+                          aria-hidden="true"
+                          className="absolute inset-0 w-full h-full object-cover blur-xl opacity-40 scale-125 pointer-events-none"
+                        />
+                        <div className="absolute inset-0 bg-black/20 pointer-events-none" />
+                        <img
+                          src={art.coverImage}
                           alt={art.headline}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          className="relative max-w-full max-h-full w-auto h-auto object-contain z-10 group-hover:scale-105 transition-transform duration-300"
                         />
                         {videoUrl && (
                           <button

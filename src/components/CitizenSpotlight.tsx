@@ -63,13 +63,20 @@ export default function CitizenSpotlight({ articles }: CitizenSpotlightProps) {
             className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-amber-200 dark:border-slate-700 shadow-sm hover:shadow-md hover:border-amber-400 transition flex flex-col justify-between group"
           >
             <div>
-              <div className="relative aspect-video w-full rounded-lg overflow-hidden mb-3 bg-slate-900">
+              <div className="relative aspect-video w-full rounded-lg overflow-hidden mb-3 bg-slate-950 flex items-center justify-center">
+                <img
+                  src={story.coverImage}
+                  alt=""
+                  aria-hidden="true"
+                  className="absolute inset-0 w-full h-full object-cover blur-lg opacity-40 scale-125 pointer-events-none"
+                />
+                <div className="absolute inset-0 bg-black/20 pointer-events-none" />
                 <img
                   src={story.coverImage}
                   alt={story.headline}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  className="relative max-w-full max-h-full w-auto h-auto object-contain z-10 group-hover:scale-105 transition-transform duration-300"
                 />
-                <span className="absolute bottom-2 left-2 bg-slate-950/80 text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded flex items-center gap-1 backdrop-blur-sm">
+                <span className="absolute bottom-2 left-2 bg-slate-950/85 text-amber-300 text-[10px] font-bold px-2 py-0.5 rounded flex items-center gap-1 backdrop-blur-sm z-20">
                   <MapPin className="w-3 h-3" />
                   {story.city}
                 </span>

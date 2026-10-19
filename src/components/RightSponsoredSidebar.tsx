@@ -136,28 +136,50 @@ export default function RightSponsoredSidebar() {
       {/* EXCLUSIVELY SPONSORED ADS CONTAINER - TALL FORMAT WITH NAVIGATION */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-sm flex flex-col">
         
-        {/* Header with live pulsing dot & index counter */}
-        <div className="px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs">
-          <div className="flex items-center gap-2">
-            <span className="relative flex h-2.5 w-2.5">
+        {/* Header with live pulsing dot, SPONSORED badge & high-contrast navigation arrows */}
+        <div className="px-3 py-2 bg-slate-50 dark:bg-slate-800/90 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs">
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+            <span className="relative flex h-2.5 w-2.5 shrink-0">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
             </span>
-            <span className="font-black text-slate-800 dark:text-slate-100 uppercase tracking-wider text-[11px]">
+            <span className="font-black text-slate-900 dark:text-slate-100 uppercase tracking-wider text-[11px]">
               SPONSORED
             </span>
-            <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
-              (प्रायोजित)
+            <span className="text-[10px] text-amber-800 dark:text-amber-300 font-bold bg-amber-100 dark:bg-amber-950/70 px-1.5 py-0.5 rounded border border-amber-300/80 dark:border-amber-800/80">
+              प्रायोजित
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 shrink-0">
             {displayAds.length > 1 && (
-              <span className="text-[11px] font-mono font-bold text-slate-600 dark:text-slate-300 bg-slate-200/70 dark:bg-slate-700/70 px-2 py-0.5 rounded-full">
-                {adIndex + 1} / {displayAds.length}
-              </span>
+              <div className="flex items-center gap-1 bg-slate-200/90 dark:bg-slate-900 p-0.5 rounded-lg border border-slate-300 dark:border-slate-700 shadow-2xs">
+                <button
+                  type="button"
+                  onClick={handlePrev}
+                  className="w-6 h-6 rounded-md bg-slate-900 hover:bg-amber-500 text-white hover:text-slate-950 dark:bg-amber-500 dark:hover:bg-amber-400 dark:text-slate-950 flex items-center justify-center transition shadow-xs cursor-pointer border border-slate-800 dark:border-amber-400 active:scale-95"
+                  aria-label="पिछला विज्ञापन (Previous Ad)"
+                  title="पिछला विज्ञापन"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5 stroke-[3]" />
+                </button>
+
+                <span className="px-1.5 text-[11px] font-mono font-black text-slate-900 dark:text-slate-100 min-w-7 text-center">
+                  {adIndex + 1}/{displayAds.length}
+                </span>
+
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  className="w-6 h-6 rounded-md bg-slate-900 hover:bg-amber-500 text-white hover:text-slate-950 dark:bg-amber-500 dark:hover:bg-amber-400 dark:text-slate-950 flex items-center justify-center transition shadow-xs cursor-pointer border border-slate-800 dark:border-amber-400 active:scale-95"
+                  aria-label="अगला विज्ञापन (Next Ad)"
+                  title="अगला विज्ञापन"
+                >
+                  <ChevronRight className="w-3.5 h-3.5 stroke-[3]" />
+                </button>
+              </div>
             )}
-            <span className="text-[10px] text-slate-400 dark:text-slate-500">विज्ञापन</span>
+            <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium hidden sm:inline">विज्ञापन</span>
           </div>
         </div>
 
@@ -233,30 +255,6 @@ export default function RightSponsoredSidebar() {
               </a>
             )}
 
-            {/* Left & Right Navigation Buttons */}
-            {displayAds.length > 1 && (
-              <>
-                <button
-                  type="button"
-                  onClick={handlePrev}
-                  className="absolute left-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/70 hover:bg-black/95 text-white flex items-center justify-center backdrop-blur-md transition shadow-xl cursor-pointer z-30 hover:scale-110 active:scale-95 border border-white/30"
-                  aria-label="पिछला विज्ञापन (Previous Ad)"
-                  title="पिछला विज्ञापन"
-                >
-                  <ChevronLeft className="w-5 h-5 stroke-[2.5]" />
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleNext}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/70 hover:bg-black/95 text-white flex items-center justify-center backdrop-blur-md transition shadow-xl cursor-pointer z-30 hover:scale-110 active:scale-95 border border-white/30"
-                  aria-label="अगला विज्ञापन (Next Ad)"
-                  title="अगला विज्ञापन"
-                >
-                  <ChevronRight className="w-5 h-5 stroke-[2.5]" />
-                </button>
-              </>
-            )}
           </div>
 
           {/* Clean Details & CTA Bar Below Image (Does Not Cut Off Or Obscure Photo) */}

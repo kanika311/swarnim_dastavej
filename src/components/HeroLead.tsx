@@ -51,13 +51,23 @@ export default function HeroLead({ leadArticle, sideArticles }: HeroLeadProps) {
         {/* BIG LEAD STORY (7 cols) */}
         <div className="lg:col-span-8 bg-white dark:bg-slate-800 rounded-xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-700 group hover:shadow-md transition">
           <Link href={`/article/${leadArticle.id}`} className="block relative">
-            <div className="relative aspect-video w-full overflow-hidden bg-slate-900">
+            <div className="relative aspect-video w-full overflow-hidden bg-slate-950 flex items-center justify-center">
+              {/* Ambient blurred backdrop */}
+              <img
+                src={leadArticle.coverImage}
+                alt=""
+                aria-hidden="true"
+                className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-40 scale-125 pointer-events-none"
+              />
+              <div className="absolute inset-0 bg-black/25 pointer-events-none" />
+
+              {/* Main Full Image without cropping */}
               <img
                 src={leadArticle.coverImage}
                 alt={leadArticle.headline}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                className="relative max-w-full max-h-full w-auto h-auto object-contain z-10 transition-transform duration-500 group-hover:scale-105"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/30 to-transparent"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-transparent pointer-events-none z-15"></div>
               
               {/* Badges on Image */}
               <div className="absolute top-3 left-3 flex flex-wrap gap-2">
@@ -158,13 +168,20 @@ export default function HeroLead({ leadArticle, sideArticles }: HeroLeadProps) {
                 href={`/article/${art.id}`}
                 className="bg-white dark:bg-slate-800 p-3 rounded-lg border border-slate-200 dark:border-slate-700 flex gap-3 hover:border-red-500 transition group shadow-sm"
               >
-                <div className="relative w-24 h-20 shrink-0 rounded overflow-hidden bg-slate-900">
+                <div className="relative w-24 h-20 shrink-0 rounded overflow-hidden bg-slate-950 flex items-center justify-center">
+                  <img
+                    src={art.coverImage}
+                    alt=""
+                    aria-hidden="true"
+                    className="absolute inset-0 w-full h-full object-cover blur-md opacity-40 scale-125 pointer-events-none"
+                  />
+                  <div className="absolute inset-0 bg-black/15 pointer-events-none" />
                   <img
                     src={art.coverImage}
                     alt={art.headline}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                    className="relative max-w-full max-h-full w-auto h-auto object-contain z-10 transition-transform group-hover:scale-105"
                   />
-                  <span className="absolute top-1 left-1 bg-black/70 text-amber-300 text-[9px] font-bold px-1 rounded">
+                  <span className="absolute top-1 left-1 bg-black/80 text-amber-300 text-[9px] font-bold px-1 rounded z-20">
                     {art.city}
                   </span>
                 </div>

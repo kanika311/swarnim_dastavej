@@ -78,6 +78,7 @@ import {
 } from 'lucide-react';
 import JournalistContestAdmin from '@/components/admin/JournalistContestAdmin';
 import { convertImageToWebP } from '@/lib/imageOptimization';
+import NewsBodyEditor from '@/components/NewsBodyEditor';
 
 export default function AdminDashboardPage() {
   const { 
@@ -2308,16 +2309,13 @@ export default function AdminDashboardPage() {
                         />
                       </div>
 
-                      <div>
-                        <label className="block text-xs font-bold text-slate-700 mb-1">समाचार विवरण (Full Body Content) *</label>
-                        <textarea
-                          required
-                          rows={6}
-                          value={editSubBody}
-                          onChange={(e) => setEditSubBody(e.target.value)}
-                          className="w-full text-xs p-3 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-[#D97706]/40 focus:border-[#D97706] leading-relaxed"
-                        />
-                      </div>
+                      <NewsBodyEditor
+                        value={editSubBody}
+                        onChange={setEditSubBody}
+                        label="समाचार विवरण (Full Body Content - बोल्ड एवं फॉन्ट साइज़ विकल्प) *"
+                        rows={6}
+                        placeholder="समाचार विवरण..."
+                      />
 
                       <div>
                         <label className="block text-xs font-bold text-slate-700 mb-1">संपादक टिप्पणी / नोट (Editor Comments)</label>
@@ -4419,17 +4417,13 @@ export default function AdminDashboardPage() {
 
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Story Content *</label>
-                <textarea
-                  required
-                  rows={4}
-                  value={newBody}
-                  onChange={(e) => setNewBody(e.target.value)}
-                  placeholder="Write the full news story details..."
-                  className="w-full px-3 py-2 border rounded-xl text-xs font-medium focus:ring-1 focus:ring-[#D97706] focus:outline-none"
-                />
-              </div>
+              <NewsBodyEditor
+                value={newBody}
+                onChange={setNewBody}
+                label="Story Content (समाचार विवरण - बोल्ड, फॉन्ट साइज़, बुलेट) *"
+                rows={8}
+                placeholder="Write the full news story details... (यहाँ खबर का संपूर्ण विवरण लिखें...)"
+              />
 
               <div className="flex items-center gap-2">
                 <input
