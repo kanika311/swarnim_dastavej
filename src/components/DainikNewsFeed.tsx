@@ -16,10 +16,10 @@ import {
   TrendingUp, 
   MessageSquare,
   Sparkles,
-  MapPin,
   SlidersHorizontal
 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
+import { extractTakeaways, stripHtml } from '@/lib/textCleaners';
 
 interface DainikNewsFeedProps {
   articles: Article[];
@@ -127,7 +127,7 @@ export default function DainikNewsFeed({
       window.speechSynthesis.cancel();
       setIsPlayingAudio(false);
     } else {
-      const textToSpeak = `${leadArticle.headline}. ${leadArticle.subHeadline || leadArticle.excerpt}`;
+      const textToSpeak = `${leadArticle.headline}. ${stripHtml(leadArticle.subHeadline || leadArticle.excerpt)}`;
       const utterance = new SpeechSynthesisUtterance(textToSpeak);
       utterance.lang = language === 'en' ? 'en-IN' : language === 'ur' ? 'ur-PK' : 'hi-IN';
       utterance.rate = 0.95;
@@ -227,11 +227,7 @@ export default function DainikNewsFeed({
 
           {(() => {
             const leadVideo = leadArticle.mediaGallery?.find((item) => item.type === 'video')?.url;
-            const takeaways = (leadArticle.body || leadArticle.excerpt || '')
-              .split(/\n+/)
-              .map((line) => line.replace(/^[\s•●\-–]+/, '').trim())
-              .filter((line) => line.length > 0)
-              .slice(0, 4);
+            const takeaways = extractTakeaways(leadArticle.body, leadArticle.excerpt, 4);
             const videoOn = Boolean(leadVideo && playingVideoId === leadArticle.id);
             return (
               <>
@@ -473,7 +469,7 @@ export default function DainikNewsFeed({
 
                   {/* Excerpt */}
                   <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2 mt-2 leading-relaxed">
-                    {art.excerpt}
+                    {stripHtml(art.excerpt || art.body)}
                   </p>
                 </div>
 

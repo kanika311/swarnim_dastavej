@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { Clock, Eye, MapPin, ChevronRight, ArrowLeft, Play } from 'lucide-react';
 
 import { useApp } from '@/context/AppContext';
+import { stripHtml } from '@/lib/textCleaners';
 
 export default function CategoryListingPage() {
   const params = useParams();
@@ -164,7 +165,7 @@ export default function CategoryListingPage() {
                     </Link>
 
                     <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-3 mt-2 leading-relaxed">
-                      {art.excerpt}
+                      {stripHtml(art.excerpt || art.body)}
                     </p>
                   </div>
                 </div>

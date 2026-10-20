@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { Article } from '@/types';
 import { Clock, Eye, Share2, Flame, Bookmark, Volume2 } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
+import { stripHtml } from '@/lib/textCleaners';
 
 interface HeroLeadProps {
   leadArticle: Article;
@@ -21,7 +22,7 @@ export default function HeroLead({ leadArticle, sideArticles }: HeroLeadProps) {
     if (navigator.share) {
       navigator.share({
         title: art.headline,
-        text: art.excerpt,
+        text: stripHtml(art.excerpt || art.headline),
         url: window.location.origin + `/article/${art.id}`
       }).catch(() => {});
     } else {
@@ -35,7 +36,7 @@ export default function HeroLead({ leadArticle, sideArticles }: HeroLeadProps) {
     setIsPlayingAudio(!isPlayingAudio);
     if ('speechSynthesis' in window) {
       if (!isPlayingAudio) {
-        const utterance = new SpeechSynthesisUtterance(leadArticle.headline + '. ' + leadArticle.excerpt);
+        const utterance = new SpeechSynthesisUtterance(leadArticle.headline + '. ' + stripHtml(leadArticle.subHeadline || leadArticle.excerpt || ''));
         utterance.lang = 'hi-IN';
         window.speechSynthesis.speak(utterance);
       } else {

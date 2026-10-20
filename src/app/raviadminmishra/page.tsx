@@ -74,11 +74,14 @@ import {
   XCircle,
   EyeOff,
   Menu,
-  Trophy
+  Trophy,
+  Maximize2,
+  Minimize2
 } from 'lucide-react';
 import JournalistContestAdmin from '@/components/admin/JournalistContestAdmin';
 import { convertImageToWebP } from '@/lib/imageOptimization';
 import NewsBodyEditor from '@/components/NewsBodyEditor';
+import { stripHtml } from '@/lib/textCleaners';
 
 export default function AdminDashboardPage() {
   const { 
@@ -172,6 +175,7 @@ export default function AdminDashboardPage() {
 
   // New Article Form state
   const [showAddArticle, setShowAddArticle] = useState(false);
+  const [articleModalFullScreen, setArticleModalFullScreen] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newCategory, setNewCategory] = useState<ArticleCategory>('state-city');
   const [newCity, setNewCity] = useState('Lucknow');
@@ -1065,6 +1069,7 @@ export default function AdminDashboardPage() {
     setPhotoFileName('');
     setVideoFileName('');
     setNewIsBreaking(false);
+    setArticleModalFullScreen(false);
   };
 
   const handleDeleteArticle = async (articleId: string, headline: string) => {
@@ -3175,7 +3180,7 @@ export default function AdminDashboardPage() {
                         )}
                       </div>
                       <h4 className="font-bold text-slate-900 text-sm sm:text-base">{art.headline}</h4>
-                      <p className="text-xs text-slate-500 line-clamp-1">{art.excerpt}</p>
+                      <p className="text-xs text-slate-500 line-clamp-1">{stripHtml(art.excerpt || art.body)}</p>
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
@@ -4193,266 +4198,387 @@ export default function AdminDashboardPage() {
       </main>
 
       {/* ========================================================= */}
-      {/* MODAL: PUBLISH NEW ARTICLE DIRECTLY                       */}
+      {/* MODAL: PUBLISH NEW ARTICLE DIRECTLY / EDIT ARTICLE        */}
       {/* ========================================================= */}
       {showAddArticle && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4 border max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b">
-              <h3 className="font-extrabold text-base text-slate-900 flex items-center gap-2">
-                <Camera className="w-4 h-4 text-[#D97706]" />
-                <span>{editingArticleId ? 'Edit Article' : 'Direct Article Publication (with Photo & Video)'}</span>
-              </h3>
-              <button onClick={resetArticleForm} className="text-slate-400 hover:text-slate-600 cursor-pointer">✕</button>
-            </div>
+        <div className={`fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center ${
+          articleModalFullScreen ? 'p-0' : 'p-2 sm:p-4 md:p-6'
+        }`}>
+          <div className={`bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col transition-all duration-200 ${
+            articleModalFullScreen
+              ? 'w-screen h-screen rounded-none max-w-none max-h-none'
+              : 'w-full max-w-6xl xl:max-w-7xl h-full max-h-[96vh] rounded-2xl'
+          } overflow-hidden`}>
             
-            <form onSubmit={handleCreateArticle} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Headline *</label>
-                <input
-                  type="text"
-                  required
-                  value={newTitle}
-                  onChange={(e) => setNewTitle(e.target.value)}
-                  placeholder="Enter headline..."
-                  className="w-full px-3 py-2 border rounded-xl text-xs font-medium focus:ring-1 focus:ring-[#D97706] focus:outline-none"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {/* Modal Top Header */}
+            <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0 bg-white dark:bg-slate-900">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-[#D97706] flex items-center justify-center font-bold">
+                  <Camera className="w-5 h-5" />
+                </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Category</label>
-                  <select
-                    value={newCategory}
-                    onChange={(e) => setNewCategory(e.target.value as any)}
-                    className="w-full px-3 py-2 border rounded-xl text-xs font-medium focus:ring-1 focus:ring-[#D97706] focus:outline-none"
-                  >
-                    {!TOPICS.some((topic) => topic.id === newCategory) && (
-                      <option value={newCategory}>{newCategory}</option>
+                  <h3 className="font-extrabold text-base sm:text-lg text-slate-900 dark:text-white flex items-center gap-2">
+                    <span>{editingArticleId ? 'संपादित करें (Edit Article)' : 'सीधे खबर प्रकाशित करें (Publish News)'}</span>
+                    {editingArticleId && (
+                      <span className="text-[11px] font-mono px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-300">
+                        {editingArticleId}
+                      </span>
                     )}
-                    {TOPICS.filter((topic) => topic.id !== 'all').map((topic) => (
-                      <option key={topic.id} value={topic.id}>{topic.label}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">राज्य / शहर (All India Location) *</label>
-                  <select
-                    value={newCity}
-                    onChange={(e) => setNewCity(e.target.value)}
-                    className="w-full px-3 py-2 border rounded-xl text-xs font-medium focus:ring-1 focus:ring-[#D97706] focus:outline-none bg-white"
-                  >
-                    {newCity && !ALL_INDIA_LOCATIONS.some(s => s.cities.some(c => c.name.toLowerCase() === newCity.toLowerCase() || c.nameHi === newCity)) && (
-                      <option value={newCity}>{newCity} (Selected)</option>
-                    )}
-                    <option value="Lucknow">Lucknow (लखनऊ)</option>
-                    <option value="Sultanpur">Sultanpur (सुल्तानपुर)</option>
-                    <option value="National">🇮🇳 All India / National (राष्ट्रीय)</option>
-                    {ALL_INDIA_LOCATIONS.map((state) => (
-                      <optgroup key={state.name} label={`${state.name} (${state.nameHi})`}>
-                        {state.cities.map((city) => (
-                          <option key={city.name} value={city.name}>
-                            {city.name} ({city.nameHi})
-                          </option>
-                        ))}
-                      </optgroup>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">खबर की भाषा (Language) *</label>
-                  <select
-                    value={newLanguage}
-                    onChange={(e) => setNewLanguage(e.target.value as LanguageCode)}
-                    className="w-full px-3 py-2 border rounded-xl text-xs font-bold bg-white focus:ring-1 focus:ring-[#D97706] focus:outline-none"
-                  >
-                    <option value="hi">हिन्दी (Hindi)</option>
-                    <option value="en">English</option>
-                    <option value="ur">اردو (Urdu)</option>
-                  </select>
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    यहाँ खबर का शीर्षक, स्थान, फोटो, वीडियो और संपूर्ण विवरण दर्ज करें
+                  </p>
                 </div>
               </div>
-
-              {/* MEDIA UPLOAD SECTION: PHOTO & VIDEO */}
-              <div className="space-y-3 p-3.5 bg-amber-50/40 rounded-2xl border border-amber-200/80">
-                <div className="font-extrabold text-xs text-slate-800 flex items-center justify-between">
-                  <span className="flex items-center gap-1.5 text-amber-900">
-                    <Camera className="w-3.5 h-3.5 text-[#D97706]" />
-                    <span>Article Media (Photo & Video)</span>
-                  </span>
-                  <span className="text-[10px] text-amber-700 font-medium">Upload from device media or URL</span>
-                </div>
-
-                {/* 1. PHOTO UPLOAD */}
-                <div className="space-y-1.5 bg-white p-3 rounded-xl border border-slate-200/80">
-                  <label className="block text-[11px] font-bold text-slate-700">
-                    Featured Photo / Cover Image
-                  </label>
-                  <div className="flex flex-col sm:flex-row items-center gap-2">
-                    <div className="relative flex-1 w-full">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handlePhotoUpload}
-                        disabled={isUploadingPhoto}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                      />
-                      <button
-                        type="button"
-                        className="w-full px-3 py-2 border border-dashed border-amber-300 hover:border-[#D97706] bg-amber-50/50 rounded-xl text-xs font-bold text-amber-800 flex items-center justify-center gap-2 transition"
-                      >
-                        {isUploadingPhoto ? (
-                          <>
-                            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#D97706]" />
-                            <span>Converting to WebP...</span>
-                          </>
-                        ) : (
-                          <>
-                            <Camera className="w-3.5 h-3.5 text-[#D97706]" />
-                            <span>Choose Photo from Device</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
-
-                    <div className="flex-1 w-full">
-                      <input
-                        type="text"
-                        value={newCoverImage}
-                        onChange={(e) => {
-                          coverImageRef.current = e.target.value;
-                          setNewCoverImage(e.target.value);
-                        }}
-                        placeholder="Or paste Image URL..."
-                        className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs"
-                      />
-                    </div>
-                  </div>
-
-                  {newCoverImage && (
-                    <div className="flex items-center gap-3 pt-1">
-                      <img
-                        src={newCoverImage}
-                        alt="Preview"
-                        className="w-14 h-10 object-cover rounded-lg border shadow-xs"
-                      />
-                      <div className="text-[11px] text-emerald-600 font-semibold truncate flex-1">
-                        ✓ Photo attached {photoFileName && `(${photoFileName})`}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          coverImageRef.current = '';
-                          setNewCoverImage('');
-                          setPhotoFileName('');
-                        }}
-                        className="text-[10px] text-red-500 font-bold hover:underline"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                {/* 2. VIDEO UPLOAD OR LINK */}
-                <div className="space-y-1.5 bg-white p-3 rounded-xl border border-slate-200/80">
-                  <label className="block text-[11px] font-bold text-slate-700">
-                    News Video (Optional)
-                  </label>
-                  <div className="flex flex-col sm:flex-row items-center gap-2">
-                    <div className="relative flex-1 w-full">
-                      <input
-                        type="file"
-                        accept="video/*,.mp4,.mov,.webm"
-                        onChange={handleVideoUpload}
-                        disabled={isUploadingVideo}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                      />
-                      <button
-                        type="button"
-                        className="w-full px-3 py-2 border border-dashed border-amber-300 hover:border-[#D97706] bg-amber-50/50 rounded-xl text-xs font-bold text-amber-800 flex items-center justify-center gap-2 transition"
-                      >
-                        {isUploadingVideo ? (
-                          <>
-                            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#D97706]" />
-                            <span>Compressing video...</span>
-                          </>
-                        ) : (
-                          <>
-                            <Video className="w-3.5 h-3.5 text-[#D97706]" />
-                            <span>Choose Video from Device</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
-
-                    <div className="flex-1 w-full">
-                      <input
-                        type="text"
-                        value={newVideoUrl}
-                        onChange={(e) => setNewVideoUrl(e.target.value)}
-                        placeholder="Or paste Video URL (YouTube/MP4)..."
-                        className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs"
-                      />
-                    </div>
-                  </div>
-
-                  {newVideoUrl && (
-                    <div className="flex items-center gap-2 pt-1 text-[11px] text-emerald-600 font-semibold bg-emerald-50 px-2.5 py-1 rounded-lg">
-                      <Film className="w-3.5 h-3.5 text-emerald-600" />
-                      <span className="truncate flex-1">Video attached{videoFileName ? ` (${videoFileName})` : ''}: {newVideoUrl}</span>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setNewVideoUrl('');
-                          setVideoFileName('');
-                        }}
-                        className="text-[10px] text-red-500 font-bold hover:underline"
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-              </div>
-
-              <NewsBodyEditor
-                value={newBody}
-                onChange={setNewBody}
-                label="Story Content (समाचार विवरण - बोल्ड, फॉन्ट साइज़, बुलेट) *"
-                rows={8}
-                placeholder="Write the full news story details... (यहाँ खबर का संपूर्ण विवरण लिखें...)"
-              />
 
               <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="breakingCheck"
-                  checked={newIsBreaking}
-                  onChange={(e) => setNewIsBreaking(e.target.checked)}
-                  className="rounded text-[#D97706] focus:ring-[#D97706]"
-                />
-                <label htmlFor="breakingCheck" className="text-xs font-bold text-slate-700">
-                  Mark as Breaking Alert (flashes in top ticker)
-                </label>
-              </div>
-
-              <div className="flex justify-end gap-2 pt-3 border-t">
+                <button
+                  type="button"
+                  onClick={() => setArticleModalFullScreen(!articleModalFullScreen)}
+                  className="p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                  title={articleModalFullScreen ? 'साधारण विंडो (Restore Window)' : 'फुल स्क्रीन (Full Screen)'}
+                >
+                  {articleModalFullScreen ? (
+                    <Minimize2 className="w-4 h-4" />
+                  ) : (
+                    <Maximize2 className="w-4 h-4" />
+                  )}
+                </button>
                 <button
                   type="button"
                   onClick={resetArticleForm}
-                  className="px-4 py-2 border rounded-xl text-xs font-semibold cursor-pointer hover:bg-slate-100 transition"
+                  className="p-2 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition cursor-pointer text-base font-bold"
+                  title="बंद करें (Close)"
                 >
-                  Cancel
+                  ✕
                 </button>
-                <button
-                  type="submit"
-                  disabled={isUploadingPhoto}
-                  className="px-5 py-2 bg-gradient-to-r from-[#B45309] via-[#D97706] to-[#F59E0B] text-white font-bold text-xs rounded-xl shadow-md shadow-amber-500/20 hover:opacity-95 cursor-pointer transition disabled:opacity-50"
-                >
-                  {isUploadingPhoto ? 'फोटो अपलोड हो रही है...' : editingArticleId ? 'Save changes' : 'Publish Now'}
-                </button>
+              </div>
+            </div>
+
+            {/* Form Body - Scrollable */}
+            <form onSubmit={handleCreateArticle} className="flex-1 overflow-y-auto flex flex-col">
+              <div className="p-6 sm:p-8 space-y-6 flex-1">
+                
+                {/* 1. Headline */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">
+                      मुख्य शीर्षक (Headline) *
+                    </label>
+                    <span className="text-[11px] text-slate-400">
+                      {newTitle.length} अक्षर
+                    </span>
+                  </div>
+                  <input
+                    type="text"
+                    required
+                    value={newTitle}
+                    onChange={(e) => setNewTitle(e.target.value)}
+                    placeholder="यहाँ आकर्षक एवं सटीक मुख्य शीर्षक लिखें..."
+                    className="w-full px-4 py-3 border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white rounded-xl text-sm sm:text-base font-semibold focus:ring-2 focus:ring-[#D97706]/40 focus:border-[#D97706] focus:outline-none transition shadow-2xs"
+                  />
+                </div>
+
+                {/* 2. Metadata Grid (Category, City, Language) */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-slate-50 dark:bg-slate-800/40 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-700/80">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                      श्रेणी (Category) *
+                    </label>
+                    <select
+                      value={newCategory}
+                      onChange={(e) => setNewCategory(e.target.value as any)}
+                      className="w-full px-3 py-2.5 border border-slate-300 dark:border-slate-700 rounded-xl text-xs sm:text-sm font-medium focus:ring-2 focus:ring-[#D97706]/40 focus:border-[#D97706] focus:outline-none bg-white dark:bg-slate-800 text-slate-900 dark:text-white cursor-pointer"
+                    >
+                      {!TOPICS.some((topic) => topic.id === newCategory) && (
+                        <option value={newCategory}>{newCategory}</option>
+                      )}
+                      {TOPICS.filter((topic) => topic.id !== 'all').map((topic) => (
+                        <option key={topic.id} value={topic.id}>{topic.label}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                      राज्य / शहर (All India Location) *
+                    </label>
+                    <select
+                      value={newCity}
+                      onChange={(e) => setNewCity(e.target.value)}
+                      className="w-full px-3 py-2.5 border border-slate-300 dark:border-slate-700 rounded-xl text-xs sm:text-sm font-medium focus:ring-2 focus:ring-[#D97706]/40 focus:border-[#D97706] focus:outline-none bg-white dark:bg-slate-800 text-slate-900 dark:text-white cursor-pointer"
+                    >
+                      {newCity && !ALL_INDIA_LOCATIONS.some(s => s.cities.some(c => c.name.toLowerCase() === newCity.toLowerCase() || c.nameHi === newCity)) && (
+                        <option value={newCity}>{newCity} (Selected)</option>
+                      )}
+                      <option value="Lucknow">Lucknow (लखनऊ)</option>
+                      <option value="Sultanpur">Sultanpur (सुल्तानपुर)</option>
+                      <option value="National">🇮🇳 All India / National (राष्ट्रीय)</option>
+                      {ALL_INDIA_LOCATIONS.map((state) => (
+                        <optgroup key={state.name} label={`${state.name} (${state.nameHi})`}>
+                          {state.cities.map((city) => (
+                            <option key={city.name} value={city.name}>
+                              {city.name} ({city.nameHi})
+                            </option>
+                          ))}
+                        </optgroup>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                      खबर की भाषा (Language) *
+                    </label>
+                    <select
+                      value={newLanguage}
+                      onChange={(e) => setNewLanguage(e.target.value as LanguageCode)}
+                      className="w-full px-3 py-2.5 border border-slate-300 dark:border-slate-700 rounded-xl text-xs sm:text-sm font-bold bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-2 focus:ring-[#D97706]/40 focus:border-[#D97706] focus:outline-none cursor-pointer"
+                    >
+                      <option value="hi">हिन्दी (Hindi)</option>
+                      <option value="en">English</option>
+                      <option value="ur">اردو (Urdu)</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* 3. MEDIA UPLOAD SECTION: PHOTO & VIDEO */}
+                <div className="space-y-4 p-5 bg-amber-50/40 dark:bg-amber-950/20 rounded-2xl border border-amber-200/80 dark:border-amber-800/60">
+                  <div className="flex flex-wrap items-center justify-between gap-2 border-b border-amber-200/60 dark:border-amber-800/40 pb-2.5">
+                    <span className="flex items-center gap-2 font-extrabold text-sm text-amber-900 dark:text-amber-300">
+                      <Camera className="w-4 h-4 text-[#D97706]" />
+                      <span>Article Media (मुख्य फोटो व वीडियो)</span>
+                    </span>
+                    <span className="text-xs text-amber-700 dark:text-amber-400 font-medium">
+                      डिवाइस से अपलोड करें या डायरेक्ट URL डालें
+                    </span>
+                  </div>
+
+                  {/* Photo Input Row */}
+                  <div className="space-y-2 bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200/80 dark:border-slate-700/80">
+                    <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
+                      मुख्य तस्वीर (Featured Photo / Cover Image)
+                    </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="relative w-full">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handlePhotoUpload}
+                          disabled={isUploadingPhoto}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                        />
+                        <button
+                          type="button"
+                          className="w-full px-4 py-2.5 border border-dashed border-amber-300 hover:border-[#D97706] bg-amber-50/60 hover:bg-amber-100/60 dark:bg-amber-950/30 rounded-xl text-xs font-bold text-amber-800 dark:text-amber-300 flex items-center justify-center gap-2 transition cursor-pointer"
+                        >
+                          {isUploadingPhoto ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin text-[#D97706]" />
+                              <span>Converting to WebP...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Camera className="w-4 h-4 text-[#D97706]" />
+                              <span>डिवाइस से फोटो चुनें (Choose Photo)</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+
+                      <div className="w-full">
+                        <input
+                          type="text"
+                          value={newCoverImage}
+                          onChange={(e) => {
+                            coverImageRef.current = e.target.value;
+                            setNewCoverImage(e.target.value);
+                          }}
+                          placeholder="या इमेज URL पेस्ट करें (/uploads/... या https://...)"
+                          className="w-full px-3.5 py-2.5 border border-slate-300 dark:border-slate-700 rounded-xl text-xs bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-1 focus:ring-[#D97706] focus:outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    {/* LIVE FRONT-PAGE EXACT IMAGE PREVIEW (NO CROP / NO CUT) */}
+                    {newCoverImage && (
+                      <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                            <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                              वेबसाइट लाइव प्रीव्यू (Front View — फोटो का कोई भी हिस्सा कटेगा नहीं):
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              coverImageRef.current = '';
+                              setNewCoverImage('');
+                              setPhotoFileName('');
+                            }}
+                            className="text-xs text-red-500 font-bold hover:underline cursor-pointer"
+                          >
+                            फोटो हटाएं (Remove)
+                          </button>
+                        </div>
+
+                        {/* Front replica image box with ambient backdrop & object-contain */}
+                        <div className="relative w-full rounded-2xl overflow-hidden bg-slate-950 flex items-center justify-center shadow-md min-h-[260px] max-h-[460px] border border-slate-800">
+                          {/* Ambient blurred backdrop for seamless, edge-to-edge color fill */}
+                          <img
+                            src={newCoverImage}
+                            alt=""
+                            aria-hidden="true"
+                            className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-40 scale-125 pointer-events-none"
+                          />
+                          <div className="absolute inset-0 bg-black/25 pointer-events-none" />
+
+                          {/* Main Full Image: object-contain guarantees 100% of photo is visible without cutting */}
+                          <img
+                            src={newCoverImage}
+                            alt={newTitle || 'Cover preview'}
+                            className="relative max-w-full max-h-[440px] w-auto h-auto object-contain z-10 mx-auto transition-transform duration-300"
+                          />
+
+                          {/* Category & City Badges Overlay */}
+                          <div className="absolute top-3 left-3 z-20 flex items-center gap-2">
+                            <span className="bg-red-700 text-white font-bold text-[11px] px-2.5 py-1 rounded shadow">
+                              {newCategory === 'sultanpur' || newCategory === 'sitapur' ? 'सुल्तानपुर विशेष' : newCategory === 'lucknow' ? 'लखनऊ हलचल' : newCategory}
+                            </span>
+                            <span className="bg-slate-900/80 text-amber-300 text-[11px] font-bold px-2 py-0.5 rounded backdrop-blur-xs">
+                              {newCity}
+                            </span>
+                            <span className="bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-xs">
+                              ✓ 100% Full View (No Cut)
+                            </span>
+                          </div>
+
+                          {/* Bottom Caption Overlay */}
+                          <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-3 text-white text-[11px] z-20 flex items-center justify-between">
+                            <span className="truncate max-w-[80%] font-medium">
+                              तस्वीर: {newTitle || 'समाचार शीर्षक'} - स्वर्णिम दस्तावेज़ डेस्क
+                            </span>
+                            <span className="text-[10px] text-slate-300 shrink-0">
+                              {photoFileName ? photoFileName : 'WebP Ready'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Video Input Row */}
+                  <div className="space-y-2 bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200/80 dark:border-slate-700/80">
+                    <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
+                      वीडियो (News Video - Optional)
+                    </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="relative w-full">
+                        <input
+                          type="file"
+                          accept="video/*,.mp4,.mov,.webm"
+                          onChange={handleVideoUpload}
+                          disabled={isUploadingVideo}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                        />
+                        <button
+                          type="button"
+                          className="w-full px-4 py-2.5 border border-dashed border-amber-300 hover:border-[#D97706] bg-amber-50/60 hover:bg-amber-100/60 dark:bg-amber-950/30 rounded-xl text-xs font-bold text-amber-800 dark:text-amber-300 flex items-center justify-center gap-2 transition cursor-pointer"
+                        >
+                          {isUploadingVideo ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin text-[#D97706]" />
+                              <span>Compressing video...</span>
+                            </>
+                          ) : (
+                            <>
+                              <Video className="w-4 h-4 text-[#D97706]" />
+                              <span>डिवाइस से वीडियो चुनें (Choose Video)</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+
+                      <div className="w-full">
+                        <input
+                          type="text"
+                          value={newVideoUrl}
+                          onChange={(e) => setNewVideoUrl(e.target.value)}
+                          placeholder="या वीडियो URL डालें (YouTube / MP4)..."
+                          className="w-full px-3.5 py-2.5 border border-slate-300 dark:border-slate-700 rounded-xl text-xs bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-1 focus:ring-[#D97706] focus:outline-none"
+                        />
+                      </div>
+                    </div>
+
+                    {newVideoUrl && (
+                      <div className="flex items-center gap-2 pt-1 text-xs text-emerald-600 font-semibold bg-emerald-50 dark:bg-emerald-950/40 px-3 py-1.5 rounded-lg border border-emerald-200 dark:border-emerald-800">
+                        <Film className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <span className="truncate flex-1">Video attached{videoFileName ? ` (${videoFileName})` : ''}: {newVideoUrl}</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setNewVideoUrl('');
+                            setVideoFileName('');
+                          }}
+                          className="text-xs text-red-500 font-bold hover:underline cursor-pointer"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* 4. Story Content (NewsBodyEditor) */}
+                <div>
+                  <NewsBodyEditor
+                    value={newBody}
+                    onChange={setNewBody}
+                    label="समाचार विवरण (Story Content - बोल्ड, शीर्षक, हाइलाइट, बुलेट) *"
+                    rows={12}
+                    placeholder="यहाँ खबर का संपूर्ण विवरण लिखें... (Write the full story details here)"
+                  />
+                </div>
+
+                {/* 5. Breaking Alert Option */}
+                <div className="flex items-center gap-2.5 p-3 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/60">
+                  <input
+                    type="checkbox"
+                    id="breakingCheck"
+                    checked={newIsBreaking}
+                    onChange={(e) => setNewIsBreaking(e.target.checked)}
+                    className="w-4 h-4 rounded text-red-600 focus:ring-red-500 cursor-pointer"
+                  />
+                  <label htmlFor="breakingCheck" className="text-xs font-bold text-red-900 dark:text-red-300 cursor-pointer">
+                    ⚡ ब्रेकिंग अलर्ट के रूप में दिखाएं (Flashes in Top Breaking Ticker)
+                  </label>
+                </div>
+
+              </div>
+
+              {/* Modal Sticky Bottom Footer */}
+              <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0 bg-slate-50 dark:bg-slate-800/80">
+                <div className="text-xs text-slate-500 dark:text-slate-400">
+                  {newCoverImage ? '✓ मुख्य फोटो संलग्न है' : '⚠️ मुख्य फोटो अवश्य संलग्न करें'}
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={resetArticleForm}
+                    className="px-4 py-2 border border-slate-300 dark:border-slate-700 rounded-xl text-xs font-semibold cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition"
+                  >
+                    रद्द करें (Cancel)
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isUploadingPhoto}
+                    className="px-6 py-2.5 bg-gradient-to-r from-[#B45309] via-[#D97706] to-[#F59E0B] text-white font-bold text-xs sm:text-sm rounded-xl shadow-md shadow-amber-500/20 hover:opacity-95 cursor-pointer transition disabled:opacity-50"
+                  >
+                    {isUploadingPhoto ? 'फोटो अपलोड हो रही है...' : editingArticleId ? 'संशोधन सुरक्षित करें (Save Changes)' : 'अभी प्रकाशित करें (Publish Live)'}
+                  </button>
+                </div>
               </div>
             </form>
           </div>

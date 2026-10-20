@@ -3,6 +3,7 @@ import { platformStore } from '@/lib/store';
 import { connectToDatabase } from '@/lib/mongodb';
 import ArticleModel from '@/models/Article';
 import { isSeedArticle, SEED_ARTICLE_IDS } from '@/lib/initialData';
+import { cleanExcerpt, sanitizeArticleHtml } from '@/lib/textCleaners';
 
 export async function GET(
   request: Request,
@@ -16,12 +17,16 @@ export async function GET(
     const conn = await connectToDatabase();
     if (conn) {
       const doc = await ArticleModel.findOne({ $or: [{ id }, { slug: id }] }).lean().exec();
-      if (doc) {
-        if (isSeedArticle(doc)) {
-          return NextResponse.json({ success: false, message: 'Article not found' }, { status: 404 });
+        if (doc) {
+          if (isSeedArticle(doc)) {
+            return NextResponse.json({ success: false, message: 'Article not found' }, { status: 404 });
+          }
+          const cleanDoc = {
+            ...doc,
+            excerpt: cleanExcerpt(doc.excerpt || doc.body, 150),
+          };
+          return NextResponse.json({ success: true, data: cleanDoc });
         }
-        return NextResponse.json({ success: true, data: doc });
-      }
     }
   } catch {
     // Fall through to the in-memory article.
@@ -54,16 +59,21 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    let updated = platformStore.updateArticle(id, body);
+    const sanitizedBody = { ...body };
+    if (sanitizedBody.body) {
+      sanitizedBody.body = sanitizeArticleHtml(sanitizedBody.body);
+      sanitizedBody.excerpt = cleanExcerpt(sanitizedBody.excerpt || sanitizedBody.body, 150);
+    }
+    let updated = platformStore.updateArticle(id, sanitizedBody);
     try {
       const conn = await connectToDatabase();
       if (conn) {
         const doc = await ArticleModel.findOneAndUpdate(
           { id },
-          { $set: body },
+          { $set: sanitizedBody },
           { new: true }
         ).lean().exec();
-        if (doc) updated = doc as NonNullable<typeof updated>;
+        if (doc) updated = { ...doc, excerpt: cleanExcerpt(doc.excerpt || doc.body, 150) } as NonNullable<typeof updated>;
       }
     } catch (dbErr: unknown) {
       const message = dbErr instanceof Error ? dbErr.message : 'MongoDB article update error';

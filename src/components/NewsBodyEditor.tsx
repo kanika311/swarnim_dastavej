@@ -21,6 +21,7 @@ import {
   RemoveFormatting
 } from 'lucide-react';
 import RichArticleBody, { markdownToHtml } from './RichArticleBody';
+import { sanitizeArticleHtml } from '@/lib/textCleaners';
 
 interface NewsBodyEditorProps {
   value: string;
@@ -84,10 +85,24 @@ export default function NewsBodyEditor({
   const handleInput = () => {
     if (editorRef.current) {
       isTypingRef.current = true;
-      const html = editorRef.current.innerHTML;
+      const html = sanitizeArticleHtml(editorRef.current.innerHTML);
       onChange(html);
       updateActiveStates();
     }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const html = e.clipboardData.getData('text/html');
+    const text = e.clipboardData.getData('text/plain');
+
+    if (html) {
+      const clean = sanitizeArticleHtml(html);
+      document.execCommand('insertHTML', false, clean);
+    } else if (text) {
+      document.execCommand('insertText', false, text);
+    }
+    handleInput();
   };
 
   /**
@@ -495,6 +510,7 @@ export default function NewsBodyEditor({
             contentEditable={true}
             suppressContentEditableWarning={true}
             onInput={handleInput}
+            onPaste={handlePaste}
             onKeyDown={(e) => {
               if ((e.ctrlKey || e.metaKey) && (e.key === 'b' || e.key === 'B')) {
                 setTimeout(updateActiveStates, 10);

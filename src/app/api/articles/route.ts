@@ -3,6 +3,7 @@ import { platformStore } from '@/lib/store';
 import { connectToDatabase } from '@/lib/mongodb';
 import ArticleModel from '@/models/Article';
 import { isSeedArticle, SEED_ARTICLE_HEADLINES, SEED_ARTICLE_IDS } from '@/lib/initialData';
+import { cleanExcerpt } from '@/lib/textCleaners';
 
 let seedArticlesPurged = false;
 
@@ -68,6 +69,10 @@ export async function GET(request: Request) {
     ...storeArticles.filter((article) => !seen.has(article.id)),
   ]
     .filter((article) => !isSeedArticle(article))
+    .map((article) => ({
+      ...article,
+      excerpt: cleanExcerpt(article.excerpt || article.body, 150),
+    }))
     .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
   return NextResponse.json({ success: true, count: articles.length, source: dbArticles.length ? 'mongodb' : 'store', data: articles });
 }

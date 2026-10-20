@@ -4,6 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { PenTool, CheckCircle, MapPin, Camera, Video, ArrowRight } from 'lucide-react';
 import { Article } from '@/types';
+import { stripHtml } from '@/lib/textCleaners';
 
 interface CitizenSpotlightProps {
   articles: Article[];
@@ -89,7 +90,7 @@ export default function CitizenSpotlight({ articles }: CitizenSpotlightProps) {
                 {story.headline}
               </h4>
               <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mt-1.5 leading-relaxed">
-                {story.excerpt}
+                {stripHtml(story.excerpt || story.body)}
               </p>
             </div>
 

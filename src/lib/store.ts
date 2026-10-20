@@ -21,6 +21,7 @@ import {
   INITIAL_CLASSIFIEDS, 
   INITIAL_GRIEVANCES 
 } from './initialData';
+import { sanitizeArticleHtml, cleanExcerpt, stripHtml } from './textCleaners';
 
 const DEFAULT_SETTINGS: SiteSettings = {
   siteName: 'स्वर्णिम दस्तावेज़ (Swarnim Dastavej)',
@@ -139,8 +140,8 @@ class PlatformStore {
       slug: data.headline ? data.headline.slice(0, 40).replace(/[^a-zA-Z0-9\u0900-\u097F]/g, '-').toLowerCase() : `art-${Date.now()}`,
       headline: data.headline || 'शीर्षक उपलब्ध नहीं',
       subHeadline: data.subHeadline || '',
-      body: data.body || '',
-      excerpt: data.excerpt || (data.body ? data.body.slice(0, 150) + '...' : ''),
+      body: data.body ? sanitizeArticleHtml(data.body) : '',
+      excerpt: cleanExcerpt(data.excerpt || data.body || '', 150),
       category: data.category || 'national',
       city: data.city || 'लखनऊ',
       language: data.language || 'hi',
@@ -193,8 +194,9 @@ class PlatformStore {
     const { id: _id, ...rest } = data;
     Object.assign(art, rest);
     if (data.body) {
-      art.excerpt = data.excerpt || `${data.body.slice(0, 150)}...`;
-      art.readingTimeMinutes = Math.max(1, Math.ceil(data.body.length / 400));
+      art.body = sanitizeArticleHtml(data.body);
+      art.excerpt = cleanExcerpt(data.excerpt || data.body, 150);
+      art.readingTimeMinutes = Math.max(1, Math.ceil(stripHtml(data.body).length / 400));
     }
     return art;
   }

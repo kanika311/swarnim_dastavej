@@ -4,6 +4,7 @@ import { platformStore } from '@/lib/store';
 import { isSeedArticle, SEED_ARTICLE_IDS } from '@/lib/initialData';
 import { Article } from '@/types';
 import type { Metadata } from 'next';
+import { cleanExcerpt } from '@/lib/textCleaners';
 
 export function serializeArticle(doc: any): Article {
   return {
@@ -12,7 +13,7 @@ export function serializeArticle(doc: any): Article {
     headline: String(doc.headline || ''),
     subHeadline: doc.subHeadline ? String(doc.subHeadline) : undefined,
     body: String(doc.body || ''),
-    excerpt: doc.excerpt ? String(doc.excerpt) : '',
+    excerpt: cleanExcerpt(doc.excerpt || doc.body || '', 150),
     category: (doc.category || 'state') as Article['category'],
     city: String(doc.city || ''),
     language: (doc.language || 'hi') as Article['language'],
@@ -123,13 +124,8 @@ export function getArticleMetadata(article: Article | null, idOrSlug: string): M
     imageUrl = `${siteUrl}${cleanPath}`;
   }
 
-  // 2. Prepare clean description without line breaks
-  const rawDesc = article.subHeadline || article.excerpt || article.body || '';
-  const cleanDesc = rawDesc
-    .replace(/\r?\n|\r/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .slice(0, 160);
+  // 2. Prepare clean description without line breaks or HTML tags
+  const cleanDesc = cleanExcerpt(article.subHeadline || article.excerpt || article.body || '', 160);
 
   const headline = article.headline?.trim() || 'ताज़ा खबर';
   const fullTitle = `${headline} - स्वर्णिम दस्तावेज़`;
