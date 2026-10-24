@@ -38,6 +38,8 @@ const DEFAULT_SETTINGS: SiteSettings = {
   youtubeUrl: 'https://youtube.com',
   whatsappUrl: 'https://whatsapp.com/channel/0029Vb9Vh4s3rZZlaVJwQq15',
   whatsappNumber: '+91 95196 231111',
+  whatsappCommunityUrl: 'https://whatsapp.com/channel/0029Vb9Vh4s3rZZlaVJwQq15',
+  facebookCommunityUrl: 'https://facebook.com',
   privacyPolicy: `## गोपनीयता नीति (Privacy Policy) - स्वर्णिम दस्तावेज़
 
 अंतिम अद्यतन: 2026 | पंजीयन संख्या: UPHIN/26/A7984
@@ -146,6 +148,8 @@ class PlatformStore {
       city: data.city || 'लखनऊ',
       language: data.language || 'hi',
       coverImage: data.coverImage || 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=1000&auto=format&fit=crop&q=80',
+      coverImageCaption: data.coverImageCaption || data.photoCredit,
+      photoCredit: data.photoCredit || data.coverImageCaption,
       mediaGallery: data.mediaGallery || [],
       author: data.author || {
         id: 'user_editor_1',

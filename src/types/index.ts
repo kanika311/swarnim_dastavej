@@ -72,6 +72,8 @@ export interface Article {
   city: string;
   language: LanguageCode;
   coverImage: string;
+  coverImageCaption?: string;
+  photoCredit?: string;
   mediaGallery?: MediaItem[];
   author: {
     id: string;
@@ -325,6 +327,8 @@ export interface SiteSettings {
   youtubeUrl?: string;
   whatsappUrl?: string;
   whatsappNumber?: string;
+  whatsappCommunityUrl?: string;
+  facebookCommunityUrl?: string;
 }
 
 export interface EPaperPricingPlan {

@@ -18,6 +18,8 @@ export interface ISiteSettings extends Document {
   youtubeUrl?: string;
   whatsappUrl?: string;
   whatsappNumber?: string;
+  whatsappCommunityUrl?: string;
+  facebookCommunityUrl?: string;
   updatedAt: Date;
 }
 
@@ -39,7 +41,9 @@ const SiteSettingsSchema = new Schema<ISiteSettings>(
     instagramUrl: { type: String, default: 'https://instagram.com' },
     youtubeUrl: { type: String, default: 'https://youtube.com' },
     whatsappUrl: { type: String, default: 'https://whatsapp.com/channel/0029Vb9Vh4s3rZZlaVJwQq15' },
-    whatsappNumber: { type: String, default: '+91 95196 231111' }
+    whatsappNumber: { type: String, default: '+91 95196 231111' },
+    whatsappCommunityUrl: { type: String, default: 'https://whatsapp.com/channel/0029Vb9Vh4s3rZZlaVJwQq15' },
+    facebookCommunityUrl: { type: String, default: 'https://facebook.com' }
   },
   { timestamps: true }
 );

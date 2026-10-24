@@ -11,6 +11,8 @@ export interface IArticle extends Document {
   city: string;
   language: string;
   coverImage: string;
+  coverImageCaption?: string;
+  photoCredit?: string;
   mediaGallery?: Array<{
     id: string;
     type: 'image' | 'video';
@@ -52,6 +54,8 @@ const ArticleSchema = new Schema<IArticle>(
     city: { type: String, required: true, index: true },
     language: { type: String, default: 'hi' },
     coverImage: { type: String, required: true },
+    coverImageCaption: { type: String },
+    photoCredit: { type: String },
     mediaGallery: [
       {
         id: String,

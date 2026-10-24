@@ -76,8 +76,11 @@ import {
   Menu,
   Trophy,
   Maximize2,
-  Minimize2
+  Minimize2,
+  Share2,
+  Copy
 } from 'lucide-react';
+import { FaWhatsapp, FaFacebookF } from 'react-icons/fa6';
 import JournalistContestAdmin from '@/components/admin/JournalistContestAdmin';
 import { convertImageToWebP } from '@/lib/imageOptimization';
 import NewsBodyEditor from '@/components/NewsBodyEditor';
@@ -190,6 +193,7 @@ export default function AdminDashboardPage() {
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
   const [photoFileName, setPhotoFileName] = useState('');
+  const [newPhotoCaption, setNewPhotoCaption] = useState('');
   const [videoFileName, setVideoFileName] = useState('');
   const [shelfTitle, setShelfTitle] = useState('');
   const [shelfCity, setShelfCity] = useState('लखनऊ');
@@ -197,6 +201,12 @@ export default function AdminDashboardPage() {
   const [shelfFileName, setShelfFileName] = useState('');
   const [shelfUploading, setShelfUploading] = useState(false);
   const [shelfSaving, setShelfSaving] = useState(false);
+
+  // Community Share Options State
+  const [shareToWhatsapp, setShareToWhatsapp] = useState(true);
+  const [shareToFacebook, setShareToFacebook] = useState(true);
+  const [recentlyPublishedArticle, setRecentlyPublishedArticle] = useState<Article | null>(null);
+  const [copiedShareText, setCopiedShareText] = useState(false);
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -497,6 +507,32 @@ export default function AdminDashboardPage() {
     }
   };
 
+  // Share Content Helpers
+  const getShareContent = (art: Article) => {
+    const origin = typeof window !== 'undefined' ? window.location.origin : 'https://swarnimdastavej.com';
+    const articleUrl = `${origin}/article/${art.id}`;
+    const waCommunity = settingsForm.whatsappCommunityUrl || settingsForm.whatsappUrl || '';
+    const fbCommunity = settingsForm.facebookCommunityUrl || settingsForm.facebookUrl || '';
+    
+    const shareText = `📰 *${art.headline}*\n\nस्वर्णिम दस्तावेज़ पर विस्तृत खबर यहाँ पढ़ें:\n👉 ${articleUrl}${waCommunity ? `\n\nहमारे व्हाट्सएप कम्युनिटी से तुरंत जुड़ें:\n🔗 ${waCommunity}` : ''}`;
+    
+    return { articleUrl, shareText, waCommunity, fbCommunity };
+  };
+
+  const handleShareToWhatsapp = (art: Article) => {
+    const { shareText } = getShareContent(art);
+    if (typeof window !== 'undefined') {
+      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`, '_blank');
+    }
+  };
+
+  const handleShareToFacebook = (art: Article) => {
+    const { articleUrl } = getShareContent(art);
+    if (typeof window !== 'undefined') {
+      window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(articleUrl)}`, '_blank');
+    }
+  };
+
   // Create article handler
   const handleCreateArticle = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -520,8 +556,10 @@ export default function AdminDashboardPage() {
         language: newLanguage,
         isBreaking: newIsBreaking,
         coverImage: coverImage || 'https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=1000&auto=format&fit=crop&q=80',
+        coverImageCaption: newPhotoCaption.trim() || undefined,
+        photoCredit: newPhotoCaption.trim() || undefined,
         mediaGallery: [
-          ...(coverImage ? [{ id: `img-${Date.now()}`, type: 'image' as const, url: coverImage, caption: newTitle }] : []),
+          ...(coverImage ? [{ id: `img-${Date.now()}`, type: 'image' as const, url: coverImage, caption: newPhotoCaption.trim() || newTitle }] : []),
           ...(newVideoUrl ? [{ id: `vid-${Date.now()}`, type: 'video' as const, url: newVideoUrl, caption: 'News Video' }] : [])
         ],
         author: {
@@ -537,14 +575,34 @@ export default function AdminDashboardPage() {
       });
       const data = await res.json();
       if (data.success && data.data) {
+        const savedArt: Article = data.data;
         if (editingArticleId) {
-          setArticles(prev => prev.map(a => a.id === editingArticleId ? data.data : a));
+          setArticles(prev => prev.map(a => a.id === editingArticleId ? savedArt : a));
           recordUpdate();
           alert('Article updated.');
         } else {
-          setArticles(prev => [data.data, ...prev]);
+          setArticles(prev => [savedArt, ...prev]);
           recordUpdate();
-          alert('Article published live to portal!');
+
+          // Auto-trigger community shares if checked
+          const { shareText, articleUrl } = getShareContent(savedArt);
+          if (shareToWhatsapp && typeof window !== 'undefined') {
+            try {
+              window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`, '_blank');
+            } catch (err) {
+              console.warn('Could not auto-open WhatsApp:', err);
+            }
+          }
+          if (shareToFacebook && typeof window !== 'undefined') {
+            try {
+              window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(articleUrl)}`, '_blank');
+            } catch (err) {
+              console.warn('Could not auto-open Facebook:', err);
+            }
+          }
+
+          // Show post-publish community share dialog
+          setRecentlyPublishedArticle(savedArt);
         }
       } else {
         alert(data.message || 'Could not save article.');
@@ -760,6 +818,8 @@ export default function AdminDashboardPage() {
     youtubeUrl: 'https://youtube.com',
     whatsappUrl: 'https://whatsapp.com/channel/0029Vb9Vh4s3rZZlaVJwQq15',
     whatsappNumber: '+91 95196 231111',
+    whatsappCommunityUrl: 'https://whatsapp.com/channel/0029Vb9Vh4s3rZZlaVJwQq15',
+    facebookCommunityUrl: 'https://facebook.com',
     privacyPolicy: '',
     termsOfService: '',
     editorialPolicy: '',
@@ -772,7 +832,14 @@ export default function AdminDashboardPage() {
     fetch('/api/settings')
       .then(r => r.json())
       .then(d => {
-        if (d.success && d.data) setSettingsForm(d.data);
+        if (d.success && d.data) {
+          setSettingsForm(prev => ({
+            ...prev,
+            ...d.data,
+            whatsappCommunityUrl: d.data.whatsappCommunityUrl || d.data.whatsappUrl || prev.whatsappCommunityUrl,
+            facebookCommunityUrl: d.data.facebookCommunityUrl || d.data.facebookUrl || prev.facebookCommunityUrl
+          }));
+        }
       })
       .catch(() => {});
   }, []);
@@ -1054,6 +1121,8 @@ export default function AdminDashboardPage() {
     setNewCoverImage(art.coverImage || '');
     const video = art.mediaGallery?.find(item => item.type === 'video');
     setNewVideoUrl(video?.url || '');
+    const initialCaption = art.coverImageCaption || art.photoCredit || (art.mediaGallery?.[0]?.caption && art.mediaGallery[0].caption !== art.headline ? art.mediaGallery[0].caption : '');
+    setNewPhotoCaption(initialCaption || '');
     setShowAddArticle(true);
   };
 
@@ -1065,10 +1134,13 @@ export default function AdminDashboardPage() {
     setNewBody('');
     coverImageRef.current = '';
     setNewCoverImage('');
+    setNewPhotoCaption('');
     setNewVideoUrl('');
     setPhotoFileName('');
     setVideoFileName('');
     setNewIsBreaking(false);
+    setShareToWhatsapp(true);
+    setShareToFacebook(true);
     setArticleModalFullScreen(false);
   };
 
@@ -3197,6 +3269,22 @@ export default function AdminDashboardPage() {
                         <Power className="w-4 h-4" />
                       </button>
                       <button
+                        type="button"
+                        onClick={() => handleShareToWhatsapp(art)}
+                        className="p-1.5 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 rounded-lg cursor-pointer transition"
+                        title="व्हाट्सएप कम्युनिटी में शेयर करें (Share to WhatsApp Community)"
+                      >
+                        <FaWhatsapp className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleShareToFacebook(art)}
+                        className="p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40 rounded-lg cursor-pointer transition"
+                        title="फेसबुक कम्युनिटी में शेयर करें (Share to Facebook Community)"
+                      >
+                        <FaFacebookF className="w-3.5 h-3.5" />
+                      </button>
+                      <button
                         onClick={() => handleStartEditArticle(art)}
                         className="p-1.5 text-slate-500 hover:text-[#D97706] rounded-lg cursor-pointer"
                         title="Edit article"
@@ -4074,6 +4162,44 @@ export default function AdminDashboardPage() {
                     <span className="text-[10px] text-slate-400 font-normal">इस नंबर पर साइट विज़िटर्स सीधे व्हाट्सएप पर संदेश भेज सकेंगे।</span>
                   </label>
                 </div>
+
+                {/* Community Links for Auto-Share */}
+                <div className="mt-4 p-4 rounded-xl bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/50 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Share2 className="w-4 h-4 text-[#D97706]" />
+                    <h4 className="text-xs font-bold text-amber-950 dark:text-amber-200 uppercase tracking-wider">
+                      कम्युनिटी शेयर लिंक (Community Links for Direct News Sharing)
+                    </h4>
+                  </div>
+                  <p className="text-[11px] text-slate-600 dark:text-slate-400">
+                    जब आप नई खबर पोस्ट करेंगे, तो नीचे दिए गए लिंक्स के अनुसार व्हाट्सएप व फेसबुक कम्युनिटी में सीधे शेयर किया जाएगा।
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
+                      🟢 WhatsApp Community / Channel Link *
+                      <input
+                        type="url"
+                        placeholder="https://chat.whatsapp.com/... या https://whatsapp.com/channel/..."
+                        value={settingsForm.whatsappCommunityUrl || ''}
+                        onChange={(e) => updateSetting('whatsappCommunityUrl', e.target.value)}
+                        className="mt-1 w-full px-3 py-2 border rounded-xl text-xs font-medium bg-white dark:bg-slate-800 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
+                      />
+                      <span className="text-[10px] text-slate-500">व्हाट्सएप कम्युनिटी या चैनल का इनवाइट लिंक।</span>
+                    </label>
+
+                    <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
+                      🔵 Facebook Community / Group Link *
+                      <input
+                        type="url"
+                        placeholder="https://facebook.com/groups/..."
+                        value={settingsForm.facebookCommunityUrl || ''}
+                        onChange={(e) => updateSetting('facebookCommunityUrl', e.target.value)}
+                        className="mt-1 w-full px-3 py-2 border rounded-xl text-xs font-medium bg-white dark:bg-slate-800 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                      />
+                      <span className="text-[10px] text-slate-500">फेसबुक ग्रुप या कम्युनिटी पेज का लिंक।</span>
+                    </label>
+                  </div>
+                </div>
               </div>
 
               <label className="block text-xs font-bold text-slate-700">
@@ -4400,6 +4526,58 @@ export default function AdminDashboardPage() {
                       </div>
                     </div>
 
+                    {/* PHOTO CAPTION & CREDIT / SAABHAR INPUT */}
+                    <div className="mt-3 pt-3 border-t border-slate-200/80 dark:border-slate-700/80 space-y-1.5">
+                      <div className="flex flex-wrap items-center justify-between gap-1">
+                        <label className="block text-xs font-bold text-slate-800 dark:text-slate-200">
+                          तस्वीर विवरण / आभार / क्रेडिट (Photo Caption / Credit / साभार)
+                        </label>
+                        <span className="text-[10px] text-slate-400">
+                          (खाली रखने पर स्वतः समाचार शीर्षक दिखेगा)
+                        </span>
+                      </div>
+                      <input
+                        type="text"
+                        value={newPhotoCaption}
+                        onChange={(e) => setNewPhotoCaption(e.target.value)}
+                        placeholder="जैसे: सांकेतिक तस्वीर, फ़ाइल फ़ोटो, साभार: सोशल मीडिया, साभार: ANI..."
+                        className="w-full px-3.5 py-2.5 border border-slate-300 dark:border-slate-700 rounded-xl text-xs bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:ring-1 focus:ring-[#D97706] focus:outline-none font-medium"
+                      />
+                      {/* Quick 1-Click Preset Chips */}
+                      <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                        <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">त्वरित विकल्प:</span>
+                        {[
+                          'सांकेतिक तस्वीर',
+                          'फ़ाइल फ़ोटो',
+                          'साभार: सोशल मीडिया',
+                          'साभार: ANI / एजेंसी',
+                          'स्वर्णिम दस्तावेज़ डेस्क'
+                        ].map((chip) => (
+                          <button
+                            key={chip}
+                            type="button"
+                            onClick={() => setNewPhotoCaption(chip)}
+                            className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border transition cursor-pointer ${
+                              newPhotoCaption === chip
+                                ? 'bg-amber-100 text-amber-900 border-amber-400 dark:bg-amber-900/60 dark:text-amber-200 shadow-xs'
+                                : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-amber-50 hover:border-amber-300'
+                            }`}
+                          >
+                            + {chip}
+                          </button>
+                        ))}
+                        {newPhotoCaption && (
+                          <button
+                            type="button"
+                            onClick={() => setNewPhotoCaption('')}
+                            className="text-[10px] text-red-500 font-bold px-2 py-1 hover:underline cursor-pointer"
+                          >
+                            ✕ रीसेट (हेडलाइन रखें)
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
                     {/* LIVE FRONT-PAGE EXACT IMAGE PREVIEW (NO CROP / NO CUT) */}
                     {newCoverImage && (
                       <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2">
@@ -4457,7 +4635,11 @@ export default function AdminDashboardPage() {
                           {/* Bottom Caption Overlay */}
                           <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-3 text-white text-[11px] z-20 flex items-center justify-between">
                             <span className="truncate max-w-[80%] font-medium">
-                              तस्वीर: {newTitle || 'समाचार शीर्षक'} - स्वर्णिम दस्तावेज़ डेस्क
+                              {newPhotoCaption.trim()
+                                ? (newPhotoCaption.trim().startsWith('तस्वीर') || newPhotoCaption.trim().startsWith('फोटो')
+                                    ? newPhotoCaption.trim()
+                                    : `तस्वीर: ${newPhotoCaption.trim()}`)
+                                : `तस्वीर: ${newTitle || 'समाचार शीर्षक'} - स्वर्णिम दस्तावेज़ डेस्क`}
                             </span>
                             <span className="text-[10px] text-slate-300 shrink-0">
                               {photoFileName ? photoFileName : 'WebP Ready'}
@@ -4555,6 +4737,105 @@ export default function AdminDashboardPage() {
                   </label>
                 </div>
 
+                {/* 6. Community Auto-Share Checkboxes */}
+                {!editingArticleId && (
+                  <div className="p-4 rounded-2xl bg-gradient-to-br from-emerald-50/90 via-teal-50/60 to-blue-50/90 dark:from-emerald-950/40 dark:via-slate-900 dark:to-blue-950/40 border-2 border-emerald-300 dark:border-emerald-700/80 shadow-xs space-y-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-emerald-200/80 dark:border-emerald-800/60 pb-2.5">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-lg bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+                          <Share2 className="w-3.5 h-3.5" />
+                        </div>
+                        <div>
+                          <h4 className="font-extrabold text-xs sm:text-sm text-emerald-950 dark:text-emerald-100 flex items-center gap-1.5">
+                            <span>कम्युनिटी ऑटो-शेयर (Auto Share on Publish)</span>
+                            <span className="text-[10px] bg-emerald-600 text-white font-bold px-1.5 py-0.5 rounded-full">New</span>
+                          </h4>
+                          <p className="text-[11px] text-emerald-800 dark:text-emerald-300">
+                            खबर प्रकाशित होते ही चयनित कम्युनिटी में डायरेक्ट शेयर हो जाएगा
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700">
+                        आवश्यकतानुसार टिक करें
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                      {/* WhatsApp Community Checkbox */}
+                      <label className={`flex items-start gap-3 p-3.5 rounded-xl border-2 transition cursor-pointer ${
+                        shareToWhatsapp
+                          ? 'bg-white dark:bg-slate-900 border-emerald-500 shadow-sm ring-1 ring-emerald-500/20'
+                          : 'bg-white/60 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 hover:border-slate-300'
+                      }`}>
+                        <input
+                          type="checkbox"
+                          checked={shareToWhatsapp}
+                          onChange={(e) => setShareToWhatsapp(e.target.checked)}
+                          className="w-5 h-5 mt-0.5 rounded text-emerald-600 focus:ring-emerald-500 cursor-pointer accent-emerald-600"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 font-black text-xs text-slate-900 dark:text-white">
+                            <span className="p-1 rounded-full bg-emerald-100 dark:bg-emerald-900 text-emerald-600 dark:text-emerald-300">
+                              <FaWhatsapp className="w-3.5 h-3.5" />
+                            </span>
+                            <span>WhatsApp Community</span>
+                            {shareToWhatsapp && (
+                              <span className="text-[10px] text-emerald-600 font-bold ml-auto bg-emerald-50 dark:bg-emerald-950 px-1.5 py-0.2 rounded border border-emerald-200">
+                                सक्रिय
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-1 leading-snug">
+                            व्हाट्सएप कम्युनिटी में शीर्षक व लिंक सहित सीधे शेयर होगा
+                          </p>
+                          <div className="mt-2 text-[10px] text-emerald-700 dark:text-emerald-400 font-mono truncate bg-emerald-50 dark:bg-emerald-950/60 px-2 py-1 rounded border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
+                            <span className="font-sans font-semibold">लिंक:</span>
+                            <span className="truncate">{settingsForm.whatsappCommunityUrl || settingsForm.whatsappUrl || 'चैनल लिंक सेट नहीं है'}</span>
+                          </div>
+                        </div>
+                      </label>
+
+                      {/* Facebook Community Checkbox */}
+                      <label className={`flex items-start gap-3 p-3.5 rounded-xl border-2 transition cursor-pointer ${
+                        shareToFacebook
+                          ? 'bg-white dark:bg-slate-900 border-blue-500 shadow-sm ring-1 ring-blue-500/20'
+                          : 'bg-white/60 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 hover:border-slate-300'
+                      }`}>
+                        <input
+                          type="checkbox"
+                          checked={shareToFacebook}
+                          onChange={(e) => setShareToFacebook(e.target.checked)}
+                          className="w-5 h-5 mt-0.5 rounded text-blue-600 focus:ring-blue-500 cursor-pointer accent-blue-600"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 font-black text-xs text-slate-900 dark:text-white">
+                            <span className="p-1 rounded-full bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300">
+                              <FaFacebookF className="w-3.5 h-3.5" />
+                            </span>
+                            <span>Facebook Community / Group</span>
+                            {shareToFacebook && (
+                              <span className="text-[10px] text-blue-600 font-bold ml-auto bg-blue-50 dark:bg-blue-950 px-1.5 py-0.2 rounded border border-blue-200">
+                                सक्रिय
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-1 leading-snug">
+                            फेसबुक कम्युनिटी/ग्रुप में खबर का लिंक व कार्ड तुरंत साझा होगा
+                          </p>
+                          <div className="mt-2 text-[10px] text-blue-700 dark:text-blue-400 font-mono truncate bg-blue-50 dark:bg-blue-950/60 px-2 py-1 rounded border border-blue-200 dark:border-blue-800 flex items-center gap-1">
+                            <span className="font-sans font-semibold">लिंक:</span>
+                            <span className="truncate">{settingsForm.facebookCommunityUrl || settingsForm.facebookUrl || 'फेसबुक लिंक सेट नहीं है'}</span>
+                          </div>
+                        </div>
+                      </label>
+                    </div>
+
+                    <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 pt-1">
+                      <span>💡 कम्युनिटी लिंक बदलने के लिए एडमिन <b>Contact & Policies (Settings)</b> टैब का उपयोग करें।</span>
+                    </div>
+                  </div>
+                )}
+
               </div>
 
               {/* Modal Sticky Bottom Footer */}
@@ -4586,8 +4867,176 @@ export default function AdminDashboardPage() {
       )}
 
       {/* ========================================================= */}
-      {/* MODAL: EDIT USER PROFILE & ROLES                          */}
+      {/* MODAL: POST-PUBLISH COMMUNITY SHARE SUCCESS DIALOG        */}
       {/* ========================================================= */}
+      {recentlyPublishedArticle && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-5">
+            {/* Modal Header */}
+            <div className="flex items-start justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 flex items-center justify-center shadow-xs">
+                  <CheckCircle className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-black text-base text-slate-900 dark:text-white">
+                    खबर लाइव प्रकाशित हो चुकी है!
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    कम्युनिटी में शेयर करें और अधिक से अधिक पाठकों तक पहुंचाएं
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setRecentlyPublishedArticle(null)}
+                className="p-1.5 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-600 cursor-pointer transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Article Preview Card */}
+            <div className="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700">
+              {recentlyPublishedArticle.coverImage && (
+                <img
+                  src={recentlyPublishedArticle.coverImage}
+                  alt=""
+                  className="w-20 h-16 object-cover rounded-xl shrink-0 border border-slate-200 dark:border-slate-700"
+                />
+              )}
+              <div className="min-w-0 flex-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#D97706] bg-amber-50 dark:bg-amber-950/50 px-2 py-0.5 rounded border border-amber-200/60">
+                  {recentlyPublishedArticle.category} · {recentlyPublishedArticle.city}
+                </span>
+                <h4 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white line-clamp-2 mt-1">
+                  {recentlyPublishedArticle.headline}
+                </h4>
+              </div>
+            </div>
+
+            {/* Direct Community Share Action Buttons */}
+            <div className="space-y-2.5">
+              <div className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                सोशल कम्युनिटी शेयर विकल्प:
+              </div>
+
+              {/* WhatsApp Share Button */}
+              <button
+                type="button"
+                onClick={() => handleShareToWhatsapp(recentlyPublishedArticle)}
+                className="w-full flex items-center justify-between p-3.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 text-white font-bold rounded-2xl shadow-md shadow-emerald-600/20 cursor-pointer transition"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-white/20">
+                    <FaWhatsapp className="w-5 h-5" />
+                  </div>
+                  <div className="text-left">
+                    <div className="text-xs sm:text-sm">WhatsApp Community में भेजें</div>
+                    <div className="text-[10px] text-emerald-100 font-normal">शीर्षक व समाचार लिंक सहित डायरेक्ट खुलेगा</div>
+                  </div>
+                </div>
+                <ArrowUpRight className="w-5 h-5 shrink-0 opacity-80" />
+              </button>
+
+              {/* Facebook Share Button */}
+              <button
+                type="button"
+                onClick={() => handleShareToFacebook(recentlyPublishedArticle)}
+                className="w-full flex items-center justify-between p-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-2xl shadow-md shadow-blue-600/20 cursor-pointer transition"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-white/20">
+                    <FaFacebookF className="w-4 h-4 ml-0.5" />
+                  </div>
+                  <div className="text-left">
+                    <div className="text-xs sm:text-sm">Facebook Community / Group में भेजें</div>
+                    <div className="text-[10px] text-blue-100 font-normal">फेसबुक ग्रुप अथवा कम्युनिटी पेज पर पोस्ट करें</div>
+                  </div>
+                </div>
+                <ArrowUpRight className="w-5 h-5 shrink-0 opacity-80" />
+              </button>
+
+              {/* Copy Full Text Button */}
+              <button
+                type="button"
+                onClick={() => {
+                  const { shareText } = getShareContent(recentlyPublishedArticle);
+                  if (typeof navigator !== 'undefined' && navigator.clipboard) {
+                    navigator.clipboard.writeText(shareText);
+                    setCopiedShareText(true);
+                    setTimeout(() => setCopiedShareText(false), 2500);
+                  }
+                }}
+                className="w-full flex items-center justify-center gap-2 p-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs rounded-xl cursor-pointer transition border border-slate-200 dark:border-slate-700"
+              >
+                {copiedShareText ? (
+                  <>
+                    <Check className="w-4 h-4 text-emerald-600" />
+                    <span className="text-emerald-600">पोस्ट टेक्स्ट कॉपी हो गया! (Copied)</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-4 h-4" />
+                    <span>पोस्ट टेक्स्ट व लिंक कॉपी करें (Copy Text & Link)</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Quick Community Direct Links */}
+            <div className="p-3 bg-amber-50/70 dark:bg-amber-950/30 rounded-xl border border-amber-200 dark:border-amber-800/50 space-y-1.5 text-xs">
+              <div className="font-bold text-amber-900 dark:text-amber-200 flex items-center gap-1.5">
+                <span>🔗 सेट किए गए कम्युनिटी लिंक्स:</span>
+              </div>
+              <div className="flex flex-wrap gap-2 text-[11px]">
+                {settingsForm.whatsappCommunityUrl && (
+                  <a
+                    href={settingsForm.whatsappCommunityUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400 font-semibold underline hover:text-emerald-800"
+                  >
+                    <span>व्हाट्सएप चैनल/ग्रुप खोलें</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                )}
+                {settingsForm.facebookCommunityUrl && (
+                  <a
+                    href={settingsForm.facebookCommunityUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 text-blue-700 dark:text-blue-400 font-semibold underline hover:text-blue-800"
+                  >
+                    <span>फेसबुक ग्रुप खोलें</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                )}
+                <Link
+                  href={`/article/${recentlyPublishedArticle.id}`}
+                  target="_blank"
+                  className="inline-flex items-center gap-1 text-[#D97706] font-semibold underline"
+                >
+                  <span>लाइव खबर देखें</span>
+                  <ExternalLink className="w-3 h-3" />
+                </Link>
+              </div>
+            </div>
+
+            {/* Close footer */}
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                onClick={() => setRecentlyPublishedArticle(null)}
+                className="px-5 py-2.5 bg-slate-900 text-white dark:bg-white dark:text-slate-900 font-bold text-xs rounded-xl hover:opacity-90 cursor-pointer transition shadow-xs"
+              >
+                पूर्ण हुआ (Done)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {editingUser && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 border">

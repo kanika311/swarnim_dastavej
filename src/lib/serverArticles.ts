@@ -18,6 +18,8 @@ export function serializeArticle(doc: any): Article {
     city: String(doc.city || ''),
     language: (doc.language || 'hi') as Article['language'],
     coverImage: String(doc.coverImage || ''),
+    coverImageCaption: doc.coverImageCaption ? String(doc.coverImageCaption) : (doc.mediaGallery?.[0]?.caption ? String(doc.mediaGallery[0].caption) : undefined),
+    photoCredit: doc.photoCredit ? String(doc.photoCredit) : undefined,
     mediaGallery: Array.isArray(doc.mediaGallery)
       ? doc.mediaGallery.map((m: any) => ({
           id: String(m.id || ''),

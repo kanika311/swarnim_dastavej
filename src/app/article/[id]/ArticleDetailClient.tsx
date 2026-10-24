@@ -393,9 +393,19 @@ export default function ArticleDetailClient({
                   alt={article.headline}
                   className="relative max-w-full max-h-[580px] w-auto h-auto object-contain z-10 mx-auto transition-transform duration-300"
                 />
-                <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-3 text-white text-[11px] z-20">
-                  तस्वीर: {article.headline} - स्वर्णिम दस्तावेज़ डेस्क
-                </div>
+                {(() => {
+                  const customCaption = article.coverImageCaption?.trim() || article.photoCredit?.trim() || (article.mediaGallery?.[0]?.caption && article.mediaGallery[0].caption !== article.headline ? article.mediaGallery[0].caption.trim() : '');
+                  const displayText = customCaption 
+                    ? (customCaption.startsWith('तस्वीर') || customCaption.startsWith('फोटो') ? customCaption : `तस्वीर: ${customCaption}`)
+                    : `तस्वीर: ${article.headline} - स्वर्णिम दस्तावेज़ डेस्क`;
+                  return (
+                    <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-3 text-white text-[11px] z-20 flex items-center justify-between">
+                      <span className="truncate max-w-[90%] font-medium">
+                        {displayText}
+                      </span>
+                    </div>
+                  );
+                })()}
               </div>
             );
           })()}
