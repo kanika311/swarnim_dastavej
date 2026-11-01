@@ -364,11 +364,13 @@ export default function ArticleDetailClient({
           {(() => {
             const videoUrl = article.mediaGallery?.find((item) => item.type === 'video')?.url;
             if (videoUrl) {
+              const isGenericCover = !article.coverImage || article.coverImage.includes('unsplash.com');
+              const videoPoster = isGenericCover ? undefined : article.coverImage;
               return (
                 <div className="relative aspect-video w-full rounded-xl overflow-hidden mb-6 bg-black shadow">
                   <video
                     src={videoUrl}
-                    poster={article.coverImage}
+                    poster={videoPoster}
                     controls
                     playsInline
                     className="w-full h-full object-contain bg-black"
@@ -377,21 +379,21 @@ export default function ArticleDetailClient({
               );
             }
             return (
-              <div className="relative w-full rounded-2xl overflow-hidden mb-6 bg-slate-950 flex items-center justify-center shadow-md min-h-[320px] max-h-[580px]">
+              <div className="relative w-full rounded-2xl overflow-hidden mb-6 bg-slate-900/90 flex items-center justify-center shadow-md min-h-[320px] max-h-[580px] p-2 sm:p-3">
                 {/* Ambient blurred backdrop for seamless, edge-to-edge color fill */}
                 <img
                   src={article.coverImage}
                   alt=""
                   aria-hidden="true"
-                  className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-40 scale-125 pointer-events-none"
+                  className="absolute inset-0 w-full h-full object-cover blur-3xl opacity-75 scale-125 pointer-events-none select-none"
                 />
-                <div className="absolute inset-0 bg-black/25 pointer-events-none" />
+                <div className="absolute inset-0 bg-slate-950/20 dark:bg-black/40 pointer-events-none" />
 
                 {/* Main Full Image: object-contain guarantees 100% of photo is visible without cutting */}
                 <img
                   src={article.coverImage}
                   alt={article.headline}
-                  className="relative max-w-full max-h-[580px] w-auto h-auto object-contain z-10 mx-auto transition-transform duration-300"
+                  className="relative max-w-full max-h-[560px] w-auto h-auto object-contain z-10 mx-auto rounded-lg shadow-2xl transition-transform duration-300"
                 />
                 {(() => {
                   const customCaption = article.coverImageCaption?.trim() || article.photoCredit?.trim() || (article.mediaGallery?.[0]?.caption && article.mediaGallery[0].caption !== article.headline ? article.mediaGallery[0].caption.trim() : '');

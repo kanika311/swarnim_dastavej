@@ -375,6 +375,16 @@ class PlatformStore {
     return this.users.filter(u => !this.deletedUserIds.has(u.id));
   }
 
+  addUser(user: User): User {
+    const idx = this.users.findIndex(u => u.id === user.id || (u.email && user.email && u.email.toLowerCase() === user.email.toLowerCase()));
+    if (idx !== -1) {
+      this.users[idx] = { ...this.users[idx], ...user };
+      return this.users[idx];
+    }
+    this.users.unshift(user);
+    return user;
+  }
+
   updateUserRole(userId: string, newRole: UserRole) {
     const u = this.users.find(x => x.id === userId && !this.deletedUserIds.has(x.id));
     if (u) {

@@ -12,7 +12,7 @@ interface AppContextType {
   usersList: User[];
   login: (identifier: string, password?: string, isStaffGate?: boolean) => Promise<boolean>;
   logout: () => void;
-  registerUser: (userData: Partial<User>) => User;
+  registerUser: (userData: Partial<User>) => Promise<User>;
   updateCurrentUser: (updates: Partial<User>) => void;
   switchRole: (role: UserRole) => void;
 
@@ -373,9 +373,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     addNotification('आप सफलतापूर्वक लॉगआउट हो गए हैं।');
   };
 
-  const registerUser = (userData: Partial<User>): User => {
-    const newUser: User = {
-      id: `user_${Date.now()}`,
+  const registerUser = async (userData: Partial<User>): Promise<User> => {
+    let newUser: User = {
+      id: userData.id || `user_${Date.now()}`,
       name: userData.name || 'उपयोगकर्ता',
       email: userData.email || `user_${Date.now()}@swarnim.local`,
       phone: userData.phone,
@@ -387,7 +387,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       kycDetails: userData.kycDetails
     };
 
-    const updatedList = [newUser, ...usersList];
+    // 1. Send registration to server and database
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newUser)
+      });
+      const data = await res.json();
+      if (data.success && data.data) {
+        newUser = { ...newUser, ...data.data };
+      }
+    } catch (e) {
+      console.warn('Network registration fallback to local:', e);
+    }
+
+    const updatedList = [newUser, ...usersList.filter(u => u.email !== newUser.email)];
     setUsersList(updatedList);
     setCurrentUser(newUser);
 
@@ -563,23 +578,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     );
   };
 
-  const isEPaperUnlocked = (editionId?: string, date?: string): boolean => {
-    if (!currentUser) return false;
-    // Staff/admin roles always have full free access
-    if (
-      currentUser?.role === 'admin' ||
-      currentUser?.role === 'super_admin' ||
-      currentUser?.role === 'editor' ||
-      currentUser?.role === 'staff_reporter'
-    ) {
-      return true;
-    }
-
-    if (unlockedEpaperKeys.includes('all')) return true;
-    if (editionId && unlockedEpaperKeys.includes(editionId)) return true;
-    if (date && unlockedEpaperKeys.includes(date)) return true;
-
-    return false;
+  const isEPaperUnlocked = (_editionId?: string, _date?: string): boolean => {
+    // Free public access - completely open without costing or paywall
+    return true;
   };
 
   return (

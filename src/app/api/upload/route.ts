@@ -79,6 +79,35 @@ function compressVideo(input: string, output: string): Promise<void> {
   });
 }
 
+function extractVideoThumbnail(input: string, output: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (!ffmpegPath) {
+      reject(new Error('FFmpeg is not available'));
+      return;
+    }
+    const args = [
+      '-y',
+      '-ss', '00:00:01.000',
+      '-i', input,
+      '-vframes', '1',
+      '-vf', "scale='min(1280,iw)':-2",
+      '-q:v', '2',
+      output,
+    ];
+    const proc = spawn(ffmpegPath, args, { windowsHide: true });
+    let err = '';
+    proc.stderr.on('data', (chunk) => {
+      err = (err + chunk.toString()).slice(-1000);
+    });
+    proc.on('error', reject);
+    proc.on('close', (code) => {
+      if (code === 0) resolve();
+      else reject(new Error(err || `Thumbnail extraction failed (${code})`));
+    });
+  });
+}
+
+
 export async function POST(request: Request) {
   const tempPaths: string[] = [];
 
@@ -113,6 +142,8 @@ export async function POST(request: Request) {
     let output = bytes;
     let format: 'webp' | 'mp4' | 'original' = 'original';
     let contentType = file.type || 'application/octet-stream';
+    let thumbBuffer: Buffer | null = null;
+    let thumbName = '';
 
     if (isPdf(file)) {
       format = 'original';
@@ -130,7 +161,8 @@ export async function POST(request: Request) {
     } else if (isVideo(file)) {
       const inputPath = path.join(os.tmpdir(), `${stamp}${path.extname(file.name) || '.bin'}`);
       const outputPath = path.join(os.tmpdir(), `${stamp}.mp4`);
-      tempPaths.push(inputPath, outputPath);
+      const thumbPath = path.join(os.tmpdir(), `${stamp}_thumb.jpg`);
+      tempPaths.push(inputPath, outputPath, thumbPath);
 
       await writeFile(inputPath, bytes);
       let videoBuffer = bytes;
@@ -140,6 +172,14 @@ export async function POST(request: Request) {
         videoBuffer = await readFile(outputPath);
       } catch (compErr) {
         console.warn('Video compression skipped or unavailable, using raw video:', compErr);
+      }
+
+      thumbName = `${stamp}_thumb.jpg`;
+      try {
+        await extractVideoThumbnail(inputPath, thumbPath);
+        thumbBuffer = await readFile(thumbPath);
+      } catch (thumbErr) {
+        console.warn('Video thumbnail extraction skipped:', thumbErr);
       }
 
       output = videoBuffer;
@@ -152,6 +192,9 @@ export async function POST(request: Request) {
     try {
       const filePath = path.join(uploadsDir, outputName);
       await writeFile(filePath, output);
+      if (thumbBuffer && thumbName) {
+        await writeFile(path.join(uploadsDir, thumbName), thumbBuffer).catch(() => {});
+      }
     } catch (writeErr: any) {
       // In read-only serverless environments (Vercel /var/task), write fails with EROFS.
       // This is expected and handled safely below by storing in MongoDB.
@@ -170,17 +213,33 @@ export async function POST(request: Request) {
           size: output.length,
           createdAt: new Date(),
         },
-        { upsert: true, new: true }
+        { upsert: true, returnDocument: 'after' }
       );
+
+      if (thumbBuffer && thumbName) {
+        await UploadedMediaModel.findOneAndUpdate(
+          { filename: thumbName },
+          {
+            filename: thumbName,
+            contentType: 'image/jpeg',
+            data: thumbBuffer,
+            size: thumbBuffer.length,
+            createdAt: new Date(),
+          },
+          { upsert: true, returnDocument: 'after' }
+        );
+      }
     } catch (dbErr) {
       console.error('Failed to persist media to MongoDB:', dbErr);
     }
 
     const publicUrl = `/uploads/${outputName}`;
+    const thumbnailUrl = thumbBuffer ? `/uploads/${thumbName}` : undefined;
 
     return NextResponse.json({
       success: true,
       url: publicUrl,
+      thumbnailUrl,
       fileName: outputName,
       originalName: file.name,
       size: output.length,

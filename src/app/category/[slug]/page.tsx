@@ -96,17 +96,19 @@ export default function CategoryListingPage() {
           ) : (
             filtered.map((art) => {
               const videoUrl = art.mediaGallery?.find((item) => item.type === 'video')?.url;
+              const isGenericUnsplash = !art.coverImage || art.coverImage.includes('unsplash.com');
+              const posterImage = isGenericUnsplash && videoUrl ? null : art.coverImage;
               return (
               <article
                 key={art.id}
                 className="bg-white dark:bg-slate-800 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700 hover:border-red-500 hover:shadow-lg transition flex flex-col justify-between group"
               >
                 <div>
-                  <div className="relative aspect-video w-full overflow-hidden bg-slate-900">
+                  <div className="relative aspect-video w-full overflow-hidden bg-slate-900 flex items-center justify-center">
                     {videoUrl && playingId === art.id ? (
                       <video
                         src={videoUrl}
-                        poster={art.coverImage}
+                        poster={posterImage || undefined}
                         controls
                         autoPlay
                         playsInline
@@ -114,18 +116,30 @@ export default function CategoryListingPage() {
                       />
                     ) : (
                       <>
-                        <img
-                          src={art.coverImage}
-                          alt=""
-                          aria-hidden="true"
-                          className="absolute inset-0 w-full h-full object-cover blur-xl opacity-40 scale-125 pointer-events-none"
-                        />
-                        <div className="absolute inset-0 bg-black/20 pointer-events-none" />
-                        <img
-                          src={art.coverImage}
-                          alt={art.headline}
-                          className="relative max-w-full max-h-full w-auto h-auto object-contain z-10 group-hover:scale-105 transition-transform duration-300"
-                        />
+                        {posterImage ? (
+                          <>
+                            <img
+                              src={posterImage}
+                              alt=""
+                              aria-hidden="true"
+                              className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-75 scale-125 pointer-events-none select-none"
+                            />
+                            <div className="absolute inset-0 bg-slate-950/20 pointer-events-none" />
+                            <img
+                              src={posterImage}
+                              alt={art.headline}
+                              className="relative max-w-full max-h-full w-auto h-auto object-contain z-10 mx-auto group-hover:scale-105 transition-transform duration-300"
+                            />
+                          </>
+                        ) : videoUrl ? (
+                          <video
+                            src={`${videoUrl}#t=0.5`}
+                            preload="metadata"
+                            playsInline
+                            muted
+                            className="w-full h-full object-cover"
+                          />
+                        ) : null}
                         {videoUrl && (
                           <button
                             type="button"

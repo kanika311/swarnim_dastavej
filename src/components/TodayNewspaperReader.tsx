@@ -423,8 +423,9 @@ export default function TodayNewspaperReader() {
     ? pdfPageCount
     : (currentEdition?.pages?.length || 6);
 
-  const isCurrentEditionUnlocked = isEPaperUnlocked(currentEdition?.id, selectedDate);
-  const isPageLocked = !isCurrentEditionUnlocked;
+  // E-Paper is completely free & open to all readers without costing or paywall
+  const isCurrentEditionUnlocked = true;
+  const isPageLocked = false;
 
   const handleOpenCheckout = (plan?: EPaperPricingPlan) => {
     if (!currentUser) {
@@ -637,7 +638,7 @@ export default function TodayNewspaperReader() {
             </button>
 
             {/* Direct PDF Link if uploaded */}
-            {activePdfUrl && isCurrentEditionUnlocked ? (
+            {activePdfUrl && (
               <a
                 href={activePdfUrl}
                 download={`swarnim-dastavej-${selectedDate}.pdf`}
@@ -647,17 +648,7 @@ export default function TodayNewspaperReader() {
                 <Download className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">PDF</span>
               </a>
-            ) : activePdfUrl ? (
-              <button
-                type="button"
-                onClick={() => handleOpenCheckout()}
-                className="flex items-center gap-1.5 bg-slate-200 text-slate-600 font-black px-3 py-1.5 rounded-xl shadow-xs text-xs"
-                title="इस तारीख का अखबार खरीदने के बाद डाउनलोड होगा"
-              >
-                <Lock className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">PDF</span>
-              </button>
-            ) : null}
+            )}
 
           </div>
 
@@ -711,8 +702,7 @@ export default function TodayNewspaperReader() {
               didSwipe.current = false;
               return;
             }
-            if (isPageLocked) handleOpenCheckout();
-            else setIsModalOpen(true);
+            setIsModalOpen(true);
           }}
           className={`cursor-pointer touch-pan-y bg-[#fbf9f4] text-slate-900 border-2 border-slate-300 dark:border-slate-700 rounded-sm shadow-2xl overflow-hidden transition-all duration-300 group hover:shadow-red-500/20 w-full max-w-[min(100%,520px)] aspect-[1/1.414] max-h-[76vh] relative flex flex-col justify-between ${
             isFlipping 
@@ -730,114 +720,16 @@ export default function TodayNewspaperReader() {
           <div className="absolute inset-y-0 left-0 w-6 bg-gradient-to-r from-black/10 via-black/3 to-transparent pointer-events-none z-10"></div>
           <div className="absolute inset-y-0 right-0 w-6 bg-gradient-to-l from-black/10 via-black/3 to-transparent pointer-events-none z-10"></div>
 
-          {/* Click to Zoom Hover Badge or Lock Indicator */}
-          {isPageLocked ? (
-            <div 
-              onClick={(e) => {
-                e.stopPropagation();
-                handleOpenCheckout();
-              }}
-              className="absolute top-3 right-3 z-30 bg-amber-500 hover:bg-amber-400 text-slate-950 px-3 py-1 rounded-full text-[11px] font-black flex items-center gap-1.5 shadow-lg border border-amber-300 animate-pulse"
-            >
-              <Lock className="w-3.5 h-3.5" />
-              <span>{language === 'en' ? 'Locked • Unlock at ₹1' : '🔒 लॉक है • ₹1 में खोलें'}</span>
-            </div>
-          ) : (
-            <div className="absolute top-3 right-3 z-20 bg-slate-950/85 text-amber-300 backdrop-blur-xs px-2.5 py-1 rounded-full text-[11px] font-bold flex items-center gap-1 opacity-80 group-hover:opacity-100 group-hover:bg-red-700 group-hover:text-white transition shadow-md">
-              <ZoomIn className="w-3.5 h-3.5" />
-              <span>{content.fullPageRead}</span>
-            </div>
-          )}
-
-          {/* PAYWALL OVERLAY WHEN PAGE IS LOCKED (Page 2 onwards) */}
-          {isPageLocked && (
-            <div 
-              onClick={(e) => {
-                e.stopPropagation();
-                handleOpenCheckout();
-              }}
-              className="absolute inset-0 z-30 bg-slate-950/45 flex flex-col justify-between p-4 sm:p-5 text-white text-center select-none"
-            >
-              {/* Top Banner */}
-              <div className="pt-2">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500 text-slate-950 text-xs font-black uppercase tracking-wider shadow-md">
-                  <Lock className="w-3.5 h-3.5" />
-                  <span>{!currentUser ? (language === 'en' ? 'Login to read' : 'पढ़ने के लिए लॉगिन करें') : (language === 'en' ? 'This date is locked' : 'यह तारीख का अखबार लॉक है')}</span>
-                </span>
-              </div>
-
-              {/* Center Pitch & Callout */}
-              <div className="space-y-2.5 max-w-sm mx-auto my-auto py-2">
-                <div className="w-12 h-12 mx-auto rounded-2xl bg-gradient-to-tr from-amber-500 to-amber-300 text-slate-950 flex items-center justify-center shadow-lg border-2 border-white/20">
-                  <Lock className="w-6 h-6 stroke-[2.5]" />
-                </div>
-                
-                <h3 className="text-base sm:text-lg font-black text-amber-300 font-serif leading-tight">
-                  {!currentUser
-                    ? (language === 'en' ? 'Login first, then buy this paper' : 'पहले लॉगिन करें, फिर यह अखबार खरीदें')
-                    : (language === 'en' ? 'Buy this date’s paper to read it' : 'पढ़ने के लिए इस तारीख का अखबार खरीदें')}
-                </h3>
-                
-                <p className="text-[11px] text-slate-300 leading-relaxed">
-                  {!currentUser
-                    ? (language === 'en'
-                      ? 'The paper stays hidden until you log in. After login you can pay for this date and read it.'
-                      : 'लॉगिन से पहले अखबार नहीं खुलता। लॉगिन के बाद इस तारीख का भुगतान करके पूरा पढ़ सकते हैं।')
-                    : (language === 'en'
-                      ? 'Without payment the paper stays blurred. Buy this date to read and download it.'
-                      : 'भुगतान के बिना अखबार धुंधला रहता है। इस तारीख को खरीदने पर पूरा पढ़ और डाउनलोड कर सकते हैं।')}
-                </p>
-
-                {/* Quick Plan Pills */}
-                <div className="grid grid-cols-3 gap-2 pt-1 text-left">
-                  {pricingPlans.slice(0, 3).map((plan) => (
-                    <button
-                      key={plan.id}
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleOpenCheckout(plan);
-                      }}
-                      className={`p-2 rounded-xl border text-left transition cursor-pointer ${
-                        plan.isPopular || plan.price === 1
-                          ? 'bg-amber-500/20 border-amber-400 text-white hover:bg-amber-500/30 ring-1 ring-amber-400/40'
-                          : 'bg-white/10 border-white/20 text-slate-200 hover:bg-white/20'
-                      }`}
-                    >
-                      <div className="text-[10px] text-amber-300 font-bold truncate">
-                        {plan.duration === 'single_edition' ? '1 दिन' : plan.duration === 'yearly' ? '1 वर्ष' : '1 माह'}
-                      </div>
-                      <div className="text-sm font-black text-white">₹{plan.price}</div>
-                    </button>
-                  ))}
-                </div>
-
-                {/* Primary Unlock Button */}
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleOpenCheckout(pricingPlans.find(p => p.price === 1) || pricingPlans[0]);
-                  }}
-                  className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs sm:text-sm shadow-xl flex items-center justify-center gap-2 cursor-pointer transition transform hover:scale-[1.02] active:scale-[0.98]"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  <span>{!currentUser ? (language === 'en' ? 'Login to continue' : 'जारी रखने के लिए लॉगिन करें') : (language === 'en' ? 'Unlock Today at ₹1 Only' : 'मात्र ₹1 में आज का पूरा अंक अनलॉक करें')}</span>
-                </button>
-              </div>
-
-              {/* Bottom Assurance */}
-              <div className="text-[10px] text-slate-400 flex items-center justify-center gap-1.5 pb-1">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-                <span>{language === 'en' ? 'Instant Access • Safe & Secure Payment' : 'तत्काल सक्रियता • 100% सुरक्षित भुगतान'}</span>
-              </div>
-            </div>
-          )}
+          {/* Click to Zoom Hover Badge */}
+          <div className="absolute top-3 right-3 z-20 bg-slate-950/85 text-amber-300 backdrop-blur-xs px-2.5 py-1 rounded-full text-[11px] font-bold flex items-center gap-1 opacity-80 group-hover:opacity-100 group-hover:bg-red-700 group-hover:text-white transition shadow-md">
+            <ZoomIn className="w-3.5 h-3.5" />
+            <span>{content.fullPageRead}</span>
+          </div>
 
           {/* AUTHENTIC BROADSHEET NEWSPAPER PAGE CONTENT OR EMBEDDED PDF */}
           {activePdfUrl ? (
             <div className="flex-1 w-full min-h-0 relative overflow-hidden bg-white">
-              <div className={isPageLocked ? 'w-full h-full blur-md pointer-events-none select-none' : 'w-full h-full'}>
+              <div className="w-full h-full">
                 <PdfSinglePage
                   url={activePdfUrl}
                   pageNumber={activePageIndex + 1}
@@ -1259,75 +1151,15 @@ export default function TodayNewspaperReader() {
                 style={{ width: `${modalZoom}%`, maxWidth: modalZoom > 100 ? 'none' : '980px', height: '86vh' }}
                 className="transition-all duration-200 bg-white rounded-xl shadow-2xl overflow-hidden border border-slate-700 relative"
               >
-                {/* Paywall Overlay inside Fullscreen Modal if locked */}
-                <div className={isPageLocked ? 'absolute inset-0 blur-md pointer-events-none' : 'absolute inset-0'}>
+                <div className="absolute inset-0">
                   <PdfSinglePage url={activePdfUrl} pageNumber={activePageIndex + 1} />
                 </div>
-                {isPageLocked && (
-                  <div className="absolute inset-0 z-30 bg-slate-950/45 flex flex-col items-center justify-center p-6 text-white text-center">
-                    <div className="max-w-md w-full p-6 rounded-2xl bg-slate-900 border border-amber-400/60 shadow-2xl space-y-4">
-                      <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-amber-500 to-amber-300 text-slate-950 flex items-center justify-center font-bold shadow-lg">
-                        <Lock className="w-7 h-7 stroke-[2.5]" />
-                      </div>
-                      <h3 className="text-lg font-black text-amber-300">
-                        {language === 'en' ? 'Buy this date to read the paper' : 'इस तारीख का अखबार खरीदें'}
-                      </h3>
-                      <p className="text-xs text-slate-300 leading-relaxed">
-                        {language === 'en'
-                          ? 'Full screen reading is available after unlocking today\'s edition starting at just ₹1.'
-                          : 'फुल स्क्रीन वाचन हेतु मात्र ₹1 में आज का पूरा अखबार अनलॉक करें या ₹340 वार्षिक प्लान चुनें।'}
-                      </p>
-                      <div className="pt-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setIsModalOpen(false);
-                            handleOpenCheckout();
-                          }}
-                          className="w-full py-3 bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 font-black text-sm rounded-xl shadow-lg hover:from-amber-400 hover:to-amber-500 transition cursor-pointer"
-                        >
-                          {language === 'en' ? 'Unlock Now (Starting ₹1)' : 'मात्र ₹1 में अभी अनलॉक करें'}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
             ) : (
             <div
               style={{ width: `${modalZoom}%`, maxWidth: modalZoom > 100 ? 'none' : '820px' }}
               className="transition-all duration-200 bg-[#fbf9f4] text-slate-950 rounded-sm shadow-2xl overflow-hidden p-6 sm:p-10 border border-slate-400 aspect-[1/1.414] relative"
             >
-              {/* Paywall Overlay inside Fullscreen Modal if locked */}
-              {isPageLocked && (
-                <div className="absolute inset-0 z-30 bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-white text-center">
-                  <div className="max-w-md w-full p-6 rounded-2xl bg-slate-900 border border-amber-400/60 shadow-2xl space-y-4">
-                    <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-amber-500 to-amber-300 text-slate-950 flex items-center justify-center font-bold shadow-lg">
-                      <Lock className="w-7 h-7 stroke-[2.5]" />
-                    </div>
-                    <h3 className="text-lg font-black text-amber-300">
-                      {language === 'en' ? 'Buy this date to read the paper' : 'इस तारीख का अखबार खरीदें'}
-                    </h3>
-                    <p className="text-xs text-slate-300 leading-relaxed">
-                      {language === 'en'
-                        ? 'Full screen reading is available after unlocking today\'s edition starting at just ₹1.'
-                        : 'फुल स्क्रीन वाचन हेतु मात्र ₹1 में आज का पूरा अखबार अनलॉक करें या ₹340 वार्षिक प्लान चुनें।'}
-                    </p>
-                    <div className="pt-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsModalOpen(false);
-                          handleOpenCheckout();
-                        }}
-                        className="w-full py-3 bg-gradient-to-r from-amber-500 to-amber-400 text-slate-950 font-black text-sm rounded-xl shadow-lg hover:from-amber-400 hover:to-amber-500 transition cursor-pointer"
-                      >
-                        {language === 'en' ? 'Unlock Now (Starting ₹1)' : 'मात्र ₹1 में अभी अनलॉक करें'}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
 
               {/* High-res modal contents */}
               <div className="border-b-2 border-slate-900 pb-2 mb-4 flex items-center justify-between text-xs font-bold font-mono">

@@ -129,8 +129,8 @@ export default function AdminDashboardPage() {
     setGateReady(true);
   }, []);
 
-  // User Management Tab States (Readers)
-  const [userFilter, setUserFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  // User Management Tab States (Readers & Registered Users)
+  const [userFilter, setUserFilter] = useState<'all' | 'active' | 'inactive' | 'reader' | 'citizen_journalist'>('all');
   const [userSearchQuery, setUserSearchQuery] = useState('');
   const [showAddUser, setShowAddUser] = useState(false);
   const [newUserName, setNewUserName] = useState('');
@@ -255,6 +255,10 @@ export default function AdminDashboardPage() {
       const data = await res.json();
       if (data.success && data.url) {
         setNewVideoUrl(data.url);
+        if (data.thumbnailUrl && (!coverImageRef.current || coverImageRef.current.includes('unsplash.com')) && (!newCoverImage || newCoverImage.includes('unsplash.com'))) {
+          coverImageRef.current = data.thumbnailUrl;
+          setNewCoverImage(data.thumbnailUrl);
+        }
         const mb = data.size ? `${(data.size / (1024 * 1024)).toFixed(1)} MB` : '';
         setVideoFileName(mb ? `compressed MP4 · ${mb}` : 'compressed MP4');
       } else {
@@ -1402,7 +1406,7 @@ export default function AdminDashboardPage() {
     { id: 'pricing', label: 'E-Paper Price Plans', icon: CreditCard, count: pricingPlans.length },
     { id: 'articles', label: 'Articles / News', icon: FileText, count: articles.length },
     { id: 'videos', label: 'Videos', icon: Video, count: articles.filter(a => a.showOnVideos).length },
-    { id: 'users', label: 'Registered Users (पाठक)', icon: UserCheck, count: users.filter(u => u.role === 'reader').length },
+    { id: 'users', label: 'Registered Users (पाठक)', icon: UserCheck, count: users.filter(u => u.role === 'reader' || u.role === 'citizen_journalist').length },
     { id: 'journalists', label: 'Journalists (पत्रकार)', icon: Users, count: users.filter(u => u.role === 'citizen_journalist' || u.role === 'staff_reporter').length },
     { id: 'ads', label: 'Advertisements', icon: Megaphone, count: ads.length },
     { id: 'grievances', label: 'Grievances', icon: Scale, count: grievances.length },
@@ -3321,35 +3325,35 @@ export default function AdminDashboardPage() {
               {/* Stat Cards Row */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs">
-                  <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">कुल पंजीकृत पाठक</div>
+                  <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">कुल पंजीकृत उपयोगकर्ता</div>
                   <div className="text-2xl font-black text-slate-900 mt-1">
-                    {users.filter(u => u.role === 'reader').length}
+                    {users.filter(u => u.role === 'reader' || u.role === 'citizen_journalist').length}
                   </div>
-                  <div className="text-[11px] text-slate-400 mt-0.5">Total registered readers</div>
+                  <div className="text-[11px] text-slate-400 mt-0.5">Total registered public users</div>
                 </div>
 
                 <div className="bg-white p-4 rounded-2xl border border-emerald-200/80 shadow-xs">
-                  <div className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider">सक्रिय पाठक (Active)</div>
+                  <div className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider">सक्रिय उपयोगकर्ता (Active)</div>
                   <div className="text-2xl font-black text-emerald-600 mt-1">
-                    {users.filter(u => u.role === 'reader' && !u.isBanned && u.isActive !== false).length}
+                    {users.filter(u => (u.role === 'reader' || u.role === 'citizen_journalist') && !u.isBanned && u.isActive !== false).length}
                   </div>
                   <div className="text-[11px] text-emerald-600/70 mt-0.5">Accounts in good standing</div>
                 </div>
 
-                <div className="bg-white p-4 rounded-2xl border border-red-200/80 shadow-xs">
-                  <div className="text-[11px] font-bold text-red-700 uppercase tracking-wider">निष्क्रिय / ब्लॉक (Inactive)</div>
-                  <div className="text-2xl font-black text-red-600 mt-1">
-                    {users.filter(u => u.role === 'reader' && (u.isBanned || u.isActive === false)).length}
+                <div className="bg-white p-4 rounded-2xl border border-amber-200/80 shadow-xs">
+                  <div className="text-[11px] font-bold text-amber-800 uppercase tracking-wider">नागरिक पत्रकार</div>
+                  <div className="text-2xl font-black text-amber-600 mt-1">
+                    {users.filter(u => u.role === 'citizen_journalist').length}
                   </div>
-                  <div className="text-[11px] text-red-500/70 mt-0.5">Suspended / blocked accounts</div>
+                  <div className="text-[11px] text-amber-600/70 mt-0.5">Citizen Journalists</div>
                 </div>
 
-                <div className="bg-white p-4 rounded-2xl border border-amber-200/80 shadow-xs">
-                  <div className="text-[11px] font-bold text-amber-800 uppercase tracking-wider">लॉगिन गतिविधि</div>
-                  <div className="text-2xl font-black text-[#D97706] mt-1">
-                    {users.filter(u => u.role === 'reader' && u.lastLoginAt).length}
+                <div className="bg-white p-4 rounded-2xl border border-blue-200/80 shadow-xs">
+                  <div className="text-[11px] font-bold text-blue-800 uppercase tracking-wider">दैनिक पाठक</div>
+                  <div className="text-2xl font-black text-blue-600 mt-1">
+                    {users.filter(u => u.role === 'reader').length}
                   </div>
-                  <div className="text-[11px] text-slate-400 mt-0.5">Active logged-in sessions</div>
+                  <div className="text-[11px] text-blue-500/70 mt-0.5">General Readers</div>
                 </div>
               </div>
 
@@ -3357,38 +3361,50 @@ export default function AdminDashboardPage() {
               <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xs p-5 sm:p-6 space-y-4">
                 <div className="pb-3 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
-                    <h2 className="text-lg font-bold text-slate-900">पंजीकृत पाठक सूची (Registered Readers Directory)</h2>
-                    <p className="text-xs text-slate-500">वेबसाइट पर लॉगिन किए हुए पाठकों का विवरण, संपादन, स्थिति (Active/Inactive) एवं खाता निष्कासन</p>
+                    <h2 className="text-lg font-bold text-slate-900">पंजीकृत उपयोगकर्ता व पाठक सूची (Registered Users & Readers)</h2>
+                    <p className="text-xs text-slate-500">वेबसाइट पर पंजीकृत पाठकों व नागरिक पत्रकारों का विवरण, संपादन, स्थिति (Active/Inactive) एवं खाता निष्कासन</p>
                   </div>
                   <button
                     onClick={() => setShowAddUser(true)}
                     className="bg-gradient-to-r from-[#B45309] via-[#D97706] to-[#F59E0B] text-white font-bold text-xs px-4 py-2 rounded-xl flex items-center gap-1.5 shadow-md shadow-amber-500/20 cursor-pointer shrink-0"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    <span>नया पाठक जोड़ें (Add Reader)</span>
+                    <span>नया खाता जोड़ें (Add User)</span>
                   </button>
                 </div>
 
                 {/* Filter and Search Bar */}
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-                  <div className="flex items-center gap-1.5 bg-slate-100 p-1 rounded-xl text-xs font-bold text-slate-600">
+                  <div className="flex flex-wrap items-center gap-1.5 bg-slate-100 p-1 rounded-xl text-xs font-bold text-slate-600">
                     <button
                       onClick={() => setUserFilter('all')}
                       className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${userFilter === 'all' ? 'bg-white text-slate-900 shadow-xs font-black' : 'hover:text-slate-900'}`}
                     >
-                      सभी ({users.filter(u => u.role === 'reader').length})
+                      सभी ({users.filter(u => u.role === 'reader' || u.role === 'citizen_journalist').length})
+                    </button>
+                    <button
+                      onClick={() => setUserFilter('reader')}
+                      className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${userFilter === 'reader' ? 'bg-white text-blue-700 shadow-xs font-black' : 'hover:text-slate-900'}`}
+                    >
+                      पाठक ({users.filter(u => u.role === 'reader').length})
+                    </button>
+                    <button
+                      onClick={() => setUserFilter('citizen_journalist')}
+                      className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${userFilter === 'citizen_journalist' ? 'bg-amber-600 text-white shadow-xs font-black' : 'hover:text-slate-900'}`}
+                    >
+                      नागरिक पत्रकार ({users.filter(u => u.role === 'citizen_journalist').length})
                     </button>
                     <button
                       onClick={() => setUserFilter('active')}
                       className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${userFilter === 'active' ? 'bg-emerald-600 text-white shadow-xs font-black' : 'hover:text-slate-900'}`}
                     >
-                      सक्रिय ({users.filter(u => u.role === 'reader' && !u.isBanned && u.isActive !== false).length})
+                      सक्रिय ({users.filter(u => (u.role === 'reader' || u.role === 'citizen_journalist') && !u.isBanned && u.isActive !== false).length})
                     </button>
                     <button
                       onClick={() => setUserFilter('inactive')}
                       className={`px-3 py-1.5 rounded-lg transition cursor-pointer ${userFilter === 'inactive' ? 'bg-red-600 text-white shadow-xs font-black' : 'hover:text-slate-900'}`}
                     >
-                      निष्क्रिय ({users.filter(u => u.role === 'reader' && (u.isBanned || u.isActive === false)).length})
+                      निष्क्रिय ({users.filter(u => (u.role === 'reader' || u.role === 'citizen_journalist') && (u.isBanned || u.isActive === false)).length})
                     </button>
                   </div>
 
@@ -3442,13 +3458,16 @@ export default function AdminDashboardPage() {
                 <div className="space-y-3">
                   {(() => {
                     const readerList = users.filter(u => {
-                      if (u.role !== 'reader') return false;
+                      if (userFilter === 'reader' && u.role !== 'reader') return false;
+                      if (userFilter === 'citizen_journalist' && u.role !== 'citizen_journalist') return false;
+                      if ((userFilter === 'all' || userFilter === 'active' || userFilter === 'inactive') && (u.role !== 'reader' && u.role !== 'citizen_journalist')) return false;
+
                       const isActive = !u.isBanned && u.isActive !== false;
                       if (userFilter === 'active' && !isActive) return false;
                       if (userFilter === 'inactive' && isActive) return false;
                       if (userSearchQuery.trim()) {
                         const q = userSearchQuery.trim().toLowerCase();
-                        const matchName = u.name.toLowerCase().includes(q);
+                        const matchName = (u.name || '').toLowerCase().includes(q);
                         const matchEmail = (u.email || '').toLowerCase().includes(q);
                         const matchPhone = (u.phone || '').includes(q);
                         const matchCity = (u.city || '').toLowerCase().includes(q);
@@ -3460,7 +3479,7 @@ export default function AdminDashboardPage() {
                     if (readerList.length === 0) {
                       return (
                         <div className="p-8 text-center text-slate-400 text-xs">
-                          कोई पाठक नहीं मिला।
+                          कोई उपयोगकर्ता / पाठक नहीं मिला।
                         </div>
                       );
                     }
@@ -3483,6 +3502,17 @@ export default function AdminDashboardPage() {
                             <div className="min-w-0">
                               <div className="flex items-center gap-2 flex-wrap">
                                 <span className="font-bold text-sm text-slate-900">{u.name}</span>
+                                {u.role === 'citizen_journalist' ? (
+                                  <span className="bg-amber-100 text-amber-800 font-bold text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1 border border-amber-200">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-600" />
+                                    <span>नागरिक पत्रकार</span>
+                                  </span>
+                                ) : (
+                                  <span className="bg-blue-50 text-blue-700 font-bold text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1 border border-blue-200">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                                    <span>पाठक</span>
+                                  </span>
+                                )}
                                 {isActive ? (
                                   <span className="bg-emerald-100 text-emerald-800 font-bold text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1">
                                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
@@ -3501,7 +3531,7 @@ export default function AdminDashboardPage() {
                                 {u.city && <span> • {u.city}</span>}
                               </div>
                               <div className="mt-1 flex items-center gap-2 text-[10px] text-slate-400">
-                                <span>भूमिका: पाठक (Reader)</span>
+                                <span>भूमिका: {u.role === 'citizen_journalist' ? 'नागरिक पत्रकार (Citizen Journalist)' : 'पाठक (Reader)'}</span>
                                 {u.lastLoginAt && (
                                   <span>• अंतिम लॉगिन: {new Date(u.lastLoginAt).toLocaleDateString('hi-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
                                 )}

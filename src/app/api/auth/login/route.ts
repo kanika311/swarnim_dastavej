@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { platformStore } from '@/lib/store';
+import { connectToDatabase } from '@/lib/mongodb';
+import UserModel from '@/models/User';
 
 export async function POST(request: Request) {
   try {
@@ -16,32 +18,73 @@ export async function POST(request: Request) {
 
     const isStaffGate = Boolean(body.isStaffGate);
 
-    const result = platformStore.authenticate(identifier, password);
-    if (result.status === 'ok' && result.user) {
-      const isStaffUser = result.user.role === 'admin' || result.user.role === 'super_admin' || result.user.role === 'editor';
+    let result = platformStore.authenticate(identifier, password);
+    let user = result.user;
+
+    // Check MongoDB if not found in platformStore
+    if (!user) {
+      try {
+        await connectToDatabase();
+        const clean = identifier.trim().toLowerCase();
+        const digits = clean.replace(/\D/g, '');
+        const dbUser = await UserModel.findOne({
+          $or: [
+            { email: clean },
+            ...(digits.length >= 10 ? [{ phone: digits }] : [{ phone: clean }])
+          ]
+        }).lean();
+
+        if (dbUser) {
+          if ((dbUser as any).isBanned) {
+            return NextResponse.json(
+              { success: false, message: 'This account is blocked' },
+              { status: 403 }
+            );
+          }
+          if (dbUser.password && dbUser.password !== password) {
+            return NextResponse.json(
+              { success: false, message: 'Incorrect password' },
+              { status: 401 }
+            );
+          }
+          const { password: _p, ...safeUser } = dbUser;
+          user = safeUser as any;
+          try {
+            platformStore.addUser({ ...safeUser, password } as any);
+          } catch {}
+        }
+      } catch (dbErr: any) {
+        console.warn('MongoDB login check error:', dbErr?.message);
+      }
+    }
+
+    if (user) {
+      const isStaffUser = user.role === 'admin' || user.role === 'super_admin' || user.role === 'editor';
       if (isStaffUser && !isStaffGate) {
         return NextResponse.json(
           { success: false, message: 'एडमिन लॉगिन मुख्य वेबसाइट पर उपलब्ध नहीं है।' },
           { status: 403 }
         );
       }
-      return NextResponse.json({ success: true, data: result.user });
+      return NextResponse.json({ success: true, data: user });
     }
-    if (result.status === 'not_found') {
-      return NextResponse.json(
-        { success: false, message: 'Account not found' },
-        { status: 404 }
-      );
-    }
+
     if (result.status === 'banned') {
       return NextResponse.json(
         { success: false, message: 'This account is blocked' },
         { status: 403 }
       );
     }
+    if (result.status === 'invalid') {
+      return NextResponse.json(
+        { success: false, message: 'Incorrect password' },
+        { status: 401 }
+      );
+    }
+
     return NextResponse.json(
-      { success: false, message: 'Incorrect password' },
-      { status: 401 }
+      { success: false, message: 'Account not found' },
+      { status: 404 }
     );
   } catch {
     return NextResponse.json(

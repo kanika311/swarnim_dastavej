@@ -97,7 +97,7 @@ export default function AuthModal() {
   };
 
   // Handle Registration
-  const handleRegisterSubmit = (e: React.FormEvent) => {
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setRegError('');
 
@@ -117,7 +117,7 @@ export default function AuthModal() {
     }
 
     try {
-      const newUser = registerUser({
+      const newUser = await registerUser({
         name: regName.trim(),
         phone: regPhone.trim(),
         email: regEmail.trim() || `${regPhone.trim()}@swarnim.local`,

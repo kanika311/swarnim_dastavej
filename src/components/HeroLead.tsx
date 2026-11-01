@@ -58,15 +58,15 @@ export default function HeroLead({ leadArticle, sideArticles }: HeroLeadProps) {
                 src={leadArticle.coverImage}
                 alt=""
                 aria-hidden="true"
-                className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-40 scale-125 pointer-events-none"
+                className="absolute inset-0 w-full h-full object-cover blur-3xl opacity-75 scale-125 pointer-events-none select-none"
               />
-              <div className="absolute inset-0 bg-black/25 pointer-events-none" />
+              <div className="absolute inset-0 bg-slate-950/20 dark:bg-black/30 pointer-events-none" />
 
               {/* Main Full Image without cropping */}
               <img
                 src={leadArticle.coverImage}
                 alt={leadArticle.headline}
-                className="relative max-w-full max-h-full w-auto h-auto object-contain z-10 transition-transform duration-500 group-hover:scale-105"
+                className="relative max-w-full max-h-full w-auto h-auto object-contain z-10 mx-auto transition-transform duration-500 group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/20 to-transparent pointer-events-none z-15"></div>
               

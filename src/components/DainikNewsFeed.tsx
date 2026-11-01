@@ -231,7 +231,11 @@ export default function DainikNewsFeed({
             const videoOn = Boolean(leadVideo && playingVideoId === leadArticle.id);
             return (
               <>
-                <div className="relative mt-4 aspect-video w-full rounded-xl overflow-hidden bg-slate-950 group">
+                <div className={`relative mt-4 w-full rounded-2xl overflow-hidden shadow-xs group transition-all ${
+                  videoOn 
+                    ? 'aspect-video bg-black flex items-center justify-center' 
+                    : 'flex items-center justify-center bg-slate-900/90 min-h-[300px] sm:min-h-[380px] max-h-[540px]'
+                }`}>
                   {videoOn ? (
                     <video
                       src={leadVideo}
@@ -242,27 +246,33 @@ export default function DainikNewsFeed({
                       className="w-full h-full object-contain bg-black"
                     />
                   ) : (
-                    <>
-                      {/* Ambient blurred backdrop for edge-to-edge fill */}
+                    <div className="relative w-full h-full min-h-[300px] sm:min-h-[380px] max-h-[540px] flex items-center justify-center overflow-hidden">
+                      {/* Ambient blurred backdrop for seamless, edge-to-edge color fill */}
                       <img
                         src={leadArticle.coverImage}
                         alt=""
                         aria-hidden="true"
-                        className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-40 scale-125 pointer-events-none"
+                        className="absolute inset-0 w-full h-full object-cover blur-3xl opacity-75 scale-125 pointer-events-none select-none"
                       />
-                      <div className="absolute inset-0 bg-black/25 pointer-events-none" />
+                      <div className="absolute inset-0 bg-slate-950/20 dark:bg-black/40 pointer-events-none" />
 
-                      {/* Main Full Image: object-contain guarantees 100% of photo is visible without cutting */}
-                      <img
-                        src={leadArticle.coverImage}
-                        alt={leadArticle.headline}
-                        className="relative max-w-full max-h-full w-auto h-auto object-contain z-10 transition-transform duration-300 group-hover:scale-105"
-                      />
+                      {/* Main Full Image: perfectly centered, natural aspect ratio, 0% cut off */}
+                      <Link 
+                        href={`/article/${leadArticle.id}`}
+                        className="relative z-10 w-full h-full flex items-center justify-center p-2 sm:p-3"
+                      >
+                        <img
+                          src={leadArticle.coverImage}
+                          alt={leadArticle.headline}
+                          className="relative max-w-full max-h-[510px] w-auto h-auto object-contain mx-auto rounded-lg shadow-2xl transition-transform duration-300 group-hover:scale-[1.01]"
+                        />
+                      </Link>
+
                       {leadVideo && (
                         <button
                           type="button"
                           onClick={() => setPlayingVideoId(leadArticle.id)}
-                          className="absolute inset-0 flex items-center justify-center bg-black/25 hover:bg-black/10 transition cursor-pointer"
+                          className="absolute inset-0 flex items-center justify-center bg-black/25 hover:bg-black/10 transition cursor-pointer z-20"
                           aria-label="Play video"
                         >
                           <span className="w-16 h-16 rounded-full bg-red-600 text-white flex items-center justify-center shadow-2xl">
@@ -270,16 +280,15 @@ export default function DainikNewsFeed({
                           </span>
                         </button>
                       )}
-                    </>
-                  )}
-                  {!videoOn && (
-                    <div className="absolute bottom-3 left-3 flex items-center gap-2 pointer-events-none">
-                      <span className="bg-slate-950/80 text-amber-300 text-[11px] font-bold px-2 py-0.5 rounded backdrop-blur-xs">
-                        {language === 'en' ? '| Swarnim Ground Report' : language === 'ur' ? '| سوَرنم زمینی رپورٹ' : '| स्वर्णिम विशेष ग्राउंड रिपोर्ट'}
-                      </span>
-                      <span className="bg-red-600 text-white text-[11px] font-bold px-2 py-0.5 rounded">
-                        {leadArticle.city}
-                      </span>
+
+                      <div className="absolute bottom-3 left-3 flex items-center gap-2 pointer-events-none z-20">
+                        <span className="bg-slate-950/85 text-amber-300 text-[11px] font-bold px-2.5 py-1 rounded-md backdrop-blur-md shadow">
+                          {language === 'en' ? '| Swarnim Ground Report' : language === 'ur' ? '| سوَرنم زمینی رپورٹ' : '| स्वर्णिम विशेष ग्राउंड रिपोर्ट'}
+                        </span>
+                        <span className="bg-red-600 text-white text-[11px] font-bold px-2.5 py-1 rounded-md shadow">
+                          {leadArticle.city}
+                        </span>
+                      </div>
                     </div>
                   )}
                 </div>
